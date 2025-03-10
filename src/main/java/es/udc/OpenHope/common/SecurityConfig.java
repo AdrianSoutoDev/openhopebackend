@@ -1,4 +1,4 @@
-package es.udc.OpenHope.rest.common;
+package es.udc.OpenHope.common;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

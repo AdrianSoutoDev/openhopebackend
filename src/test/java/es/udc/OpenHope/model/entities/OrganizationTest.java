@@ -1,5 +1,7 @@
 package es.udc.OpenHope.model.entities;
 
+import es.udc.OpenHope.model.Organization;
+import es.udc.OpenHope.model.Registration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

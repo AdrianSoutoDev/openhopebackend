@@ -1,4 +1,4 @@
-package es.udc.OpenHope.model.entities;
+package es.udc.OpenHope.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
