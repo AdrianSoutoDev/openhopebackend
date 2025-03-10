@@ -1,4 +1,4 @@
-package es.udc.OpenHope.model.entities;
+package es.udc.OpenHope.model;
 
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Registration;
