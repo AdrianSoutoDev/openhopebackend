@@ -30,7 +30,8 @@ public class OrganizationServiceTest {
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
   @Autowired
-  public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+  public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository,
+                                 final BCryptPasswordEncoder bCryptPasswordEncoder) {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
@@ -43,10 +44,10 @@ public class OrganizationServiceTest {
 
     assertTrue(organizationFinded.isPresent());
 
-    assertEquals(organizationFinded.get().getEmail(), ORG_EMAIL);
-    assertEquals(organizationFinded.get().getName(), ORG_NAME);
-    assertEquals(organizationFinded.get().getDescription(), ORG_DESCRIPTION);
-    assertEquals(organizationFinded.get().getImage(), ORG_IMAGE);
+    assertEquals(ORG_EMAIL, organizationFinded.get().getEmail());
+    assertEquals(ORG_NAME, organizationFinded.get().getName());
+    assertEquals(ORG_DESCRIPTION, organizationFinded.get().getDescription());
+    assertEquals(ORG_IMAGE, organizationFinded.get().getImage());
   }
 
   @Test
@@ -98,19 +99,19 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationsWithEmailNullTest() {
+  public void createOrganizationWithEmailNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.create(null, PASSWORD, ORG_NAME, null, null));
   }
 
   @Test
-  public void createOrganizationsWithPasswordNullTest() throws DuplicateEmailException {
+  public void createOrganizationWithPasswordNullTest() throws DuplicateEmailException {
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.create(ORG_EMAIL, null, ORG_NAME, null, null));
   }
 
   @Test
-  public void createOrganizationsWithNameNullTest() throws DuplicateEmailException {
+  public void createOrganizationWithNameNullTest() throws DuplicateEmailException {
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.create(ORG_EMAIL, PASSWORD, null, null, null));
   }

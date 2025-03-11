@@ -12,20 +12,20 @@ public class OrganizationTest {
   private static final String ORG_NAME = "apadan";
   private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
   private static final String ORG_IMAGE = "c:\\openhope\\images\\organizations\\apadan.png";
-  private static final String ENCRYPTED_PASSWORD = "fa89sdfjasdpmcds9";
+  private static final String ENCRYPTED_PASSWORD = "$2a$16$dUrZyai4SLzT.w3NMXjfC.SgYQMyRcKyK0miEopks5RULJfl8n38G";
 
   @Test
   public void organizationInheritsFromRegistrationTest() {
     Organization organization = new Organization(ORG_EMAIL, ENCRYPTED_PASSWORD, ORG_NAME);
-    assertTrue(organization instanceof Account);
+      assertInstanceOf(Account.class, organization);
   }
 
   @Test
   public void organizationConstructorTest() {
     Organization organization = new Organization(ORG_EMAIL, ENCRYPTED_PASSWORD, ORG_NAME);
-    assertEquals(organization.getEmail(), ORG_EMAIL);
-    assertEquals(organization.getEncryptedPassword(), ENCRYPTED_PASSWORD);
-    assertEquals(organization.getName(), ORG_NAME);
+    assertEquals(ORG_EMAIL, organization.getEmail());
+    assertEquals(ENCRYPTED_PASSWORD, organization.getEncryptedPassword());
+    assertEquals(ORG_NAME, organization.getName());
     assertNull(organization.getDescription());
     assertNull(organization.getImage());
   }
@@ -33,11 +33,11 @@ public class OrganizationTest {
   @Test
   public void organizationConstructorWithDescriptionAndImageTest() {
     Organization organization = new Organization(ORG_EMAIL, ENCRYPTED_PASSWORD, ORG_NAME, ORG_DESCRIPTION, ORG_IMAGE);
-    assertEquals(organization.getEmail(), ORG_EMAIL);
-    assertEquals(organization.getEncryptedPassword(), ENCRYPTED_PASSWORD);
-    assertEquals(organization.getName(), ORG_NAME);
-    assertEquals(organization.getDescription(), ORG_DESCRIPTION);
-    assertEquals(organization.getImage(), ORG_IMAGE);
+    assertEquals(ORG_EMAIL, organization.getEmail());
+    assertEquals(ENCRYPTED_PASSWORD, organization.getEncryptedPassword());
+    assertEquals(ORG_NAME, organization.getName());
+    assertEquals(ORG_DESCRIPTION, organization.getDescription());
+    assertEquals(ORG_IMAGE, organization.getImage());
   }
 
 }
