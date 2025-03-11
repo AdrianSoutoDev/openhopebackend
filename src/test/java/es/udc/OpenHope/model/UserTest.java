@@ -1,7 +1,5 @@
 package es.udc.OpenHope.model;
 
-import es.udc.OpenHope.model.Registration;
-import es.udc.OpenHope.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -17,7 +15,7 @@ public class UserTest {
   @Test
   public void userInheritsFromRegistrationTest() {
     User user = new User(USER_EMAIL, ENCRYPTED_PASSWORD);
-    assertTrue(user instanceof Registration);
+    assertTrue(user instanceof Account);
   }
 
   @Test

@@ -1,7 +1,5 @@
 package es.udc.OpenHope.model;
 
-import es.udc.OpenHope.model.Organization;
-import es.udc.OpenHope.model.Registration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -19,7 +17,7 @@ public class OrganizationTest {
   @Test
   public void organizationInheritsFromRegistrationTest() {
     Organization organization = new Organization(ORG_EMAIL, ENCRYPTED_PASSWORD, ORG_NAME);
-    assertTrue(organization instanceof Registration);
+    assertTrue(organization instanceof Account);
   }
 
   @Test

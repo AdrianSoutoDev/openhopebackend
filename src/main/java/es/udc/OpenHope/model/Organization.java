@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-public class Organization extends Registration {
+public class Organization extends Account {
 
   @Column(nullable = false)
   private String name;

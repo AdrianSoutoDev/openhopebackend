@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Registration {
+public abstract class Account {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -17,9 +17,9 @@ public abstract class Registration {
   @Column(nullable = false)
   private String encryptedPassword;
 
-  public Registration(){}
+  public Account(){}
 
-  public Registration(String email, String encryptedPassword){
+  public Account(String email, String encryptedPassword){
     this.email = email;
     this.encryptedPassword = encryptedPassword;
   }

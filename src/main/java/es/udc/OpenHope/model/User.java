@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-public class User extends Registration {
+public class User extends Account {
   public User(String email, String encryptedPassword) {
     super(email, encryptedPassword);
   }
