@@ -22,7 +22,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   @Override
   public OrganizationDto create(String email, String password, String name, String description, String image)
-      throws DuplicateEmailException, IllegalArgumentException {
+      throws DuplicateEmailException {
 
     if(email == null) throw new IllegalArgumentException("email cannot be null");
     if(password == null) throw new IllegalArgumentException("password cannot be null");
