@@ -108,11 +108,13 @@ public class OrganizationControllerTest {
   @Test
   void registerOrganizationWithBadFormedEmailWithoutTldTest() throws Exception {
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
-    organizationParamsDto.setEmail("email@OpenHopem");
+    organizationParamsDto.setEmail("email@OpenHopecom");
     organizationParamsDto.setPassword(PASSWORD);
     organizationParamsDto.setName(ORG_NAME);
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isBadRequest());
   }
+
+
 }

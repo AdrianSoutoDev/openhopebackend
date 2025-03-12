@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 @Entity
 public class Organization extends Account {
 
-  @Column(nullable = false)
+  @Column(unique = true, nullable = false)
   private String name;
   private String description;
   private String image;

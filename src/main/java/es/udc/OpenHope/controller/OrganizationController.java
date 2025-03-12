@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -25,9 +26,19 @@ public class OrganizationController {
   private final OrganizationService organizationService;
 
   @PostMapping
-  public ResponseEntity<OrganizationDto> register(@Valid @RequestBody OrganizationParamsDto params) throws DuplicateEmailException {
+  public ResponseEntity<OrganizationDto> register(@Valid @RequestBody OrganizationParamsDto params) throws DuplicateEmailException, IOException {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
         params.getDescription(), params.getImage());
+
+    if(organizationDto.getImage() != null) {
+      String imgUrl = ServletUriComponentsBuilder
+              .fromCurrentContextPath()
+              .path("/api/resources/")
+              .path(organizationDto.getImage())
+              .toUriString();
+
+      organizationDto.setImage(imgUrl);
+    }
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest()
