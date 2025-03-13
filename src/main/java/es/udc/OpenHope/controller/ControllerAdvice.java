@@ -40,4 +40,6 @@ public class ControllerAdvice {
   public String handleDuplicateEmailException(DuplicateEmailException e) {
     return e.getMessage();
   }
+
+  //TODO add handler exception for Organization name duplicated
 }

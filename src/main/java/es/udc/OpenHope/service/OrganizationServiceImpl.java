@@ -31,6 +31,8 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     if(password == null) throw new IllegalArgumentException("password cannot be null");
     if(name == null)  throw new IllegalArgumentException("name cannot be null");
 
+    //TODO Add check if exist by name, and throw duplicated Name exception
+
     if(accountExists(email)) {
       throw new DuplicateEmailException("e-mail already exists");
     }
