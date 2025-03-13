@@ -4,17 +4,16 @@ import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.service.OrganizationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -25,14 +24,18 @@ public class OrganizationController {
 
   private final OrganizationService organizationService;
 
-  @PostMapping
-  public ResponseEntity<OrganizationDto> register(@Valid @RequestBody OrganizationParamsDto params) throws DuplicateEmailException, IOException {
+  @Value("${server.port}")
+  private String serverPort;
+
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params) throws DuplicateEmailException {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
         params.getDescription(), params.getImage());
 
     if(organizationDto.getImage() != null) {
       String imgUrl = ServletUriComponentsBuilder
               .fromCurrentContextPath()
+              .port(serverPort)
               .path("/api/resources/")
               .path(organizationDto.getImage())
               .toUriString();

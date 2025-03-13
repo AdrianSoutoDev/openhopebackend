@@ -35,6 +35,15 @@ public class ResourceServiceImpl implements ResourceService {
         return new UrlResource(imagePath.toUri());
     }
 
+    @Override
+    public void removeImage(String imageName) {
+        try {
+            Path imagePath = Path.of(uploadDir, imageName);
+            File image = new File(imagePath.toString());
+            image.delete();
+        } catch (Exception ignored){}
+    }
+
     private String fileStorage(MultipartFile file) throws IOException {
         String originalFileName = file.getOriginalFilename();
         String extension = "";

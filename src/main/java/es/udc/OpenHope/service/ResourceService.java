@@ -8,4 +8,5 @@ import java.net.MalformedURLException;
 public interface ResourceService {
     String saveImage(MultipartFile image);
     Resource getImage(String imageName) throws MalformedURLException;
+    void removeImage(String imageName);
 }

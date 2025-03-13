@@ -1,48 +1,89 @@
 package es.udc.OpenHope.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
-import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.service.ResourceService;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import java.io.IOException;
+import java.nio.file.Files;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public class OrganizationControllerTest {
 
   private static final String ORG_EMAIL = "org@openhope.com";
   private static final String ORG_NAME = "Apadan";
   private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
-  private static final String ORG_IMAGE = "c:\\openhope\\images\\organizations\\apadan.png";
   private static final String PASSWORD = "12345abc?";
 
+  @Value("${upload.dir}")
+  private String uploadDir;
+
+  @Value("${server.port}")
+  private String serverPort;
+
+  private String createdFileName = null;
+
   private final MockMvc mockMvc;
-  private final ObjectMapper objectMapper;
-  private final OrganizationRepository organizationRepository;
+  private final ResourceService resourceService;
 
   @Autowired
-  public OrganizationControllerTest(final MockMvc mockMvc, final ObjectMapper objectMapper, OrganizationRepository organizationRepository) {
+  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService) {
     this.mockMvc = mockMvc;
-    this.objectMapper = objectMapper;
-    this.organizationRepository = organizationRepository;
+    this.resourceService = resourceService;
+  }
+
+  @AfterEach
+  public void cleanUp() throws IOException {
+    if (createdFileName != null) {
+      resourceService.removeImage(createdFileName);
+    }
+  }
+
+  private MockMultipartFile getTestImg() throws IOException {
+    ClassPathResource resource = new ClassPathResource("test-images/test-image.png");
+    byte[] fileContent = Files.readAllBytes(resource.getFile().toPath());
+    return new MockMultipartFile(
+        "image",
+        "test-image.png",
+        "image/png",
+        fileContent
+    );
   }
 
   private ResultActions registerOrganization(OrganizationParamsDto params) throws Exception {
-    String jsonContent = objectMapper.writeValueAsString(params);
+    MockHttpServletRequestBuilder builder = params.getImage() != null
+        ? MockMvcRequestBuilders.multipart("/api/organization").file((MockMultipartFile) params.getImage())
+        : MockMvcRequestBuilders.multipart("/api/organization");
 
-    return mockMvc.perform(post("/api/organization")
-        .content(jsonContent)
-        .contentType(MediaType.APPLICATION_JSON));
+    builder.param("email", params.getEmail())
+        .param("password", params.getPassword())
+        .param("name", params.getName())
+        .param("description", params.getDescription())
+        .contentType(MediaType.MULTIPART_FORM_DATA);
+
+    return mockMvc.perform(builder);
   }
 
   @Test
@@ -62,11 +103,49 @@ public class OrganizationControllerTest {
   }
 
   @Test
+  void registerOrganizationResponseWithImageTest() throws Exception {
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+
+    MockMultipartFile testImage = getTestImg();
+    organizationParamsDto.setImage(testImage);
+
+    String uriStarts = ServletUriComponentsBuilder
+        .fromCurrentContextPath()
+        .port(serverPort)
+        .path("/api/resources/")
+        .toUriString();
+
+    String imageName = testImage.getOriginalFilename();
+    String extension = imageName.substring(imageName.lastIndexOf("."));
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.email").value(ORG_EMAIL))
+        .andExpect(jsonPath("$.name").value(ORG_NAME))
+        .andExpect(jsonPath("$.description").doesNotExist())
+        .andExpect(jsonPath("$.image").exists())
+        .andExpect(jsonPath("$.image").isString())
+        .andExpect(jsonPath("$.image").value(Matchers.startsWith(uriStarts)))
+        .andExpect(jsonPath("$.image").value(Matchers.endsWith(extension)))
+        .andDo(r ->{
+          //Get the image name to delete it when the test finilize.
+          String response = r.getResponse().getContentAsString();
+          String image = JsonPath.parse(response).read("$.image");
+          createdFileName = image.replace(uriStarts, "");
+        });
+  }
+
+  @Test
   void registerOrganizationDoesNotReturnPasswordTest() throws Exception {
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail(ORG_EMAIL);
     organizationParamsDto.setPassword(PASSWORD);
     organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setDescription(ORG_DESCRIPTION);
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isCreated())
@@ -116,5 +195,8 @@ public class OrganizationControllerTest {
     result.andExpect(status().isBadRequest());
   }
 
-
+  //TODO registrer organization with duplicated email
+  //TODO registrer organization with duplicated name
+  //TODO registrer organization with duplicated empty
+  //TODO registrer organization with duplicated null
 }

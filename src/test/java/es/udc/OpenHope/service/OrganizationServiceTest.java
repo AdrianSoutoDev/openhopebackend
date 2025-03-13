@@ -42,26 +42,21 @@ public class OrganizationServiceTest {
   private final OrganizationRepository organizationRepository;
   private final OrganizationService organizationService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
+  private final ResourceService resourceService;
 
   @Autowired
   public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository,
-                                 final BCryptPasswordEncoder bCryptPasswordEncoder, ResourceService resourceService) {
+                                 final BCryptPasswordEncoder bCryptPasswordEncoder, final ResourceService resourceService, final ResourceService resourceService1) {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    this.resourceService = resourceService1;
   }
 
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileName != null) {
-      deleteImg();
-    }
-  }
-
-  private void deleteImg() throws IOException {
-    Path filePath = Path.of(uploadDir, createdFileName);
-    if (Files.exists(filePath)) {
-      Files.delete(filePath);
+      resourceService.removeImage(createdFileName);
     }
   }
 
@@ -69,7 +64,7 @@ public class OrganizationServiceTest {
     ClassPathResource resource = new ClassPathResource("test-images/test-image.png");
     byte[] fileContent = Files.readAllBytes(resource.getFile().toPath());
     return new MockMultipartFile(
-            "file",
+            "image",
             "test-image.png",
             "image/png",
             fileContent
@@ -109,14 +104,6 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithoutImageTest() throws DuplicateEmailException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
-    Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
-    assertTrue(organizationFinded.isPresent());
-    assertNull(organizationFinded.get().getImage());
-  }
-
-  @Test
   public void createOrganizationWithEncryptedPasswordTest() throws DuplicateEmailException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
@@ -142,11 +129,13 @@ public class OrganizationServiceTest {
   @Test
   public void createOrganizationsWithDiferentEmailTest() throws DuplicateEmailException {
     OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
-    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, ORG_NAME, null, null);
+    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null);
 
     List<Organization> organizations = organizationRepository.findAll();
     assertEquals(2, organizations.size());
   }
+
+  //TODO Add test for duplicated Name, duplicated name ignoring case, create two organizations with diferent name
 
   @Test
   public void createOrganizationWithEmailNullTest() {
@@ -155,13 +144,13 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithPasswordNullTest() throws DuplicateEmailException {
+  public void createOrganizationWithPasswordNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.create(ORG_EMAIL, null, ORG_NAME, null, null));
   }
 
   @Test
-  public void createOrganizationWithNameNullTest() throws DuplicateEmailException {
+  public void createOrganizationWithNameNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.create(ORG_EMAIL, PASSWORD, null, null, null));
   }
