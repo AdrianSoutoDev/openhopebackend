@@ -1,7 +1,9 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
+import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
@@ -47,11 +49,13 @@ public class OrganizationControllerTest {
 
   private final MockMvc mockMvc;
   private final ResourceService resourceService;
+  private final OrganizationService organizationService;
 
   @Autowired
-  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService) {
+  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService, OrganizationService organizationService) {
     this.mockMvc = mockMvc;
     this.resourceService = resourceService;
+    this.organizationService = organizationService;
   }
 
   @AfterEach
@@ -195,8 +199,51 @@ public class OrganizationControllerTest {
     result.andExpect(status().isBadRequest());
   }
 
-  //TODO registrer organization with duplicated email
-  //TODO registrer organization with duplicated name
-  //TODO registrer organization with duplicated empty
-  //TODO registrer organization with duplicated null
+  @Test
+  void registerOrganizationWithDuplicatedEmailTest() throws Exception {
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName("Asociación protectora APADAN");
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isConflict());
+  }
+
+  @Test
+  void registerOrganizationWithDuplicatedNameTest() throws Exception {
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail("another_email@openhope.com");
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isConflict());
+  }
+
+  @Test
+  void registerOrganizationWithNameEmptyTest() throws Exception {
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName("");
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void registerOrganizationWithNameNullTest() throws Exception {
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(null);
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isBadRequest());
+  }
 }
