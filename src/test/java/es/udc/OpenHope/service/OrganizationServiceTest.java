@@ -64,7 +64,7 @@ public class OrganizationServiceTest {
     ClassPathResource resource = new ClassPathResource("test-images/test-image.png");
     byte[] fileContent = Files.readAllBytes(resource.getFile().toPath());
     return new MockMultipartFile(
-            "image",
+            "file",
             "test-image.png",
             "image/png",
             fileContent

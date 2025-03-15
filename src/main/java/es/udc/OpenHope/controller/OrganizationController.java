@@ -5,7 +5,6 @@ import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.service.OrganizationService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +30,7 @@ public class OrganizationController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params) throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
-        params.getDescription(), params.getImage());
+        params.getDescription(), params.getFile());
 
     if(organizationDto.getImage() != null) {
       String imgUrl = ServletUriComponentsBuilder

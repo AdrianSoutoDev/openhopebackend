@@ -1,7 +1,6 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
-import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
@@ -69,7 +68,7 @@ public class OrganizationControllerTest {
     ClassPathResource resource = new ClassPathResource("test-images/test-image.png");
     byte[] fileContent = Files.readAllBytes(resource.getFile().toPath());
     return new MockMultipartFile(
-        "image",
+        "file",
         "test-image.png",
         "image/png",
         fileContent
@@ -77,8 +76,8 @@ public class OrganizationControllerTest {
   }
 
   private ResultActions registerOrganization(OrganizationParamsDto params) throws Exception {
-    MockHttpServletRequestBuilder builder = params.getImage() != null
-        ? MockMvcRequestBuilders.multipart("/api/organization").file((MockMultipartFile) params.getImage())
+    MockHttpServletRequestBuilder builder = params.getFile() != null
+        ? MockMvcRequestBuilders.multipart("/api/organization").file((MockMultipartFile) params.getFile())
         : MockMvcRequestBuilders.multipart("/api/organization");
 
     builder.param("email", params.getEmail())
@@ -114,7 +113,7 @@ public class OrganizationControllerTest {
     organizationParamsDto.setName(ORG_NAME);
 
     MockMultipartFile testImage = getTestImg();
-    organizationParamsDto.setImage(testImage);
+    organizationParamsDto.setFile(testImage);
 
     String uriStarts = ServletUriComponentsBuilder
         .fromCurrentContextPath()

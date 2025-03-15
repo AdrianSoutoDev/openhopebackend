@@ -25,5 +25,5 @@ public class OrganizationParamsDto {
   private String name;
 
   private String description;
-  private MultipartFile image;
+  private MultipartFile file;
 }
