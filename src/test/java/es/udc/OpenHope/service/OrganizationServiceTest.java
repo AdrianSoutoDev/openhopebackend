@@ -2,6 +2,7 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,7 +72,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationTest() throws DuplicateEmailException {
+  public void createOrganizationTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
 
@@ -85,7 +85,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithImgTest() throws IOException, DuplicateEmailException {
+  public void createOrganizationWithImgTest() throws IOException, DuplicateEmailException, DuplicateOrganizationException {
     MockMultipartFile testImage = getTestImg();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, testImage);
 
@@ -96,7 +96,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithoutDescriptionTest() throws DuplicateEmailException {
+  public void createOrganizationWithoutDescriptionTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
     assertTrue(organizationFinded.isPresent());
@@ -104,7 +104,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithEncryptedPasswordTest() throws DuplicateEmailException {
+  public void createOrganizationWithEncryptedPasswordTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
     assertTrue(organizationFinded.isPresent());
@@ -113,21 +113,21 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationDuplicatedEmailTest() throws DuplicateEmailException {
+  public void createOrganizationDuplicatedEmailTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     assertThrows(DuplicateEmailException.class, () ->
         organizationService.create(ORG_EMAIL, "anotherPassword", "anotherName", null, null));
   }
 
   @Test
-  public void createOrganizationDuplicatedEmailIgnoringCaseTest() throws DuplicateEmailException {
+  public void createOrganizationDuplicatedEmailIgnoringCaseTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto organizationDto = organizationService.create("org@openhope.com", PASSWORD, ORG_NAME, null, null);
     assertThrows(DuplicateEmailException.class, () ->
         organizationService.create("ORG@OpenHope.com", "anotherPassword", "anotherName", null, null));
   }
 
   @Test
-  public void createOrganizationsWithDiferentEmailTest() throws DuplicateEmailException {
+  public void createOrganizationsWithDiferentEmailTest() throws DuplicateEmailException, DuplicateOrganizationException {
     OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null);
 
@@ -135,7 +135,28 @@ public class OrganizationServiceTest {
     assertEquals(2, organizations.size());
   }
 
-  //TODO Add test for duplicated Name, duplicated name ignoring case, create two organizations with diferent name
+  @Test
+  public void createOrganizationDuplicatedNameTest() throws DuplicateOrganizationException, DuplicateEmailException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    assertThrows(DuplicateOrganizationException.class, () ->
+        organizationService.create("another_email@openhope.com", PASSWORD, ORG_NAME, null, null));
+  }
+
+  @Test
+  public void createOrganizationDuplicatedNameIgnoringCaseTest() throws DuplicateOrganizationException,  DuplicateEmailException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, "Asociación protectora APADAN", null, null);
+    assertThrows(DuplicateOrganizationException.class, () ->
+        organizationService.create("another_email@openhope.com", PASSWORD, "asociación protectora apadan", null, null));
+  }
+
+  @Test
+  public void createOrganizationsWithDiferentNameTest() throws DuplicateEmailException, DuplicateOrganizationException {
+    OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null);
+
+    List<Organization> organizations = organizationRepository.findAll();
+    assertEquals(2, organizations.size());
+  }
 
   @Test
   public void createOrganizationWithEmailNullTest() {

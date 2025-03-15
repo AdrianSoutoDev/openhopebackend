@@ -3,6 +3,7 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.mappers.OrganizationMapper;
 import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
@@ -25,17 +26,14 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   @Override
   public OrganizationDto create(String email, String password, String name, String description, MultipartFile image)
-      throws DuplicateEmailException {
+      throws DuplicateEmailException, DuplicateOrganizationException {
 
     if(email == null) throw new IllegalArgumentException("email cannot be null");
     if(password == null) throw new IllegalArgumentException("password cannot be null");
     if(name == null)  throw new IllegalArgumentException("name cannot be null");
 
-    //TODO Add check if exist by name, and throw duplicated Name exception
-
-    if(accountExists(email)) {
-      throw new DuplicateEmailException("e-mail already exists");
-    }
+    if(accountExists(email)) throw new DuplicateEmailException("e-mail already exists");
+    if(organizationExists(name)) throw new DuplicateOrganizationException("organization name already exists");
 
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
     String imagePath = image != null ? resourceService.saveImage(image) : null;
@@ -43,5 +41,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     Organization organization = new Organization(email, encryptedPassword, name, description, imagePath);
     organizationRepository.save(organization);
     return OrganizationMapper.toOrganizationDto(organization);
+  }
+
+  private boolean organizationExists(String name) {
+    return organizationRepository.existsByNameIgnoreCase(name);
   }
 }

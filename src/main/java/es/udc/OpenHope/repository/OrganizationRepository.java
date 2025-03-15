@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
-  //TODO Add existByName
+  boolean existsByNameIgnoreCase(String name);
 }

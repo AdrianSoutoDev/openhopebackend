@@ -1,6 +1,7 @@
 package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,5 +42,10 @@ public class ControllerAdvice {
     return e.getMessage();
   }
 
-  //TODO add handler exception for Organization name duplicated
+  @ExceptionHandler(DuplicateOrganizationException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public String handleDuplicateOrganizationException(DuplicateOrganizationException e) {
+    return e.getMessage();
+  }
+
 }
