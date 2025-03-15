@@ -1,9 +1,7 @@
 package es.udc.OpenHope.service;
 
-import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.UserDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.User;
 import es.udc.OpenHope.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
