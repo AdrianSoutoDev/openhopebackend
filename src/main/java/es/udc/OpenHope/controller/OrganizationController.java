@@ -21,7 +21,7 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/organization")
+@RequestMapping("/api/organizations")
 @Validated
 public class OrganizationController {
 

@@ -77,8 +77,8 @@ public class OrganizationControllerTest {
 
   private ResultActions registerOrganization(OrganizationParamsDto params) throws Exception {
     MockHttpServletRequestBuilder builder = params.getFile() != null
-        ? MockMvcRequestBuilders.multipart("/api/organization").file((MockMultipartFile) params.getFile())
-        : MockMvcRequestBuilders.multipart("/api/organization");
+        ? MockMvcRequestBuilders.multipart("/api/organizations").file((MockMultipartFile) params.getFile())
+        : MockMvcRequestBuilders.multipart("/api/organizations");
 
     builder.param("email", params.getEmail())
         .param("password", params.getPassword())
@@ -99,6 +99,7 @@ public class OrganizationControllerTest {
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.email").value(ORG_EMAIL))
         .andExpect(jsonPath("$.name").value(ORG_NAME))
         .andExpect(jsonPath("$.description").doesNotExist())
