@@ -1,11 +1,8 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.LoginParamsDto;
 import es.udc.OpenHope.dto.UserDto;
 import es.udc.OpenHope.dto.UserParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
-import es.udc.OpenHope.service.AccountService;
 import es.udc.OpenHope.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

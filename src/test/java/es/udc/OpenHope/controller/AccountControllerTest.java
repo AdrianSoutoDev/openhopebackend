@@ -3,8 +3,6 @@ package es.udc.OpenHope.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import es.udc.OpenHope.dto.LoginParamsDto;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
 import es.udc.OpenHope.service.AccountService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.UserService;
@@ -22,12 +20,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
-
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional

@@ -1,6 +1,5 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.dto.UserParamsDto;
 import es.udc.OpenHope.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @Transactional
