@@ -54,5 +54,4 @@ public class OrganizationController {
 
     return ResponseEntity.created(location).body(organizationDto);
   }
-
 }

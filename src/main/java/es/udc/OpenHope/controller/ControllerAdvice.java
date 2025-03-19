@@ -2,6 +2,7 @@ package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
+import es.udc.OpenHope.exception.InvalidCredentialsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,6 +46,12 @@ public class ControllerAdvice {
   @ExceptionHandler(DuplicateOrganizationException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
   public String handleDuplicateOrganizationException(DuplicateOrganizationException e) {
+    return e.getMessage();
+  }
+
+  @ExceptionHandler(InvalidCredentialsException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public String handleDuplicateInvalidCredentialsException(InvalidCredentialsException e) {
     return e.getMessage();
   }
 
