@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginParamsDto {
-  @NotNull
-  @NotEmpty
-  @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}",flags = Pattern.Flag.CASE_INSENSITIVE)
+  @NotNull(message="{dto.common.email.NotNull}")
+  @NotEmpty(message="{dto.common.email.NotEmpty}")
+  @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}",flags = Pattern.Flag.CASE_INSENSITIVE, message = "{dto.common.email.Email}")
   private String email;
 
-  @NotNull
-  @NotEmpty
+  @NotNull(message="{dto.common.password.NotNull}")
+  @NotEmpty(message="{dto.common.password.NotEmpty}")
   private String password;
 }

@@ -9,7 +9,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,7 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
   @Value("${jwt.secret}")
@@ -32,6 +35,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
   @Value("${jwt.prefix}")
   private String PREFIX;
+
+  private final MessageSource messageSource;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -56,7 +61,9 @@ public class JwtFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } catch(UnsupportedJwtException | MalformedJwtException | ExpiredJwtException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("Access Denied");
+      response.getWriter().write(
+          messageSource.getMessage("error.access_denied", null, request.getLocale())
+      );
     }
   }
 

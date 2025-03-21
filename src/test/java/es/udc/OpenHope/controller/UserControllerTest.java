@@ -90,7 +90,7 @@ public class UserControllerTest {
   void registerUserWithBadFormedEmailWithoutAtSymbolTest() throws Exception {
     UserParamsDto userParamsDto = new UserParamsDto();
     userParamsDto.setEmail("email_OpenHope.com");
-    userParamsDto.setPassword(PASSWORD);;
+    userParamsDto.setPassword(PASSWORD);
     ResultActions result = registerUser(userParamsDto);
     result.andExpect(status().isBadRequest());
   }

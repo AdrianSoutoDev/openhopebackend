@@ -7,6 +7,7 @@ import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.utils.Messages;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,12 +29,12 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   public OrganizationDto create(String email, String password, String name, String description, MultipartFile image)
       throws DuplicateEmailException, DuplicateOrganizationException {
 
-    if(email == null) throw new IllegalArgumentException("email cannot be null");
-    if(password == null) throw new IllegalArgumentException("password cannot be null");
-    if(name == null)  throw new IllegalArgumentException("name cannot be null");
+    if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
+    if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+    if(name == null)  throw new IllegalArgumentException( Messages.get("validation.name.null") );
 
-    if(accountExists(email)) throw new DuplicateEmailException("e-mail already exists");
-    if(organizationExists(name)) throw new DuplicateOrganizationException("organization name already exists");
+    if(accountExists(email)) throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
+    if(organizationExists(name)) throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
 
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
     String imagePath = image != null ? resourceService.saveImage(image) : null;
