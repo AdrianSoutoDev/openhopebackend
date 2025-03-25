@@ -73,7 +73,7 @@ public class AccountControllerTest {
     result.andExpect(status().isOk())
         .andDo(r ->{
           String response = r.getResponse().getContentAsString();
-          String jwt = JsonPath.parse(response).read("$");
+          String jwt = JsonPath.parse(response).read("$.token");
           SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
           String subject = Jwts.parser()
               .verifyWith(key)
@@ -98,7 +98,7 @@ public class AccountControllerTest {
     result.andExpect(status().isOk())
         .andDo(r ->{
           String response = r.getResponse().getContentAsString();
-          String jwt = JsonPath.parse(response).read("$");
+          String jwt = JsonPath.parse(response).read("$.token");
           SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
           String subject = Jwts.parser()
               .verifyWith(key)
