@@ -1,9 +1,6 @@
 package es.udc.OpenHope.common;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -54,16 +51,14 @@ public class JwtFilter extends OncePerRequestFilter {
         } else {
           SecurityContextHolder.clearContext();
         }
-
       } else {
         SecurityContextHolder.clearContext();
       }
+
       filterChain.doFilter(request, response);
-    } catch(UnsupportedJwtException | MalformedJwtException | ExpiredJwtException e) {
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write(
-          messageSource.getMessage("error.access_denied", null, request.getLocale())
-      );
+    } catch(Exception e) {
+      SecurityContextHolder.clearContext();
+      filterChain.doFilter(request, response);
     }
   }
 

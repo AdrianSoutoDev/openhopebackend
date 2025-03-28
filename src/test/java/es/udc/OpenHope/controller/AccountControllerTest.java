@@ -179,6 +179,6 @@ public class AccountControllerTest {
     userService.create(USER_EMAIL, PASSWORD);
     ResultActions result = mockMvc.perform(post("/api/accounts/logout")
         .contentType(MediaType.APPLICATION_JSON));
-    result.andExpect(status().isForbidden());
+    result.andExpect(status().isUnauthorized());
   }
 }
