@@ -1,5 +1,6 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.ErrorDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
@@ -19,8 +20,8 @@ public class ControllerAdvice {
 
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public String handleGenericException(Exception e) {
-    return e.getMessage();
+  public ErrorDto handleGenericException(Exception e) {
+    return new ErrorDto(e.getMessage());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -39,20 +40,20 @@ public class ControllerAdvice {
 
   @ExceptionHandler(DuplicateEmailException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
-  public String handleDuplicateEmailException(DuplicateEmailException e) {
-    return e.getMessage();
+  public ErrorDto handleDuplicateEmailException(DuplicateEmailException e) {
+    return new ErrorDto(e.getMessage());
   }
 
   @ExceptionHandler(DuplicateOrganizationException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
-  public String handleDuplicateOrganizationException(DuplicateOrganizationException e) {
-    return e.getMessage();
+  public ErrorDto handleDuplicateOrganizationException(DuplicateOrganizationException e) {
+    return new ErrorDto(e.getMessage());
   }
 
   @ExceptionHandler(InvalidCredentialsException.class)
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
-  public String handleDuplicateInvalidCredentialsException(InvalidCredentialsException e) {
-    return e.getMessage();
+  public ErrorDto handleDuplicateInvalidCredentialsException(InvalidCredentialsException e) {
+    return new ErrorDto(e.getMessage());
   }
 
 }
