@@ -29,4 +29,9 @@ public class AccountController {
   public ResponseEntity<Void> logout() {
     return ResponseEntity.noContent().build();
   }
+
+  @PostMapping("/validate")
+  public ResponseEntity<Void> validate() {
+    return ResponseEntity.ok().build();
+  }
 }
