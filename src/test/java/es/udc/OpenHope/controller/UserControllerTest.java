@@ -1,5 +1,7 @@
 package es.udc.OpenHope.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.OpenHope.dto.LoginParamsDto;
 import es.udc.OpenHope.dto.UserParamsDto;
 import es.udc.OpenHope.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -10,10 +12,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -27,20 +28,22 @@ public class UserControllerTest {
 
   private final MockMvc mockMvc;
   private final UserService userService;
+  private final ObjectMapper objectMapper;
 
   @Autowired
-  public UserControllerTest(final MockMvc mockMvc, final UserService userService) {
+  public UserControllerTest(final MockMvc mockMvc, final UserService userService, final ObjectMapper objectMapper) {
     this.mockMvc = mockMvc;
     this.userService = userService;
+    this.objectMapper = objectMapper;
   }
 
   private ResultActions registerUser(UserParamsDto params) throws Exception {
-    MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/api/users")
-        .param("email", params.getEmail())
-        .param("password", params.getPassword())
-        .contentType(MediaType.MULTIPART_FORM_DATA);
+    LoginParamsDto loginParamsDto = new LoginParamsDto(params.getEmail(), params.getPassword());
+    String jsonContent = objectMapper.writeValueAsString(loginParamsDto);
 
-    return mockMvc.perform(builder);
+    return mockMvc.perform(post("/api/users")
+        .content(jsonContent)
+        .contentType(MediaType.APPLICATION_JSON));
   }
 
   @Test

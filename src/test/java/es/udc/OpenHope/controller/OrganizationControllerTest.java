@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
@@ -76,8 +77,12 @@ public class OrganizationControllerTest {
   }
 
   private ResultActions registerOrganization(OrganizationParamsDto params) throws Exception {
-    MockHttpServletRequestBuilder builder = params.getFile() != null
-        ? MockMvcRequestBuilders.multipart("/api/organizations").file((MockMultipartFile) params.getFile())
+    return registerOrganization(params, null);
+  }
+
+  private ResultActions registerOrganization(OrganizationParamsDto params, MultipartFile file) throws Exception {
+    MockHttpServletRequestBuilder builder = file != null
+        ? MockMvcRequestBuilders.multipart("/api/organizations").file((MockMultipartFile) file)
         : MockMvcRequestBuilders.multipart("/api/organizations");
 
     builder.param("email", params.getEmail())
@@ -114,7 +119,6 @@ public class OrganizationControllerTest {
     organizationParamsDto.setName(ORG_NAME);
 
     MockMultipartFile testImage = getTestImg();
-    organizationParamsDto.setFile(testImage);
 
     String uriStarts = ServletUriComponentsBuilder
         .fromCurrentContextPath()
@@ -125,7 +129,7 @@ public class OrganizationControllerTest {
     String imageName = testImage.getOriginalFilename();
     String extension = imageName.substring(imageName.lastIndexOf("."));
 
-    ResultActions result = registerOrganization(organizationParamsDto);
+    ResultActions result = registerOrganization(organizationParamsDto, testImage);
     result.andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.email").value(ORG_EMAIL))
