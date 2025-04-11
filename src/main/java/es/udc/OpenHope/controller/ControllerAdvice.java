@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -63,4 +64,9 @@ public class ControllerAdvice {
     return new ErrorDto(e.getMessage());
   }
 
+  @ExceptionHandler(NoSuchElementException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public ErrorDto handleNoSuchElementException(NoSuchElementException e) {
+    return new ErrorDto(e.getMessage());
+  }
 }

@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class OrganizationServiceImpl extends AccountServiceImpl implements OrganizationService {
@@ -69,6 +66,16 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   @Override
   public OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
     return create(email, password, name, description, new ArrayList<>(), image);
+  }
+
+  @Override
+  public OrganizationDto getOrganizationById(Long id) {
+    Optional<Organization> organization = organizationRepository.findById(id);
+    if(organization.isEmpty()) {
+      throw new NoSuchElementException("");
+    }
+
+    return OrganizationMapper.toOrganizationDto(organization.get());
   }
 
   private boolean organizationExists(String name) {

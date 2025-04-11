@@ -1,6 +1,7 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -313,5 +315,26 @@ public class OrganizationControllerTest {
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void GetOrganizationByIdTest() throws Exception {
+    initCategories();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, getCategoryNames(), null);
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}", organizationDto.getId()));
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.email").value(ORG_EMAIL))
+        .andExpect(jsonPath("$.name").value(ORG_NAME))
+        .andExpect(jsonPath("$.password").doesNotExist())
+        .andExpect(jsonPath("$.categories").exists())
+        .andExpect(jsonPath("$.categories").isArray())
+        .andExpect(jsonPath("$.categories").isNotEmpty());
+  }
+
+  @Test
+  void GetOrganizationByIdThatDoesntExistTest() throws Exception {
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}",  0));
+    result.andExpect(status().isNotFound());
   }
 }

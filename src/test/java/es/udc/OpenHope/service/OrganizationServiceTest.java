@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -234,5 +231,26 @@ public class OrganizationServiceTest {
     categoryNames.add(CATEGORY_4);
     assertThrows(MaxCategoriesExceededException.class, () ->
         organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null));
+  }
+
+  @Test
+  public void getOrganizationByIdTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
+    initCategories();
+    List<String> categoryNames = getCategoryNames();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null);
+    OrganizationDto organizationDtoFinded = organizationService.getOrganizationById(organizationDto.getId());
+
+    assertNotNull(organizationDtoFinded);
+    assertEquals(organizationDto.getId(), organizationDtoFinded.getId());
+    assertEquals(ORG_EMAIL, organizationDtoFinded.getEmail());
+    assertEquals(ORG_NAME, organizationDtoFinded.getName());
+    assertFalse(organizationDtoFinded.getCategories().isEmpty());
+    assertEquals(3, organizationDtoFinded.getCategories().size());
+  }
+
+  @Test
+  public void getOrganizationByIdThatDoesntExisteTest() {
+    assertThrows(NoSuchElementException.class, () ->
+        organizationService.getOrganizationById(0l));
   }
 }

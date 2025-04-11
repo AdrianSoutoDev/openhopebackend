@@ -13,4 +13,5 @@ import java.util.List;
 public interface OrganizationService {
   OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
+  OrganizationDto getOrganizationById(Long id);
 }
