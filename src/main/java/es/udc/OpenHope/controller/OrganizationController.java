@@ -4,6 +4,7 @@ import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
+import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +30,9 @@ public class OrganizationController {
   private String serverPort;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params, @RequestParam(value = "file", required = false) MultipartFile file) throws DuplicateEmailException, DuplicateOrganizationException {
+  public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params, @RequestParam(value = "file", required = false) MultipartFile file) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
-        params.getDescription(), file);
+        params.getDescription(), params.getCategories(), file);
 
     if(organizationDto.getImage() != null) {
       String imgUrl = ServletUriComponentsBuilder

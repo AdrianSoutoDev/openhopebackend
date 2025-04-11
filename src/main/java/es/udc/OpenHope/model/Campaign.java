@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Date;
+import java.util.Set;
 
 @Data
 @Entity
@@ -28,6 +29,9 @@ public class Campaign {
 
   @ManyToOne
   private Organization organization;
+
+  @ManyToMany
+  Set<Category> categories;
 
   public boolean isOnGoing() {
     //TODO si la fecha actual está entre startAt y dateLimit, si hay dateLimit, o si el ammountCollected() supera o iguala

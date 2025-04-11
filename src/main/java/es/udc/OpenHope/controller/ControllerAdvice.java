@@ -4,6 +4,7 @@ import es.udc.OpenHope.dto.ErrorDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
+import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -53,6 +54,12 @@ public class ControllerAdvice {
   @ExceptionHandler(InvalidCredentialsException.class)
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public ErrorDto handleDuplicateInvalidCredentialsException(InvalidCredentialsException e) {
+    return new ErrorDto(e.getMessage());
+  }
+
+  @ExceptionHandler(MaxCategoriesExceededException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDto handleMaxCategoriesExceededException(MaxCategoriesExceededException e) {
     return new ErrorDto(e.getMessage());
   }
 

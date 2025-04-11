@@ -3,6 +3,7 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
+import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ public class AccountServiceTest {
   }
 
   @Test
-  public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException {
+  public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException, MaxCategoriesExceededException {
     organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
     String jwt = accountService.authenticate(ORG_EMAIL, PASSWORD);
 

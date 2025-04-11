@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
 @Data
 @Entity
 @NoArgsConstructor
@@ -18,9 +16,7 @@ public class Category {
   @Column(unique = true, nullable = false)
   private String name;
 
-  @ManyToMany
-  Set<Organization> organization;
-
-  @ManyToMany
-  Set<Organization> campaign;
+  public Category(String name) {
+    this.name = name;
+  }
 }

@@ -2,6 +2,8 @@ package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
+import es.udc.OpenHope.model.Category;
+import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
 import org.hamcrest.Matchers;
@@ -25,6 +27,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,6 +44,11 @@ public class OrganizationControllerTest {
   private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
   private static final String PASSWORD = "12345abc?";
 
+  private static final String CATEGORY_1 = "CATEGORY 1";
+  private static final String CATEGORY_2 = "CATEGORY 2";
+  private static final String CATEGORY_3 = "CATEGORY 3";
+  private static final String CATEGORY_4 = "CATEGORY 4";
+
   @Value("${upload.dir}")
   private String uploadDir;
 
@@ -50,12 +60,15 @@ public class OrganizationControllerTest {
   private final MockMvc mockMvc;
   private final ResourceService resourceService;
   private final OrganizationService organizationService;
+  private final CategoryRepository categoryRepository;
 
   @Autowired
-  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService, OrganizationService organizationService) {
+  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService,
+                                    final OrganizationService organizationService, final CategoryRepository categoryRepository) {
     this.mockMvc = mockMvc;
     this.resourceService = resourceService;
     this.organizationService = organizationService;
+    this.categoryRepository = categoryRepository;
   }
 
   @AfterEach
@@ -63,6 +76,21 @@ public class OrganizationControllerTest {
     if (createdFileName != null) {
       resourceService.removeImage(createdFileName);
     }
+  }
+
+  private void initCategories() {
+    List<Category> categories = getCategories();
+    categoryRepository.saveAll(categories);
+  }
+
+  private List<Category> getCategories(){
+    List<Category> categories = new ArrayList<>();
+    getCategoryNames().forEach(c -> categories.add(new Category(c)));
+    return categories;
+  }
+
+  private List<String> getCategoryNames() {
+    return new ArrayList<>(Arrays.asList(CATEGORY_1, CATEGORY_2, CATEGORY_3));
   }
 
   private MockMultipartFile getTestImg() throws IOException {
@@ -89,6 +117,7 @@ public class OrganizationControllerTest {
         .param("password", params.getPassword())
         .param("name", params.getName())
         .param("description", params.getDescription())
+        .param("categories", String.valueOf(params.getCategories()))
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
@@ -246,6 +275,41 @@ public class OrganizationControllerTest {
     organizationParamsDto.setEmail(ORG_EMAIL);
     organizationParamsDto.setPassword(PASSWORD);
     organizationParamsDto.setName(null);
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void registerOrganizationWithCategoriesTest() throws Exception {
+    initCategories();
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setCategories(getCategoryNames());
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.categories").exists())
+        .andExpect(jsonPath("$.categories").isArray())
+        .andExpect(jsonPath("$.categories").isNotEmpty());
+  }
+
+  @Test
+  void registerOrganizationWithMoreThanThreeCategoriesTest() throws Exception {
+    initCategories();
+
+    List<String> categories = getCategoryNames();
+    categories.add(CATEGORY_4);
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setCategories(categories);
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isBadRequest());
