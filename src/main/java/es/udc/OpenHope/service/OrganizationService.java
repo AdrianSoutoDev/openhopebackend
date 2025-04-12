@@ -7,6 +7,7 @@ import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -14,4 +15,5 @@ public interface OrganizationService {
   OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto getOrganizationById(Long id);
+  OrganizationDto updateOrganization(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException;
 }

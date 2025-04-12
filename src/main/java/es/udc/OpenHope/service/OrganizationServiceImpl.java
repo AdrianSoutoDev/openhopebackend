@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -40,6 +41,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image)
       throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
 
+    //Create organization validations
     if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
     if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
     if(name == null)  throw new IllegalArgumentException( Messages.get("validation.name.null") );
@@ -51,6 +53,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
     }
 
+    //Create organization
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
     String imagePath = image != null ? resourceService.saveImage(image) : null;
 
@@ -78,7 +81,56 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     return OrganizationMapper.toOrganizationDto(organization.get());
   }
 
+  @Override
+  @Transactional
+  public OrganizationDto updateOrganization(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+
+    //Update organization validations
+    Optional<Organization> organization = organizationRepository.findById(id);
+    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
+
+    if(!owner.equals(organization.get().getEmail())){
+      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
+    }
+
+    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
+
+    if(organizationExists(name, id))
+      throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
+
+    if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
+      throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
+    }
+
+    //Update organization
+    if(image != null) {
+      boolean areTheSameImage = resourceService.filesAreEquals(image, organization.get().getImage());
+      if(!areTheSameImage) {
+        String newImage = resourceService.saveImage(image);
+        resourceService.removeImage(organization.get().getImage());
+        organization.get().setImage(newImage);
+      }
+    } else {
+      organization.get().setImage(null);
+    }
+
+    List<Category> categoriesMatched = categoryService.getCategoriesByName(categoryNames);
+    Set<Category> categories = new HashSet<>(categoriesMatched);
+
+    organization.get().setName(name);
+    organization.get().setDescription(description);
+    organization.get().setCategories(categories);
+
+    organizationRepository.save(organization.get());
+    return OrganizationMapper.toOrganizationDto(organization.get());
+  }
+
   private boolean organizationExists(String name) {
     return organizationRepository.existsByNameIgnoreCase(name);
+  }
+
+  private boolean organizationExists(String name, Long id) {
+    Organization organization = organizationRepository.findByNameIgnoreCase(name);
+    return organization != null && !organization.getId().equals(id);
   }
 }
