@@ -69,4 +69,10 @@ public class ControllerAdvice {
   public ErrorDto handleNoSuchElementException(NoSuchElementException e) {
     return new ErrorDto(e.getMessage());
   }
+
+  @ExceptionHandler(SecurityException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  public ErrorDto handleSecurityException(SecurityException e) {
+    return new ErrorDto(e.getMessage());
+  }
 }

@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Service
-public interface OrganizationService {
+public interface OrganizationService extends AccountService {
   OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto getOrganizationById(Long id);

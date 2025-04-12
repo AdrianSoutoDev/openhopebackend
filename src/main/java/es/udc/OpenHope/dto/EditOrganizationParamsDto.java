@@ -12,6 +12,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class EditOrganizationParamsDto {
+
+  private Long id;
+
   @NotNull(message="{OrganizationParamsDto.name.NotNull}")
   @NotEmpty(message="{OrganizationParamsDto.name.NotEmpty}")
   private String name;

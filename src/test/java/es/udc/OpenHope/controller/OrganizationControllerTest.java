@@ -1,8 +1,13 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
+import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.exception.DuplicateOrganizationException;
+import es.udc.OpenHope.exception.InvalidCredentialsException;
+import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.OrganizationService;
@@ -25,6 +30,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -85,7 +92,7 @@ public class OrganizationControllerTest {
     categoryRepository.saveAll(categories);
   }
 
-  private List<Category> getCategories(){
+  private List<Category> getCategories() {
     List<Category> categories = new ArrayList<>();
     getCategoryNames().forEach(c -> categories.add(new Category(c)));
     return categories;
@@ -120,6 +127,31 @@ public class OrganizationControllerTest {
         .param("name", params.getName())
         .param("description", params.getDescription())
         .param("categories", String.valueOf(params.getCategories()))
+        .contentType(MediaType.MULTIPART_FORM_DATA);
+
+    return mockMvc.perform(builder);
+  }
+
+  private ResultActions updateOrganization(EditOrganizationParamsDto params, String authToken) throws Exception {
+    return updateOrganization(params, null, authToken);
+  }
+
+  private ResultActions updateOrganization(EditOrganizationParamsDto params, MultipartFile file, String authToken) throws Exception {
+    MockHttpServletRequestBuilder builder = file != null
+        ? MockMvcRequestBuilders.multipart("/api/organizations").file((MockMultipartFile) file).with(request -> {
+      request.setMethod("PUT");
+      return request;
+    })
+        : MockMvcRequestBuilders.multipart("/api/organizations").with(request -> {
+      request.setMethod("PUT");
+      return request;
+    });
+
+    builder.param("id", String.valueOf(params.getId()))
+        .param("name", params.getName())
+        .param("description", params.getDescription())
+        .param("categories", String.valueOf(params.getCategories()))
+        .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
@@ -170,7 +202,7 @@ public class OrganizationControllerTest {
         .andExpect(jsonPath("$.image").isString())
         .andExpect(jsonPath("$.image").value(Matchers.startsWith(uriStarts)))
         .andExpect(jsonPath("$.image").value(Matchers.endsWith(extension)))
-        .andDo(r ->{
+        .andDo(r -> {
           //Get the image name to delete it when the test finilize.
           String response = r.getResponse().getContentAsString();
           String image = JsonPath.parse(response).read("$.image");
@@ -334,7 +366,106 @@ public class OrganizationControllerTest {
 
   @Test
   void GetOrganizationByIdThatDoesntExistTest() throws Exception {
-    ResultActions result = mockMvc.perform(get("/api/organizations/{id}",  0));
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}", 0));
     result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  void UpdateOrganizationTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("New Name");
+    editOrganizationParamsDto.setDescription("New Description");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+
+    OrganizationDto organizationFinded = organizationService.getOrganizationById(organizationDto.getId());
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(organizationDto.getId()))
+        .andExpect(jsonPath("$.email").value(ORG_EMAIL))
+        .andExpect(jsonPath("$.name").value("New Name"))
+        .andExpect(jsonPath("$.description").value("New Description"))
+        .andExpect(jsonPath("$.password").doesNotExist());
+
+    assertEquals("New Name", organizationFinded.getName());
+    assertEquals("New Description", organizationFinded.getDescription());
+    assertEquals(organizationDto.getId(), organizationFinded.getId());
+  }
+
+  @Test
+  public void updateOrganizationWithNoPermissionTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+
+    String authToken = organizationService.authenticate("org2@openhope.com", PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("New Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void updateOrganizationThatNotExistTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(0L);
+    editOrganizationParamsDto.setName("New Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateOrganizationWithNameNullTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName(null);
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void updateOrganizationWithDuplicatedNameTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("another Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isConflict());
+  }
+
+  @Test
+  public void updateOrganizationWithMaxCategoriesExceededTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    List<String> categories = getCategoryNames();
+    categories.add(CATEGORY_4);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setCategories(categories);
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isBadRequest());
   }
 }

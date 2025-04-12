@@ -1,11 +1,13 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.service.OrganizationService;
+import es.udc.OpenHope.service.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 
 @RestController
@@ -25,6 +28,7 @@ import java.net.URI;
 public class OrganizationController {
 
   private final OrganizationService organizationService;
+  private final TokenService tokenService;
 
   @Value("${server.port}")
   private String serverPort;
@@ -57,6 +61,17 @@ public class OrganizationController {
   @GetMapping("/{id}")
   public ResponseEntity<OrganizationDto> getOrganization(@PathVariable long id) {
     OrganizationDto organizationDto = organizationService.getOrganizationById(id);
+    return ResponseEntity.ok(organizationDto);
+  }
+
+  @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<OrganizationDto> updateOrganization(@Valid @ModelAttribute EditOrganizationParamsDto params,
+       @RequestParam(value = "file", required = false) MultipartFile file, @RequestHeader(name="Authorization") String token) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+
+    String owner = tokenService.extractsubject(token);
+    OrganizationDto organizationDto = organizationService.updateOrganization(params.getId(), params.getName(), params.getDescription(),
+        params.getCategories(), file, owner);
+
     return ResponseEntity.ok(organizationDto);
   }
 
