@@ -8,6 +8,7 @@ import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.AccountRepository;
+import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.utils.Messages;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,15 +26,15 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   private final OrganizationRepository organizationRepository;
   private final ResourceService resourceService;
-  private final CategoryService categoryService;
+  private final CategoryRepository categoryRepository;
 
   public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  BCryptPasswordEncoder bCryptPasswordEncoder, AccountRepository accountRepository,
-                                 ResourceService resourceService, CategoryService categoryService) {
+                                 ResourceService resourceService, CategoryRepository categoryRepository) {
     super(bCryptPasswordEncoder, accountRepository);
     this.organizationRepository = organizationRepository;
     this.resourceService = resourceService;
-    this.categoryService = categoryService;
+    this.categoryRepository = categoryRepository;
   }
 
   @Override
@@ -55,9 +56,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     //Create organization
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
-    String imagePath = image != null ? resourceService.saveImage(image) : null;
+    String imagePath = image != null ? resourceService.save(image) : null;
 
-    List<Category> categoriesMatched = categoryService.getCategoriesByName(categoryNames);
+    List<Category> categoriesMatched = categoryRepository.findByNameIn(categoryNames);
     Set<Category> categories = new HashSet<>(categoriesMatched);
 
     Organization organization = new Organization(email, encryptedPassword, name, description ,imagePath, categories);
@@ -72,7 +73,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   }
 
   @Override
-  public OrganizationDto getOrganizationById(Long id) {
+  public OrganizationDto getById(Long id) {
     Optional<Organization> organization = organizationRepository.findById(id);
     if(organization.isEmpty()) {
       throw new NoSuchElementException("");
@@ -83,7 +84,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   @Override
   @Transactional
-  public OrganizationDto updateOrganization(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+  public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
 
     //Update organization validations
     Optional<Organization> organization = organizationRepository.findById(id);
@@ -104,17 +105,17 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     //Update organization
     if(image != null) {
-      boolean areTheSameImage = resourceService.filesAreEquals(image, organization.get().getImage());
+      boolean areTheSameImage = resourceService.areEquals(image, organization.get().getImage());
       if(!areTheSameImage) {
-        String newImage = resourceService.saveImage(image);
-        resourceService.removeImage(organization.get().getImage());
+        String newImage = resourceService.save(image);
+        resourceService.remove(organization.get().getImage());
         organization.get().setImage(newImage);
       }
     } else {
       organization.get().setImage(null);
     }
 
-    List<Category> categoriesMatched = categoryService.getCategoriesByName(categoryNames);
+    List<Category> categoriesMatched = categoryRepository.findByNameIn(categoryNames);
     Set<Category> categories = new HashSet<>(categoriesMatched);
 
     organization.get().setName(name);

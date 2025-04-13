@@ -14,6 +14,6 @@ import java.util.List;
 public interface OrganizationService extends AccountService {
   OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
   OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException;
-  OrganizationDto getOrganizationById(Long id);
-  OrganizationDto updateOrganization(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException;
+  OrganizationDto getById(Long id);
+  OrganizationDto update(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException;
 }

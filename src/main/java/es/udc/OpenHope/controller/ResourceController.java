@@ -30,7 +30,7 @@ public class ResourceController {
     @GetMapping("/{imageName}")
     public ResponseEntity<Resource> getImage(@PathVariable String imageName) {
         try {
-            Resource imageResource = resourceService.getImage(imageName);
+            Resource imageResource = resourceService.get(imageName);
 
             if (!imageResource.exists() || !imageResource.isReadable()) {
                 return ResponseEntity.notFound().build();
@@ -54,7 +54,7 @@ public class ResourceController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> postImage(@RequestParam(value = "file", required = false) MultipartFile file) {
-        String imagePath = file != null ? resourceService.saveImage(file) : null;
+        String imagePath = file != null ? resourceService.save(file) : null;
 
         URI location = ServletUriComponentsBuilder
             .fromCurrentContextPath()

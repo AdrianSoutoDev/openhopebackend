@@ -16,13 +16,8 @@ public class CategoryServiceImpl implements CategoryService {
   private final CategoryRepository categoryRepository;
 
   @Override
-  public List<CategoryDto> getCategories() {
+  public List<CategoryDto> getAll() {
     List<Category> categories = categoryRepository.findAll();
     return CategoryMapper.toCategoriesDto(categories);
-  }
-
-  @Override
-  public List<Category> getCategoriesByName(List<String> categoryNames) {
-    return categoryRepository.findByNameIn(categoryNames);
   }
 }

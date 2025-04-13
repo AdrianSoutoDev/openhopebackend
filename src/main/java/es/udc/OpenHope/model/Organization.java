@@ -22,6 +22,7 @@ public class Organization extends Account {
 
   @Lob
   private String description;
+
   private String image;
 
   @ManyToMany

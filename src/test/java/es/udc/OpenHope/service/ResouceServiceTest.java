@@ -42,7 +42,7 @@ public class ResouceServiceTest {
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileName != null) {
-      resourceService.removeImage(createdFileName);
+      resourceService.remove(createdFileName);
     }
   }
 
@@ -60,7 +60,7 @@ public class ResouceServiceTest {
   @Test
   public void saveImageTest() throws IOException {
     MockMultipartFile testImage = getTestImg();
-    createdFileName = resourceService.saveImage(testImage);
+    createdFileName = resourceService.save(testImage);
     Path filePath = Path.of(uploadDir, createdFileName);
     assertTrue(Files.exists(filePath));
   }
@@ -68,8 +68,8 @@ public class ResouceServiceTest {
   @Test
   public void removeImageTest() throws IOException {
     MockMultipartFile testImage = getTestImg();
-    String fileName = resourceService.saveImage(testImage);
-    resourceService.removeImage(fileName);
+    String fileName = resourceService.save(testImage);
+    resourceService.remove(fileName);
     Path filePath = Path.of(uploadDir, fileName);
     assertFalse(Files.exists(filePath));
   }
@@ -77,8 +77,8 @@ public class ResouceServiceTest {
   @Test
   public void getImageTest() throws IOException, NoSuchAlgorithmException {
     MockMultipartFile testImage = getTestImg();
-    createdFileName = resourceService.saveImage(testImage);
-    Resource resource = resourceService.getImage(createdFileName);
+    createdFileName = resourceService.save(testImage);
+    Resource resource = resourceService.get(createdFileName);
 
     byte[] resourceBytes = FileCopyUtils.copyToByteArray(resource.getInputStream());
     byte[] mockFileBytes = testImage.getBytes();

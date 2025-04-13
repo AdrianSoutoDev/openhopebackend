@@ -27,26 +27,25 @@ public class Campaign {
   private String image;
   private Float minimumDonation;
 
+  @Lob
+  private String description;
+
   @ManyToOne
   private Organization organization;
 
   @ManyToMany
   Set<Category> categories;
 
-  public boolean isOnGoing() {
-    //TODO si la fecha actual está entre startAt y dateLimit, si hay dateLimit, o si el ammountCollected() supera o iguala
-    // el economicTarget, si hay economicTarget;
-    return true;
+  public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
+                  Organization organization, String description, Set<Category> categories) {
+    this.name = name;
+    this.startAt = startAt;
+    this.dateLimit = dateLimit;
+    this.economicTarget = economicTarget;
+    this.minimumDonation = minimumDonation;
+    this.image = image;
+    this.organization = organization;
+    this.description = description;
+    this.categories = categories;
   }
-
-  public Float ammountCollected() {
-    //TODO suma del importe de las donacionaciones
-    return 0f;
-  }
-
-  public Float percentageCollected() {
-    //TODO si tiene economicTarget, porcentaje entre el economicTarget y ammountCollected();
-    return 0f;
-  }
-
 }

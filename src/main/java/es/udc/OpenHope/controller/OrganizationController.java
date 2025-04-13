@@ -38,17 +38,6 @@ public class OrganizationController {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
         params.getDescription(), params.getCategories(), file);
 
-    if(organizationDto.getImage() != null) {
-      String imgUrl = ServletUriComponentsBuilder
-              .fromCurrentContextPath()
-              .port(serverPort)
-              .path("/api/resources/")
-              .path(organizationDto.getImage())
-              .toUriString();
-
-      organizationDto.setImage(imgUrl);
-    }
-
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest()
         .path("/{id}")
@@ -60,7 +49,7 @@ public class OrganizationController {
 
   @GetMapping("/{id}")
   public ResponseEntity<OrganizationDto> getOrganization(@PathVariable long id) {
-    OrganizationDto organizationDto = organizationService.getOrganizationById(id);
+    OrganizationDto organizationDto = organizationService.getById(id);
     return ResponseEntity.ok(organizationDto);
   }
 
@@ -69,7 +58,7 @@ public class OrganizationController {
        @RequestParam(value = "file", required = false) MultipartFile file, @RequestHeader(name="Authorization") String token) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
 
     String owner = tokenService.extractsubject(token);
-    OrganizationDto organizationDto = organizationService.updateOrganization(params.getId(), params.getName(), params.getDescription(),
+    OrganizationDto organizationDto = organizationService.update(params.getId(), params.getName(), params.getDescription(),
         params.getCategories(), file, owner);
 
     return ResponseEntity.ok(organizationDto);

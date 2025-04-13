@@ -34,11 +34,11 @@ public class CategoryServiceTest {
   }
 
   private void initCategories() {
-    List<Category> categories = getCategories();
+    List<Category> categories = getAll();
     categoryRepository.saveAll(categories);
   }
 
-  private List<Category> getCategories(){
+  private List<Category> getAll(){
     List<Category> categories = new ArrayList<>();
     getCategoryNames().forEach(c -> categories.add(new Category(c)));
     return categories;
@@ -51,7 +51,7 @@ public class CategoryServiceTest {
   @Test
   public void getAllCategoriesTest() {
     initCategories();
-    List<CategoryDto> categoriesfinded = categoryService.getCategories();
+    List<CategoryDto> categoriesfinded = categoryService.getAll();
 
     assertFalse(categoriesfinded.isEmpty());
     assertEquals(3, categoriesfinded.size());
@@ -61,10 +61,10 @@ public class CategoryServiceTest {
   }
 
   @Test
-  public void getCategoriesByNamesTest() {
+  public void getAllByNamesTest() {
     initCategories();
     List<String> categoryNames = getCategoryNames();
-    List<Category> categories = categoryService.getCategoriesByName(categoryNames);
+    List<Category> categories = categoryRepository.findByNameIn(categoryNames);
 
     assertFalse(categories.isEmpty());
     assertEquals(3, categories.size());

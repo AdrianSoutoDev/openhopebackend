@@ -20,7 +20,7 @@ public class ResourceServiceImpl implements ResourceService {
     private String uploadDir;
 
     @Override
-    public String saveImage(MultipartFile image) {
+    public String save(MultipartFile image) {
         try {
             return fileStorage(image);
         } catch (IOException e) {
@@ -29,13 +29,13 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Resource getImage(String imageName) throws MalformedURLException {
+    public Resource get(String imageName) throws MalformedURLException {
         Path imagePath = Path.of(uploadDir, imageName);
         return new UrlResource(imagePath.toUri());
     }
 
     @Override
-    public void removeImage(String imageName) {
+    public void remove(String imageName) {
         try {
             Path imagePath = Path.of(uploadDir, imageName);
             File image = new File(imagePath.toString());
@@ -63,7 +63,7 @@ public class ResourceServiceImpl implements ResourceService {
         return newFileName;
     }
 
-    public boolean filesAreEquals(MultipartFile multipartFile, String filePath) throws IOException {
+    public boolean areEquals(MultipartFile multipartFile, String filePath) throws IOException {
         Path path = Path.of(uploadDir, filePath);
 
         try (

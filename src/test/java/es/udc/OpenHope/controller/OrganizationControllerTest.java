@@ -4,10 +4,6 @@ import com.jayway.jsonpath.JsonPath;
 import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
-import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.OrganizationService;
@@ -83,7 +79,7 @@ public class OrganizationControllerTest {
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileName != null) {
-      resourceService.removeImage(createdFileName);
+      resourceService.remove(createdFileName);
     }
   }
 
@@ -183,12 +179,6 @@ public class OrganizationControllerTest {
 
     MockMultipartFile testImage = getTestImg();
 
-    String uriStarts = ServletUriComponentsBuilder
-        .fromCurrentContextPath()
-        .port(serverPort)
-        .path("/api/resources/")
-        .toUriString();
-
     String imageName = testImage.getOriginalFilename();
     String extension = imageName.substring(imageName.lastIndexOf("."));
 
@@ -200,13 +190,11 @@ public class OrganizationControllerTest {
         .andExpect(jsonPath("$.description").doesNotExist())
         .andExpect(jsonPath("$.image").exists())
         .andExpect(jsonPath("$.image").isString())
-        .andExpect(jsonPath("$.image").value(Matchers.startsWith(uriStarts)))
         .andExpect(jsonPath("$.image").value(Matchers.endsWith(extension)))
         .andDo(r -> {
           //Get the image name to delete it when the test finilize.
           String response = r.getResponse().getContentAsString();
-          String image = JsonPath.parse(response).read("$.image");
-          createdFileName = image.replace(uriStarts, "");
+          createdFileName = JsonPath.parse(response).read("$.image");
         });
   }
 
@@ -382,7 +370,7 @@ public class OrganizationControllerTest {
 
     ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
 
-    OrganizationDto organizationFinded = organizationService.getOrganizationById(organizationDto.getId());
+    OrganizationDto organizationFinded = organizationService.getById(organizationDto.getId());
 
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
