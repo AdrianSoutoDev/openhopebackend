@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {
-  Page<Campaign> findByOrganization(Organization organization, Pageable pageable);
+  Page<Campaign> findByOrganizationOrderByStartAtDesc(Organization organization, Pageable pageable);
   Campaign findByNameIgnoreCase(String name);
 }

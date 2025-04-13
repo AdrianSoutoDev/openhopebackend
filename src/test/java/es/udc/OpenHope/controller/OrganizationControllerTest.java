@@ -1,11 +1,13 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
+import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
 import org.hamcrest.Matchers;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +57,10 @@ public class OrganizationControllerTest {
   private static final String CATEGORY_3 = "CATEGORY 3";
   private static final String CATEGORY_4 = "CATEGORY 4";
 
+  private static final String CAMPAIGN_NAME = "Campaña de esterilización";
+  private static final LocalDate CAMPAIGN_START_AT = LocalDate.now();
+  private static final LocalDate CAMPAIGN_DATE_LIMIT = LocalDate.now().plusMonths(1);
+
   @Value("${upload.dir}")
   private String uploadDir;
 
@@ -66,14 +73,17 @@ public class OrganizationControllerTest {
   private final ResourceService resourceService;
   private final OrganizationService organizationService;
   private final CategoryRepository categoryRepository;
+  private final CampaignService campaignService;
 
   @Autowired
   public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService,
-                                    final OrganizationService organizationService, final CategoryRepository categoryRepository) {
+                                    final OrganizationService organizationService, final CategoryRepository categoryRepository,
+                                    final CampaignService campaignService) {
     this.mockMvc = mockMvc;
     this.resourceService = resourceService;
     this.organizationService = organizationService;
     this.categoryRepository = categoryRepository;
+    this.campaignService = campaignService;
   }
 
   @AfterEach
@@ -456,4 +466,26 @@ public class OrganizationControllerTest {
     ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
     result.andExpect(status().isBadRequest());
   }
+
+  @Test
+  public void getCampaignsByOrganization() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}/campaigns", organizationDto.getId())
+        .param("page", String.valueOf(0))
+        .param("size", String.valueOf(10)));
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].id").value(campaignDto.getId()))
+        .andExpect(jsonPath("$.content[0].name").value(CAMPAIGN_NAME))
+        .andExpect(jsonPath("$.content[0].startAt").value(String.valueOf(CAMPAIGN_START_AT)))
+        .andExpect(jsonPath("$.content[0].dateLimit").value(String.valueOf(CAMPAIGN_DATE_LIMIT)));
+  }
+
+  //TODO testear resto de casos de getCampaignsByOrganization
 }

@@ -11,6 +11,9 @@ import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +33,7 @@ public class CampaignServiceImpl implements CampaignService {
 
   @Override
   @Transactional
-  public CampaignDto create(long organizationId, String owner, String name, String description, LocalDate startAt,
+  public CampaignDto create(Long organizationId, String owner, String name, String description, LocalDate startAt,
                             LocalDate dateLimit, Long economicTarget, Float minimumDonation, List<String> categoryNames,
                             MultipartFile image) throws DuplicatedCampaignException {
     //Create campaign validations
@@ -77,6 +80,16 @@ public class CampaignServiceImpl implements CampaignService {
     return CampaignMapper.toCampaignDto(campaign).ammountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
   }
 
+  @Override
+  @Transactional
+  public Page<CampaignDto> getByOrganization(Long organizationId, int page, int size) {
+    Optional<Organization> organization = organizationRepository.findById(organizationId);
+    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Campaign> campaignPage = campaignRepository.findByOrganizationOrderByStartAtDesc(organization.get(), pageable);
+    return campaignPage.map(this::toCampaignDto);
+  }
+
   private boolean campaignExists(String name) {
      Campaign campaign = campaignRepository.findByNameIgnoreCase(name);
      return campaign != null;
@@ -100,17 +113,24 @@ public class CampaignServiceImpl implements CampaignService {
   private boolean isOnGoing(Campaign campaign) {
     boolean itStated = LocalDate.now().isEqual(campaign.getStartAt().toLocalDate()) || LocalDate.now().isAfter(campaign.getStartAt().toLocalDate());
     boolean isBeforeDateLimit = campaign.getDateLimit() == null || LocalDate.now().isBefore(campaign.getDateLimit().toLocalDate());
-    boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < ammountCollected();
+    boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < ammountCollected(campaign);
     return itStated && isBeforeDateLimit && isUnderTarget;
   }
 
-  private Float ammountCollected() {
+  private Float ammountCollected(Campaign campaign) {
     //TODO suma del importe de las donacionaciones
     return 0f;
   }
 
-  private Float percentageCollected() {
+  private Float percentageCollected(Campaign campaign) {
     //TODO si tiene economicTarget, porcentaje entre el economicTarget y ammountCollected();
     return 0f;
+  }
+
+  private CampaignDto toCampaignDto(Campaign campaign) {
+    return CampaignMapper.toCampaignDto(campaign)
+        .ammountCollected(ammountCollected(campaign))
+        .percentageCollected(percentageCollected(campaign))
+        .isOnGoing(isOnGoing(campaign));
   }
 }

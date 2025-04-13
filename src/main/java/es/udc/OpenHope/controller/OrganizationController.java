@@ -1,16 +1,19 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +32,7 @@ public class OrganizationController {
 
   private final OrganizationService organizationService;
   private final TokenService tokenService;
+  private final CampaignService campaignService;
 
   @Value("${server.port}")
   private String serverPort;
@@ -64,4 +68,11 @@ public class OrganizationController {
     return ResponseEntity.ok(organizationDto);
   }
 
+  @GetMapping(value = "/{id}/campaigns")
+  public ResponseEntity<Page<CampaignDto>> getCampaigns(@PathVariable long id, @RequestParam(defaultValue="0") int page,
+                                                        @RequestParam(defaultValue="10") int size) {
+
+    Page<CampaignDto> campaigns = campaignService.getByOrganization(id, page, size);
+    return ResponseEntity.ok(campaigns);
+  }
 }
