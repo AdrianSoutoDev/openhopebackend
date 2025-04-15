@@ -216,7 +216,7 @@ public class CampaignServiceTest {
     LocalDate dateLimit = startAt.minusDays(1);
 
     assertThrows(IllegalArgumentException.class, () ->
-        campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, startAt,
             dateLimit, null, null, null, null));
   }
 
