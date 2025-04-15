@@ -30,8 +30,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  BCryptPasswordEncoder bCryptPasswordEncoder, AccountRepository accountRepository,
-                                 ResourceService resourceService, CategoryRepository categoryRepository) {
-    super(bCryptPasswordEncoder, accountRepository);
+                                 ResourceService resourceService, CategoryRepository categoryRepository,
+                                 TokenService tokenService) {
+    super(bCryptPasswordEncoder, accountRepository, tokenService);
     this.organizationRepository = organizationRepository;
     this.resourceService = resourceService;
     this.categoryRepository = categoryRepository;
@@ -42,17 +43,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image)
       throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
 
-    //Create organization validations
-    if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
-    if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
-    if(name == null)  throw new IllegalArgumentException( Messages.get("validation.name.null") );
-
-    if(accountExists(email)) throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
-    if(organizationExists(name)) throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
-
-    if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
-      throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
-    }
+    validateParamsCreate(email, password, name, categoryNames);
 
     //Create organization
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
@@ -83,22 +74,8 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   @Transactional
   public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
 
-    //Update organization validations
     Optional<Organization> organization = organizationRepository.findById(id);
-    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
-
-    if(!owner.equals(organization.get().getEmail())){
-      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
-    }
-
-    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
-
-    if(organizationExists(name, id))
-      throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
-
-    if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
-      throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
-    }
+    validateParamsUpdate(organization, name, categoryNames, owner);
 
     //Update organization
     if(image != null) {
@@ -130,5 +107,35 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   private boolean organizationExists(String name, Long id) {
     Organization organization = organizationRepository.findByNameIgnoreCase(name);
     return organization != null && !organization.getId().equals(id);
+  }
+
+  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+    if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
+    if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+    if(name == null)  throw new IllegalArgumentException( Messages.get("validation.name.null") );
+
+    if(accountExists(email)) throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
+    if(organizationExists(name)) throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
+
+    if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
+      throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
+    }
+  }
+
+  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException {
+    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
+
+    if(!owner.equals(organization.get().getEmail())){
+      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
+    }
+
+    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
+
+    if(organizationExists(name, organization.get().getId()))
+      throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
+
+    if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
+      throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
+    }
   }
 }

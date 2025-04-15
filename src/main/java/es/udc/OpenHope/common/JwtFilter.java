@@ -22,12 +22,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-  @Value("${jwt.secret}")
-  private String SECRET;
-
-  @Value("${jwt.expiration}")
-  private Long EXPIRATION;
-
   @Value("${jwt.header}")
   private String AUTH_HEADER;
 

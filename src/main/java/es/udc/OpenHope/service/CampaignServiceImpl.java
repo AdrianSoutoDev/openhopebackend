@@ -36,34 +36,9 @@ public class CampaignServiceImpl implements CampaignService {
   public CampaignDto create(Long organizationId, String owner, String name, String description, LocalDate startAt,
                             LocalDate dateLimit, Long economicTarget, Float minimumDonation, List<String> categoryNames,
                             MultipartFile image) throws DuplicatedCampaignException {
-    //Create campaign validations
+
     Optional<Organization> organization = organizationRepository.findById(organizationId);
-    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
-
-    if(!owner.equals(organization.get().getEmail())){
-      throw new SecurityException(Messages.get("validation.campaign.create.not.allowed"));
-    }
-
-    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
-
-    if(campaignExists(name))
-      throw new DuplicatedCampaignException( Messages.get("validation.campaign.duplicated") );
-
-    if(startAt == null || startAt.isBefore(LocalDate.now())){
-      throw new IllegalArgumentException( Messages.get("validation.startat.invalid"));
-    }
-
-    if(dateLimit == null && economicTarget == null){
-      throw new IllegalArgumentException( Messages.get("validation.datelimit.economictarget.needed"));
-    }
-
-    if(dateLimit != null && (startAt.isEqual(dateLimit) ||  startAt.isAfter(dateLimit)) ){
-      throw new IllegalArgumentException( Messages.get("validation.datelimit.startAt.invalid"));
-    }
-
-    if(dateLimit != null && dateLimit.isBefore(LocalDate.now())){
-      throw new IllegalArgumentException( Messages.get("validation.datelimit.invalid"));
-    }
+    validateParamsCreate(organization, owner, name, startAt, dateLimit, economicTarget);
 
     //create Campaign
     Date startAtDate = Date.valueOf(startAt);
@@ -139,5 +114,36 @@ public class CampaignServiceImpl implements CampaignService {
         .ammountCollected(ammountCollected(campaign))
         .percentageCollected(percentageCollected(campaign))
         .isOnGoing(isOnGoing(campaign));
+  }
+
+  private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,
+                               LocalDate dateLimit, Long economicTarget) throws DuplicatedCampaignException {
+
+    if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
+
+    if(!owner.equals(organization.get().getEmail())){
+      throw new SecurityException(Messages.get("validation.campaign.create.not.allowed"));
+    }
+
+    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
+
+    if(campaignExists(name))
+      throw new DuplicatedCampaignException( Messages.get("validation.campaign.duplicated") );
+
+    if(startAt == null || startAt.isBefore(LocalDate.now())){
+      throw new IllegalArgumentException( Messages.get("validation.startat.invalid"));
+    }
+
+    if(dateLimit == null && economicTarget == null){
+      throw new IllegalArgumentException( Messages.get("validation.datelimit.economictarget.needed"));
+    }
+
+    if(dateLimit != null && (startAt.isEqual(dateLimit) ||  startAt.isAfter(dateLimit)) ){
+      throw new IllegalArgumentException( Messages.get("validation.datelimit.startAt.invalid"));
+    }
+
+    if(dateLimit != null && dateLimit.isBefore(LocalDate.now())){
+      throw new IllegalArgumentException( Messages.get("validation.datelimit.invalid"));
+    }
   }
 }
