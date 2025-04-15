@@ -33,9 +33,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -471,5 +473,12 @@ public class OrganizationControllerTest {
         .andExpect(jsonPath("$.content[0].dateLimit").value(String.valueOf(CAMPAIGN_DATE_LIMIT)));
   }
 
-  //TODO testear resto de casos de getCampaignsByOrganization
+  @Test
+  public void getCampaignsByOrganizationThatDoesntExistTest() throws Exception {
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}/campaigns", 0L)
+        .param("page", String.valueOf(0))
+        .param("size", String.valueOf(10)));
+
+    result.andExpect(status().isNotFound());
+  }
 }
