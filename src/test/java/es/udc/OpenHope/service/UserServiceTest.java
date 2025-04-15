@@ -14,8 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static es.udc.OpenHope.utils.Constants.PASSWORD;
+import static es.udc.OpenHope.utils.Constants.USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.*;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional

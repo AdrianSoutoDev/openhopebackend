@@ -23,10 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.SecretKey;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional

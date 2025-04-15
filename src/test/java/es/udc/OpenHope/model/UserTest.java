@@ -4,9 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import static es.udc.OpenHope.utils.Constants.ENCRYPTED_PASSWORD;
+import static es.udc.OpenHope.utils.Constants.USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @ActiveProfiles("test")

@@ -16,9 +16,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static es.udc.OpenHope.utils.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional

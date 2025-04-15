@@ -14,9 +14,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import static es.udc.OpenHope.utils.Constants.PASSWORD;
+import static es.udc.OpenHope.utils.Constants.USER_EMAIL;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional

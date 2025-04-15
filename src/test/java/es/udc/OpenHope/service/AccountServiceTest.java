@@ -15,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 
+import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
