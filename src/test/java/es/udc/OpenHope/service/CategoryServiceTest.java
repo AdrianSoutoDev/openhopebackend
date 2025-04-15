@@ -3,6 +3,7 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.dto.CategoryDto;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
+import es.udc.OpenHope.utils.Utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,16 +24,13 @@ public class CategoryServiceTest {
 
   private final CategoryRepository categoryRepository;
   private final CategoryService categoryService;
+  private final Utils utils;
 
   @Autowired
-  public CategoryServiceTest(final CategoryRepository categoryRepository, final CategoryService categoryService) {
+  public CategoryServiceTest(final CategoryRepository categoryRepository, final CategoryService categoryService, final Utils utils) {
     this.categoryRepository = categoryRepository;
     this.categoryService = categoryService;
-  }
-
-  private void initCategories() {
-    List<Category> categories = getAll();
-    categoryRepository.saveAll(categories);
+    this.utils = utils;
   }
 
   private List<Category> getAll(){
@@ -47,7 +45,7 @@ public class CategoryServiceTest {
 
   @Test
   public void getAllCategoriesTest() {
-    initCategories();
+    utils.initCategories();
     List<CategoryDto> categoriesfinded = categoryService.getAll();
 
     assertFalse(categoriesfinded.isEmpty());
@@ -59,7 +57,7 @@ public class CategoryServiceTest {
 
   @Test
   public void getAllByNamesTest() {
-    initCategories();
+    utils.initCategories();
     List<String> categoryNames = getCategoryNames();
     List<Category> categories = categoryRepository.findByNameIn(categoryNames);
 
