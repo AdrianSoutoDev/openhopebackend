@@ -18,16 +18,13 @@ import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CategoryControllerTest {
-
-  private static final String CATEGORY_1 = "CATEGORY 1";
-  private static final String CATEGORY_2 = "CATEGORY 2";
-  private static final String CATEGORY_3 = "CATEGORY 3";
 
   private final CategoryRepository categoryRepository;
   private final MockMvc mockMvc;

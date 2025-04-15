@@ -15,23 +15,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
 public class CampaignServiceTest {
-
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
-  private static final String PASSWORD = "12345abc?";
-
-  private static final String CAMPAIGN_NAME = "Campaña de esterilización";
-  private static final LocalDate CAMPAIGN_START_AT = LocalDate.now();
-  private static final LocalDate CAMPAIGN_DATE_LIMIT = LocalDate.now().plusMonths(1);
 
   private static final int PAGE_SIZE = 10;
 
@@ -58,8 +50,8 @@ public class CampaignServiceTest {
 
     assertTrue(campaign.isPresent());
     assertEquals(CAMPAIGN_NAME, campaignDto.getName());
-    assertTrue(campaignDto.getStartAt().isEqual(CAMPAIGN_START_AT));
-    assertTrue(campaignDto.getDateLimit().isEqual(CAMPAIGN_DATE_LIMIT));
+    assertEquals(CAMPAIGN_START_AT, campaignDto.getStartAt());
+    assertEquals(CAMPAIGN_DATE_LIMIT, campaignDto.getDateLimit());
     assertEquals(organizationDto.getId(), campaignDto.getOrganization().getId());
   }
 
@@ -81,4 +73,23 @@ public class CampaignServiceTest {
   }
 
   //TODO testear resto de casos de get Campaigns by organization
+
+  @Test
+  public void getCampaignsTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+
+    CampaignDto campaignFinded = campaignService.get(campaignDto.getId());
+
+    assertNotNull(campaignFinded);
+    assertEquals(CAMPAIGN_NAME, campaignFinded.getName());
+    assertEquals(CAMPAIGN_START_AT, campaignFinded.getStartAt());
+    assertEquals(CAMPAIGN_DATE_LIMIT, campaignFinded.getDateLimit());
+    assertEquals(organizationDto.getId(), campaignFinded.getOrganization().getId());
+  }
+
+  //TODO testear resto de casos de getCampaignsTest
+
 }

@@ -16,15 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class UserControllerTest {
-
-  private static final String USER_EMAIL = "user@openhope.com";
-  private static final String PASSWORD = "12345abc?";
 
   private final MockMvc mockMvc;
   private final UserService userService;

@@ -27,9 +27,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import static org.junit.jupiter.api.Assertions.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,20 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class OrganizationControllerTest {
-
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
-  private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
-  private static final String PASSWORD = "12345abc?";
-
-  private static final String CATEGORY_1 = "CATEGORY 1";
-  private static final String CATEGORY_2 = "CATEGORY 2";
-  private static final String CATEGORY_3 = "CATEGORY 3";
-  private static final String CATEGORY_4 = "CATEGORY 4";
-
-  private static final String CAMPAIGN_NAME = "Campaña de esterilización";
-  private static final LocalDate CAMPAIGN_START_AT = LocalDate.now();
-  private static final LocalDate CAMPAIGN_DATE_LIMIT = LocalDate.now().plusMonths(1);
 
   @Value("${upload.dir}")
   private String uploadDir;

@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +26,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public class AccountControllerTest {
-
-  private static final String USER_EMAIL = "user@openhope.com";
-  private static final String PASSWORD = "12345abc?";
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
 
   @Value("${jwt.secret}")
   private String SECRET;

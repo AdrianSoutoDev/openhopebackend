@@ -14,15 +14,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
 public class CategoryServiceTest {
-
-  private static final String CATEGORY_1 = "CATEGORY 1";
-  private static final String CATEGORY_2 = "CATEGORY 2";
-  private static final String CATEGORY_3 = "CATEGORY 3";
 
   private final CategoryRepository categoryRepository;
   private final CategoryService categoryService;

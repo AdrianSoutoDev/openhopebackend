@@ -25,21 +25,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
 public class OrganizationServiceTest {
-
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
-  private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
-  private static final String PASSWORD = "12345abc?";
-
-  private static final String CATEGORY_1 = "CATEGORY 1";
-  private static final String CATEGORY_2 = "CATEGORY 2";
-  private static final String CATEGORY_3 = "CATEGORY 3";
-  private static final String CATEGORY_4 = "CATEGORY 4";
 
   @Value("${upload.dir}")
   private String uploadDir;

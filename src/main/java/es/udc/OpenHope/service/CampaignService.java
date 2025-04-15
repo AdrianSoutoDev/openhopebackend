@@ -13,4 +13,6 @@ public interface CampaignService {
                      LocalDate dateLimit, Long economicTarget, Float minimumDonation, List<String> categoryNames, MultipartFile image) throws DuplicatedCampaignException;
 
   Page<CampaignDto> getByOrganization(Long organizationId, int page, int size);
+
+  CampaignDto get(Long id);
 }

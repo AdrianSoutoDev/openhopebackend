@@ -90,6 +90,13 @@ public class CampaignServiceImpl implements CampaignService {
     return campaignPage.map(this::toCampaignDto);
   }
 
+  @Override
+  public CampaignDto get(Long id) {
+    Optional<Campaign> campaign = campaignRepository.findById(id);
+    if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    return toCampaignDto(campaign.get());
+  }
+
   private boolean campaignExists(String name) {
      Campaign campaign = campaignRepository.findByNameIgnoreCase(name);
      return campaign != null;

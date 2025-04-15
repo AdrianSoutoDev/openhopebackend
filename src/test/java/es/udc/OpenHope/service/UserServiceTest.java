@@ -8,19 +8,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class UserServiceTest {
-
-    private static final String USER_EMAIL = "user@openhope.com";
-    private static final String PASSWORD = "12345abc?";
 
     private final UserService userService;
     private final UserRepository userRepository;

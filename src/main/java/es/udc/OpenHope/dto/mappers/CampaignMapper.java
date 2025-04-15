@@ -4,10 +4,7 @@ import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.CategoryDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.model.Campaign;
-import es.udc.OpenHope.model.Category;
-import es.udc.OpenHope.model.Organization;
 
-import java.sql.Date;
 import java.util.List;
 
 public abstract class CampaignMapper {

@@ -10,21 +10,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static es.udc.OpenHope.utils.Constants.*;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class AccountServiceTest {
-
-  private static final String USER_EMAIL = "user@openhope.com";
-  private static final String PASSWORD = "12345abc?";
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
 
   @Value("${jwt.secret}")
   private String SECRET;
