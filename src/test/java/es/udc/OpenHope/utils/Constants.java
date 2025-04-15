@@ -24,6 +24,10 @@ public abstract class Constants {
 
   //campaign
   public static final String CAMPAIGN_NAME = "Campaña de esterilización";
+  public static final String CAMPAIGN_DESCRIPTION = "La campaña sera llevada cabo con el fin de acotar las camadas de " +
+      "animales domesticos que hacen vida fuera de sus hogares.";
+  public static final Long ECONOMIC_TARGET = 2500L;
+  public static final Float MINIMUM_DONATION = 0.50f;
   public static final LocalDate CAMPAIGN_START_AT = LocalDate.now();
   public static final LocalDate CAMPAIGN_DATE_LIMIT = LocalDate.now().plusMonths(1);
 

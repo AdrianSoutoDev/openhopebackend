@@ -45,7 +45,7 @@ public class AccountServiceImpl implements AccountService {
   }
 
   private void validateParamsAuthenticate(String email, String password) {
-    if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
-    if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+    if(email == null || email.isBlank()) throw new IllegalArgumentException( Messages.get("validation.email.null") );
+    if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
   }
 }

@@ -250,7 +250,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedEmailTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail(ORG_EMAIL);
@@ -263,7 +263,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedNameTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail("another_email@openhope.com");

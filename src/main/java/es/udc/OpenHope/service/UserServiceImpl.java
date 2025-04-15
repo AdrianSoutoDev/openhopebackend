@@ -32,8 +32,8 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     }
 
     private void validateParamsCreate(String email, String password) throws DuplicateEmailException {
-        if(email == null) throw new IllegalArgumentException(  Messages.get("validation.email.null") );
-        if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+        if(email == null || email.isBlank()) throw new IllegalArgumentException(  Messages.get("validation.email.null") );
+        if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
 
         if(accountExists(email)) {
             throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );

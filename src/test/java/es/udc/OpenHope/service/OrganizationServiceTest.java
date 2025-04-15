@@ -4,16 +4,14 @@ import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
-import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
-import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.utils.Utils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,60 +39,29 @@ public class OrganizationServiceTest {
   private final OrganizationService organizationService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final ResourceService resourceService;
-  private final CategoryRepository categoryRepository;
+  private final Utils utils;
 
   @Autowired
   public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository,
                                  final BCryptPasswordEncoder bCryptPasswordEncoder, final ResourceService resourceService,
-                                 final ResourceService resourceService1, final CategoryRepository categoryRepository) {
+                                 final ResourceService resourceService1 , final Utils utils) {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-    this.resourceService = resourceService1;
-    this.categoryRepository = categoryRepository;
+    this.resourceService = resourceService;
+    this.utils = utils;
   }
 
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileNames != null && !createdFileNames.isEmpty()) {
-      createdFileNames.forEach(file -> resourceService.remove(file));
+      createdFileNames.forEach(resourceService::remove);
     }
-  }
-
-  private void initCategories() {
-    List<String> categoryNames = new ArrayList<>(Arrays.asList(CATEGORY_1, CATEGORY_2, CATEGORY_3));
-    List<Category> categories = getCategories(categoryNames);
-    categoryRepository.saveAll(categories);
-  }
-
-  private List<Category> getCategories(List<String> categoryNames){
-    List<Category> categories = new ArrayList<>();
-    categoryNames.forEach(c -> categories.add(new Category(c)));
-    return categories;
-  }
-
-  private List<String> getCategoryNames() {
-    return new ArrayList<>(Arrays.asList(CATEGORY_1, CATEGORY_2, CATEGORY_3));
-  }
-
-  private MockMultipartFile getTestImg(String fileName) throws IOException {
-    ClassPathResource resource = new ClassPathResource("test-images/" + fileName);
-    byte[] fileContent = Files.readAllBytes(resource.getFile().toPath());
-    return new MockMultipartFile(
-            "file",
-            "test-image.png",
-            "image/png",
-            fileContent
-    );
-  }
-
-  private MockMultipartFile getTestImg() throws IOException {
-    return getTestImg("test-image.png");
   }
 
   @Test
   public void createOrganizationTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
 
     assertTrue(organizationFinded.isPresent());
@@ -107,18 +74,18 @@ public class OrganizationServiceTest {
 
   @Test
   public void createOrganizationWithImgTest() throws IOException, DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    MockMultipartFile testImage = getTestImg();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, testImage);
+    MockMultipartFile testImage = utils.getTestImg();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,testImage);
 
     createdFileNames.add(organizationDto.getImage());
 
-    Path filePath = Path.of(uploadDir, createdFileNames.get(0));
+    Path filePath = Path.of(uploadDir, createdFileNames.getFirst());
     assertTrue(Files.exists(filePath));
   }
 
   @Test
   public void createOrganizationWithoutDescriptionTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
     assertTrue(organizationFinded.isPresent());
     assertNull(organizationFinded.get().getDescription());
@@ -126,7 +93,7 @@ public class OrganizationServiceTest {
 
   @Test
   public void createOrganizationWithEncryptedPasswordTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
     assertTrue(organizationFinded.isPresent());
     boolean passwordsAreEquals = bCryptPasswordEncoder.matches(PASSWORD, organizationFinded.get().getEncryptedPassword());
@@ -135,22 +102,22 @@ public class OrganizationServiceTest {
 
   @Test
   public void createOrganizationDuplicatedEmailTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
     assertThrows(DuplicateEmailException.class, () ->
-        organizationService.create(ORG_EMAIL, "anotherPassword", "anotherName", null, null));
+        organizationService.create(ORG_EMAIL, "anotherPassword", "anotherName", null, null,null));
   }
 
   @Test
   public void createOrganizationDuplicatedEmailIgnoringCaseTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create("org@openhope.com", PASSWORD, ORG_NAME, null, null);
+    OrganizationDto organizationDto = organizationService.create("org@openhope.com", PASSWORD, ORG_NAME, null,null, null);
     assertThrows(DuplicateEmailException.class, () ->
-        organizationService.create("ORG@OpenHope.com", "anotherPassword", "anotherName", null, null));
+        organizationService.create("ORG@OpenHope.com", "anotherPassword", "anotherName", null, null,null));
   }
 
   @Test
   public void createOrganizationsWithDiferentEmailTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
-    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null);
+    OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
+    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null,null);
 
     List<Organization> organizations = organizationRepository.findAll();
     assertEquals(2, organizations.size());
@@ -158,22 +125,22 @@ public class OrganizationServiceTest {
 
   @Test
   public void createOrganizationDuplicatedNameTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
     assertThrows(DuplicateOrganizationException.class, () ->
-        organizationService.create("another_email@openhope.com", PASSWORD, ORG_NAME, null, null));
+        organizationService.create("another_email@openhope.com", PASSWORD, ORG_NAME, null, null,null));
   }
 
   @Test
   public void createOrganizationDuplicatedNameIgnoringCaseTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, "Asociación protectora APADAN", null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, "Asociación protectora APADAN", null, null,null);
     assertThrows(DuplicateOrganizationException.class, () ->
-        organizationService.create("another_email@openhope.com", PASSWORD, "asociación protectora apadan", null, null));
+        organizationService.create("another_email@openhope.com", PASSWORD, "asociación protectora apadan", null, null,null));
   }
 
   @Test
   public void createOrganizationsWithDiferentNameTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
-    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null);
+    OrganizationDto firstOrganizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
+    OrganizationDto secondOrganizationDto = organizationService.create("second_email@openHope.com", PASSWORD, "another org name", null, null,null);
 
     List<Organization> organizations = organizationRepository.findAll();
     assertEquals(2, organizations.size());
@@ -182,26 +149,26 @@ public class OrganizationServiceTest {
   @Test
   public void createOrganizationWithEmailNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
-        organizationService.create(null, PASSWORD, ORG_NAME, null, null));
+        organizationService.create(null, PASSWORD, ORG_NAME, null, null,null));
   }
 
   @Test
   public void createOrganizationWithPasswordNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
-        organizationService.create(ORG_EMAIL, null, ORG_NAME, null, null));
+        organizationService.create(ORG_EMAIL, null, ORG_NAME, null, null,null));
   }
 
   @Test
   public void createOrganizationWithNameNullTest() {
     assertThrows(IllegalArgumentException.class, () ->
-        organizationService.create(ORG_EMAIL, PASSWORD, null, null, null));
+        organizationService.create(ORG_EMAIL, PASSWORD, null, null, null,null));
   }
 
   @Test
   public void createOrganizationWithCategories() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    initCategories();
+    utils.initCategories();
 
-    List<String> categoryNames = getCategoryNames();
+    List<String> categoryNames = utils.getCategoryNames();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
 
@@ -222,7 +189,7 @@ public class OrganizationServiceTest {
 
   @Test
   public void createOrganizationWithMaxCategoriesExceeded() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    List<String> categoryNames = getCategoryNames();
+    List<String> categoryNames = utils.getCategoryNames();
     categoryNames.add(CATEGORY_4);
     assertThrows(MaxCategoriesExceededException.class, () ->
         organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null));
@@ -230,8 +197,8 @@ public class OrganizationServiceTest {
 
   @Test
   public void getByIdTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    initCategories();
-    List<String> categoryNames = getCategoryNames();
+    utils.initCategories();
+    List<String> categoryNames = utils.getCategoryNames();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null);
     OrganizationDto organizationDtoFinded = organizationService.getById(organizationDto.getId());
 
@@ -244,15 +211,15 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void getByIdThatDoesntExisteTest() {
+  public void getByIdThatDoesntExistsTest() {
     assertThrows(NoSuchElementException.class, () ->
         organizationService.getById(0L));
   }
 
   @Test
   public void updateWithouthChangeTheImageTest() throws IOException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    MockMultipartFile testImage = getTestImg();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, testImage);
+    MockMultipartFile testImage = utils.getTestImg();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, testImage);
 
     createdFileNames.add(organizationDto.getImage());
 
@@ -277,10 +244,10 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateChangingTheImageTest() throws IOException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    MockMultipartFile testImage = getTestImg();
-    MockMultipartFile testImage2 = getTestImg("test-image-2.png");
+    MockMultipartFile testImage = utils.getTestImg();
+    MockMultipartFile testImage2 = utils.getTestImg("test-image-2.png");
 
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, testImage);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, testImage);
     createdFileNames.add(organizationDto.getImage());
 
     OrganizationDto organizationUpdated = organizationService.update(organizationDto.getId(), "New Name", "New Description",
@@ -300,7 +267,7 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateWithNoPermissionTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null);
     assertThrows(SecurityException.class, () ->
         organizationService.update(organizationDto.getId(), "New Name", ORG_DESCRIPTION,
             null, null, "another@email.com"));
@@ -315,7 +282,7 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateWithNameNullTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null);
     assertThrows(IllegalArgumentException.class, () ->
         organizationService.update(organizationDto.getId(), null, ORG_DESCRIPTION,
             null, null, ORG_EMAIL));
@@ -323,8 +290,8 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateWithDuplicatedNameTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
-    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "Another name", ORG_DESCRIPTION, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "Another name", ORG_DESCRIPTION, null,null);
 
     assertThrows(DuplicateOrganizationException.class, () ->
         organizationService.update(organizationDto2.getId(), ORG_NAME, ORG_DESCRIPTION,
@@ -333,9 +300,9 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateWithMaxCategoriesExceededTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null);
 
-    List<String> categories = getCategoryNames();
+    List<String> categories = utils.getCategoryNames();
     categories.add(CATEGORY_4);
 
     assertThrows(MaxCategoriesExceededException.class, () ->

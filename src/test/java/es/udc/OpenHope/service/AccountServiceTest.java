@@ -56,7 +56,7 @@ public class AccountServiceTest {
 
   @Test
   public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
     String jwt = accountService.authenticate(ORG_EMAIL, PASSWORD);
 
     SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());

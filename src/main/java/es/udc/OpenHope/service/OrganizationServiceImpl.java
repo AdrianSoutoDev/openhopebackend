@@ -59,11 +59,6 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   }
 
   @Override
-  public OrganizationDto create(String email, String password, String name, String description, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    return create(email, password, name, description, new ArrayList<>(), image);
-  }
-
-  @Override
   public OrganizationDto getById(Long id) {
     Optional<Organization> organization = organizationRepository.findById(id);
     if(organization.isEmpty())  throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
@@ -110,9 +105,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   }
 
   private void validateParamsCreate(String email, String password, String name, List<String> categoryNames) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
-    if(email == null) throw new IllegalArgumentException( Messages.get("validation.email.null") );
-    if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
-    if(name == null)  throw new IllegalArgumentException( Messages.get("validation.name.null") );
+    if(email == null || email.isBlank()) throw new IllegalArgumentException( Messages.get("validation.email.null") );
+    if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+    if(name == null || name.isBlank())  throw new IllegalArgumentException( Messages.get("validation.name.null") );
 
     if(accountExists(email)) throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
     if(organizationExists(name)) throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );
@@ -129,7 +124,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
       throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
     }
 
-    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
+    if(name == null || name.isBlank()) throw new IllegalArgumentException( Messages.get("validation.name.null") );
 
     if(organizationExists(name, organization.get().getId()))
       throw new DuplicateOrganizationException( Messages.get("validation.organization.duplicated") );

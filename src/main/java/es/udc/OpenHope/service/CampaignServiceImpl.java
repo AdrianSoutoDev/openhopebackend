@@ -125,7 +125,7 @@ public class CampaignServiceImpl implements CampaignService {
       throw new SecurityException(Messages.get("validation.campaign.create.not.allowed"));
     }
 
-    if(name == null) throw new IllegalArgumentException( Messages.get("validation.name.null") );
+    if(name == null || name.isBlank()) throw new IllegalArgumentException( Messages.get("validation.name.null") );
 
     if(campaignExists(name))
       throw new DuplicatedCampaignException( Messages.get("validation.campaign.duplicated") );
@@ -140,10 +140,6 @@ public class CampaignServiceImpl implements CampaignService {
 
     if(dateLimit != null && (startAt.isEqual(dateLimit) ||  startAt.isAfter(dateLimit)) ){
       throw new IllegalArgumentException( Messages.get("validation.datelimit.startAt.invalid"));
-    }
-
-    if(dateLimit != null && dateLimit.isBefore(LocalDate.now())){
-      throw new IllegalArgumentException( Messages.get("validation.datelimit.invalid"));
     }
   }
 }
