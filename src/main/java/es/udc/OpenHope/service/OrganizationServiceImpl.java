@@ -59,7 +59,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   }
 
   @Override
-  public OrganizationDto getById(Long id) {
+  public OrganizationDto get(Long id) {
     Optional<Organization> organization = organizationRepository.findById(id);
     if(organization.isEmpty())  throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
     return OrganizationMapper.toOrganizationDto(organization.get());

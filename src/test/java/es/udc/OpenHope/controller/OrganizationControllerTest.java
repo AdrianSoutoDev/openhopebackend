@@ -10,6 +10,7 @@ import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
+import es.udc.OpenHope.utils.Utils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -56,17 +57,17 @@ public class OrganizationControllerTest {
   private final MockMvc mockMvc;
   private final ResourceService resourceService;
   private final OrganizationService organizationService;
-  private final CategoryRepository categoryRepository;
+  private final Utils utils;
   private final CampaignService campaignService;
 
   @Autowired
   public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService,
-                                    final OrganizationService organizationService, final CategoryRepository categoryRepository,
+                                    final OrganizationService organizationService, final Utils utils,
                                     final CampaignService campaignService) {
     this.mockMvc = mockMvc;
     this.resourceService = resourceService;
     this.organizationService = organizationService;
-    this.categoryRepository = categoryRepository;
+    this.utils = utils;
     this.campaignService = campaignService;
   }
 
@@ -75,21 +76,6 @@ public class OrganizationControllerTest {
     if (createdFileName != null) {
       resourceService.remove(createdFileName);
     }
-  }
-
-  private void initCategories() {
-    List<Category> categories = getCategories();
-    categoryRepository.saveAll(categories);
-  }
-
-  private List<Category> getCategories() {
-    List<Category> categories = new ArrayList<>();
-    getCategoryNames().forEach(c -> categories.add(new Category(c)));
-    return categories;
-  }
-
-  private List<String> getCategoryNames() {
-    return new ArrayList<>(Arrays.asList(CATEGORY_1, CATEGORY_2, CATEGORY_3));
   }
 
   private MockMultipartFile getTestImg() throws IOException {
@@ -298,13 +284,13 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithCategoriesTest() throws Exception {
-    initCategories();
+    utils.initCategories();
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail(ORG_EMAIL);
     organizationParamsDto.setPassword(PASSWORD);
     organizationParamsDto.setName(ORG_NAME);
-    organizationParamsDto.setCategories(getCategoryNames());
+    organizationParamsDto.setCategories(utils.getCategoryNames());
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isCreated())
@@ -316,9 +302,9 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithMoreThanThreeCategoriesTest() throws Exception {
-    initCategories();
+    utils.initCategories();
 
-    List<String> categories = getCategoryNames();
+    List<String> categories = utils.getCategoryNames();
     categories.add(CATEGORY_4);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
@@ -333,8 +319,8 @@ public class OrganizationControllerTest {
 
   @Test
   void GetOrganizationByIdTest() throws Exception {
-    initCategories();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, getCategoryNames(), null);
+    utils.initCategories();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
     ResultActions result = mockMvc.perform(get("/api/organizations/{id}", organizationDto.getId()));
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -364,7 +350,7 @@ public class OrganizationControllerTest {
 
     ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
 
-    OrganizationDto organizationFinded = organizationService.getById(organizationDto.getId());
+    OrganizationDto organizationFinded = organizationService.get(organizationDto.getId());
 
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -440,7 +426,7 @@ public class OrganizationControllerTest {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
-    List<String> categories = getCategoryNames();
+    List<String> categories = utils.getCategoryNames();
     categories.add(CATEGORY_4);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();

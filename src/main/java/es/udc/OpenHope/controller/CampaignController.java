@@ -42,4 +42,10 @@ public class CampaignController {
 
     return ResponseEntity.created(location).body(campaignDto);
   }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<CampaignDto> getCampaign(@PathVariable long id) {
+    CampaignDto campaignDto = campaignService.get(id);
+    return ResponseEntity.ok(campaignDto);
+  }
 }

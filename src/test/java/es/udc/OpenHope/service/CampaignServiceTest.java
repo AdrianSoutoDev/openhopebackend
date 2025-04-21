@@ -208,7 +208,7 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void createCampaignWithhDateLimitBeforeStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
+  public void createCampaignWithDateLimitBeforeStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
 
     LocalDate startAt = CAMPAIGN_START_AT.plusDays(5);

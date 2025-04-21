@@ -203,7 +203,7 @@ public class OrganizationServiceTest {
     utils.initCategories();
     List<String> categoryNames = utils.getCategoryNames();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null);
-    OrganizationDto organizationDtoFinded = organizationService.getById(organizationDto.getId());
+    OrganizationDto organizationDtoFinded = organizationService.get(organizationDto.getId());
 
     assertNotNull(organizationDtoFinded);
     assertEquals(organizationDto.getId(), organizationDtoFinded.getId());
@@ -216,7 +216,7 @@ public class OrganizationServiceTest {
   @Test
   public void getByIdThatDoesntExistsTest() {
     assertThrows(NoSuchElementException.class, () ->
-        organizationService.getById(0L));
+        organizationService.get(0L));
   }
 
   @Test

@@ -53,7 +53,7 @@ public class OrganizationController {
 
   @GetMapping("/{id}")
   public ResponseEntity<OrganizationDto> getOrganization(@PathVariable long id) {
-    OrganizationDto organizationDto = organizationService.getById(id);
+    OrganizationDto organizationDto = organizationService.get(id);
     return ResponseEntity.ok(organizationDto);
   }
 
