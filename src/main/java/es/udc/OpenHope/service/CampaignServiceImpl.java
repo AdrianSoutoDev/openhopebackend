@@ -52,7 +52,7 @@ public class CampaignServiceImpl implements CampaignService {
 
     campaignRepository.save(campaign);
 
-    return CampaignMapper.toCampaignDto(campaign).ammountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
+    return CampaignMapper.toCampaignDto(campaign).amountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
   }
 
   @Override
@@ -95,23 +95,23 @@ public class CampaignServiceImpl implements CampaignService {
   private boolean isOnGoing(Campaign campaign) {
     boolean itStated = LocalDate.now().isEqual(campaign.getStartAt().toLocalDate()) || LocalDate.now().isAfter(campaign.getStartAt().toLocalDate());
     boolean isBeforeDateLimit = campaign.getDateLimit() == null || LocalDate.now().isBefore(campaign.getDateLimit().toLocalDate());
-    boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < ammountCollected(campaign);
+    boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < amountCollected(campaign);
     return itStated && isBeforeDateLimit && isUnderTarget;
   }
 
-  private Float ammountCollected(Campaign campaign) {
+  private Float amountCollected(Campaign campaign) {
     //TODO suma del importe de las donacionaciones
     return 0f;
   }
 
   private Float percentageCollected(Campaign campaign) {
-    //TODO si tiene economicTarget, porcentaje entre el economicTarget y ammountCollected();
+    //TODO si tiene economicTarget, porcentaje entre el economicTarget y amountCollected();
     return 0f;
   }
 
   private CampaignDto toCampaignDto(Campaign campaign) {
     return CampaignMapper.toCampaignDto(campaign)
-        .ammountCollected(ammountCollected(campaign))
+        .amountCollected(amountCollected(campaign))
         .percentageCollected(percentageCollected(campaign))
         .isOnGoing(isOnGoing(campaign));
   }

@@ -18,7 +18,7 @@ public class CampaignDto {
   private OrganizationDto organization;
   private List<CategoryDto> categories;
   private Boolean isOnGoing;
-  private Float ammountCollected;
+  private Float amountCollected;
   private Float percentageCollected;
 
   public CampaignDto isOnGoing(Boolean isOnGoing) {
@@ -26,8 +26,8 @@ public class CampaignDto {
     return this;
   }
 
-  public CampaignDto ammountCollected(Float ammountCollected) {
-    this.ammountCollected = ammountCollected;
+  public CampaignDto amountCollected(Float amountCollected) {
+    this.amountCollected = amountCollected;
     return this;
   }
 

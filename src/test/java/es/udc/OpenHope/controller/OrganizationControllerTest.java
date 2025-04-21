@@ -5,8 +5,6 @@ import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.EditOrganizationParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
-import es.udc.OpenHope.model.Category;
-import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
@@ -31,8 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static es.udc.OpenHope.utils.Constants.*;
@@ -102,7 +98,7 @@ public class OrganizationControllerTest {
         .param("password", params.getPassword())
         .param("name", params.getName())
         .param("description", params.getDescription())
-        .param("categories", String.valueOf(params.getCategories()))
+        .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);

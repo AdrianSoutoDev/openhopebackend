@@ -1,10 +1,7 @@
 package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.ErrorDto;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
-import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.exception.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -73,6 +70,18 @@ public class ControllerAdvice {
   @ExceptionHandler(SecurityException.class)
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public ErrorDto handleSecurityException(SecurityException e) {
+    return new ErrorDto(e.getMessage());
+  }
+
+  @ExceptionHandler(DuplicatedCampaignException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public ErrorDto handleDuplicatedCampaignException(DuplicatedCampaignException e) {
+    return new ErrorDto(e.getMessage());
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDto handleIllegalArgumentException(IllegalArgumentException e) {
     return new ErrorDto(e.getMessage());
   }
 }

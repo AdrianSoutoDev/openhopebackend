@@ -116,7 +116,6 @@ public class CampaignServiceTest {
     assertThrows(NoSuchElementException.class, () ->
         campaignService.create(0L, ORG_EMAIL, CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
             CAMPAIGN_DATE_LIMIT, null, null, null, null));
-
   }
 
   @Test
