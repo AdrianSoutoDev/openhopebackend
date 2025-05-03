@@ -61,7 +61,8 @@ public class CampaignServiceImpl implements CampaignService {
     Optional<Organization> organization = organizationRepository.findById(organizationId);
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
     Pageable pageable = PageRequest.of(page, size);
-    Page<Campaign> campaignPage = campaignRepository.findByOrganizationOrderByStartAtDesc(organization.get(), pageable);
+    Date tomorrow = Date.valueOf(LocalDate.now().plusDays(1));
+    Page<Campaign> campaignPage = campaignRepository.findByOrganizationAndStartAtLessThanOrderByStartAtDesc(organization.get(), tomorrow, pageable);
     return campaignPage.map(this::toCampaignDto);
   }
 
@@ -93,10 +94,21 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private boolean isOnGoing(Campaign campaign) {
+
+    if(campaign.getFinalizedDate() != null) return false;
+
     boolean itStated = LocalDate.now().isEqual(campaign.getStartAt().toLocalDate()) || LocalDate.now().isAfter(campaign.getStartAt().toLocalDate());
     boolean isBeforeDateLimit = campaign.getDateLimit() == null || LocalDate.now().isBefore(campaign.getDateLimit().toLocalDate());
+
+    if(!isBeforeDateLimit) {
+      campaign.setFinalizedDate(campaign.getDateLimit());
+      campaignRepository.save(campaign);
+      return false;
+    }
+
+    //TODO Se debe eliminar esta comprobación cuando se establezca finalizedDate cuando se pase el target en las donaciones.
     boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < amountCollected(campaign);
-    return itStated && isBeforeDateLimit && isUnderTarget;
+    return itStated && isUnderTarget;
   }
 
   private Float amountCollected(Campaign campaign) {

@@ -25,6 +25,10 @@ public abstract class CampaignMapper {
     List<CategoryDto> categories = CategoryMapper.toCategoriesDto(campaign.getCategories().stream().toList());
     campaignDto.setCategories(categories);
 
+    if(campaign.getFinalizedDate() != null){
+      campaignDto.setFinalizedDate(campaign.getFinalizedDate().toLocalDate());
+    }
+
     return campaignDto;
   }
 }

@@ -80,8 +80,6 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
         resourceService.remove(organization.get().getImage());
         organization.get().setImage(newImage);
       }
-    } else {
-      organization.get().setImage(null);
     }
 
     List<Category> categoriesMatched = categoryRepository.findByNameIn(categoryNames);

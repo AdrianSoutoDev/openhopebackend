@@ -7,8 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
+
 @Repository
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {
-  Page<Campaign> findByOrganizationOrderByStartAtDesc(Organization organization, Pageable pageable);
+  Page<Campaign> findByOrganizationAndStartAtLessThanOrderByStartAtDesc(Organization organization, Date now, Pageable pageable);
   Campaign findByNameIgnoreCase(String name);
 }

@@ -36,6 +36,8 @@ public class Campaign {
   @ManyToMany
   Set<Category> categories;
 
+  private Date finalizedDate;
+
   public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
                   Organization organization, String description, Set<Category> categories) {
     this.name = name;
@@ -47,5 +49,19 @@ public class Campaign {
     this.organization = organization;
     this.description = description;
     this.categories = categories;
+  }
+
+  public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
+                  Organization organization, String description, Set<Category> categories, Date finalizedDate) {
+    this.name = name;
+    this.startAt = startAt;
+    this.dateLimit = dateLimit;
+    this.economicTarget = economicTarget;
+    this.minimumDonation = minimumDonation;
+    this.image = image;
+    this.organization = organization;
+    this.description = description;
+    this.categories = categories;
+    this.finalizedDate = finalizedDate;
   }
 }

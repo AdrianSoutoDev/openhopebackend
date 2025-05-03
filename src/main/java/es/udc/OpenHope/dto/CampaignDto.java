@@ -20,6 +20,7 @@ public class CampaignDto {
   private Boolean isOnGoing;
   private Float amountCollected;
   private Float percentageCollected;
+  private LocalDate finalizedDate;
 
   public CampaignDto isOnGoing(Boolean isOnGoing) {
     this.isOnGoing = isOnGoing;
@@ -33,6 +34,11 @@ public class CampaignDto {
 
   public CampaignDto percentageCollected(Float percentageCollected) {
     this.percentageCollected = percentageCollected;
+    return this;
+  }
+
+  public CampaignDto percentageCollected(LocalDate finalizedDate) {
+    this.finalizedDate = finalizedDate;
     return this;
   }
 }

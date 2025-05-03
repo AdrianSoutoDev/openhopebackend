@@ -70,7 +70,7 @@ public class OrganizationController {
 
   @GetMapping(value = "/{id}/campaigns")
   public ResponseEntity<Page<CampaignDto>> getCampaigns(@PathVariable long id, @RequestParam(defaultValue="0") int page,
-                                                        @RequestParam(defaultValue="10") int size) {
+                                                        @RequestParam(defaultValue="5") int size) {
 
     Page<CampaignDto> campaigns = campaignService.getByOrganization(id, page, size);
     return ResponseEntity.ok(campaigns);
