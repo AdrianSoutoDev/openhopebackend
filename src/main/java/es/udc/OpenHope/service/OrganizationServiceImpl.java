@@ -74,7 +74,11 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     //Update organization
     if(image != null) {
-      boolean areTheSameImage = resourceService.areEquals(image, organization.get().getImage());
+      boolean areTheSameImage = false;
+      if(organization.get().getImage() != null) {
+        areTheSameImage = resourceService.areEquals(image, organization.get().getImage());
+      }
+
       if(!areTheSameImage) {
         String newImage = resourceService.save(image);
         resourceService.remove(organization.get().getImage());

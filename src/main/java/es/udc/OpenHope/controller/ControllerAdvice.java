@@ -2,6 +2,7 @@ package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.ErrorDto;
 import es.udc.OpenHope.exception.*;
+import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -20,7 +22,8 @@ public class ControllerAdvice {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public ErrorDto handleGenericException(Exception e) {
-    return new ErrorDto(e.getMessage());
+    String message = Messages.get("error.generic");
+    return new ErrorDto(message);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
