@@ -14,10 +14,10 @@ public abstract class CampaignMapper {
     campaignDto.setId(campaign.getId());
     campaignDto.setName(campaign.getName());
     campaignDto.setStartAt(campaign.getStartAt().toLocalDate());
-    campaignDto.setDateLimit(campaign.getDateLimit().toLocalDate());
     campaignDto.setEconomicTarget(campaign.getEconomicTarget());
     campaignDto.setImage(campaign.getImage());
     campaignDto.setDescription(campaign.getDescription());
+    if(campaign.getDateLimit() != null) campaignDto.setDateLimit(campaign.getDateLimit().toLocalDate());
 
     OrganizationDto organizationDto = OrganizationMapper.toOrganizationDto(campaign.getOrganization());
     campaignDto.setOrganization(organizationDto);

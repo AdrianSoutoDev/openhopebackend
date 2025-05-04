@@ -107,7 +107,7 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     //TODO Se debe eliminar esta comprobación cuando se establezca finalizedDate cuando se pase el target en las donaciones.
-    boolean isUnderTarget = campaign.getEconomicTarget() == null || campaign.getEconomicTarget() < amountCollected(campaign);
+    boolean isUnderTarget = campaign.getEconomicTarget() == null || amountCollected(campaign) < campaign.getEconomicTarget();
     return itStated && isUnderTarget;
   }
 
