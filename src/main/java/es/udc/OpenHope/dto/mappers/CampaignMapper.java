@@ -17,6 +17,8 @@ public abstract class CampaignMapper {
     campaignDto.setEconomicTarget(campaign.getEconomicTarget());
     campaignDto.setImage(campaign.getImage());
     campaignDto.setDescription(campaign.getDescription());
+    campaignDto.setMinimumDonation(campaign.getMinimumDonation());
+
     if(campaign.getDateLimit() != null) campaignDto.setDateLimit(campaign.getDateLimit().toLocalDate());
 
     OrganizationDto organizationDto = OrganizationMapper.toOrganizationDto(campaign.getOrganization());
