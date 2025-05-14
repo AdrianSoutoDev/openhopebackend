@@ -199,3 +199,5 @@ README.html
 *.iml
 .idea
 .exercism
+/src/main/resources/keys/certificate.pem
+/src/main/resources/keys/privkey.pem
