@@ -1,12 +1,18 @@
 package es.udc.OpenHope.service.providers;
 
 import es.udc.OpenHope.dto.AspspDto;
+import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.AspspClientDto;
+import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.repository.RedSysProviderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,9 +57,23 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Value("${redsys.api.aspsp.endpoint}")
   private String aspspEndpoint;
 
+  @Value("${redsys.oauth.uri}")
+  private String oauthEndpoint;
+
+  @Value("${redsys.oauth.callback.uri}")
+  private String oauthCallback;
+
+  @Value("${redsys.oauth.challenge}")
+  private String oauthChallenge;
+
+  @Value("${redsys.oauth.challenge.method}")
+  private String oauthChallengeMethod;
+
+  @Value("${redsys.oauth.code.verifier}")
+  private String oauthCodeVerifier;
+
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
-
     try {
       String bodyHashed = hashSha256Base64("");
       String digest = "SHA-256=" + bodyHashed;
@@ -81,6 +101,65 @@ public class RedSysProviderServiceImpl implements ProviderService {
       throw new ProviderException("");
     }
   }
+
+  @Override
+  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign) throws ProviderException {
+    try {
+      StringBuilder sb = new StringBuilder(redSysApiUrl)
+          .append(oauthEndpoint)
+          .append(aspsp)
+          .append("/authorize")
+          .append("?response_type=code")
+          .append("&client_id=").append(redSysClientId)
+          .append("&redirect_uri=").append(oauthCallback)
+          .append("&scope=PIS%20AIS%20SVA")
+          .append("&state=").append("provider=").append(Provider.REDSSYS).append(",aspsp=").append(aspsp);
+
+      if(campaign != null) {
+          sb.append(",campaign=").append(campaign);
+      }
+
+      sb.append("&code_challenge=").append(oauthChallenge)
+          .append("&code_challenge_method=").append(oauthChallengeMethod);
+
+      ProviderAuthDto providerAuthDto = new ProviderAuthDto();
+      providerAuthDto.setUri(sb.toString());
+      return providerAuthDto;
+    } catch(Exception e) {
+      throw new ProviderException(e.getMessage());
+    }
+  }
+
+  @Override
+  public CredentialsDto authorize(String code, String aspsp) throws ProviderException {
+    try {
+      RestClient restClient = RestClient.create();
+
+      MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+      params.add("grant_type", "authorization_code");
+      params.add("client_id", redSysClientId);
+      params.add("code", code);
+      params.add("redirect_uri", oauthCallback);
+      params.add("code_verifier", oauthCodeVerifier);
+
+      StringBuilder sb = new StringBuilder(redSysApiUrl)
+          .append(oauthEndpoint)
+          .append(aspsp)
+          .append("/token");
+
+      return restClient.post()
+          .uri(sb.toString())
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(params)
+          .retrieve()
+          .body(CredentialsDto.class);
+
+    }catch(Exception e) {
+      throw new ProviderException(e.getMessage());
+    }
+  }
+
+
 
   private String hashSha256Base64(String value) throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");

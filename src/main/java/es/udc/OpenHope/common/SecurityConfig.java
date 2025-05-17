@@ -1,6 +1,7 @@
 package es.udc.OpenHope.common;
 
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -42,6 +43,9 @@ public class SecurityConfig implements WebMvcConfigurer {
             .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/providers/aspsp").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/providers/{provider}/{aspsp}/oauth").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/providers/{provider}/{aspsp}/accounts").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
@@ -62,7 +66,8 @@ public class SecurityConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(@NonNull CorsRegistry registry) {
     registry.addMapping("/**")
-        .allowedOrigins("*")
-        .allowedMethods("*");
+        .allowedOrigins("http://localhost:5173")
+        .allowedMethods("*")
+        .allowCredentials(true);
   }
 }

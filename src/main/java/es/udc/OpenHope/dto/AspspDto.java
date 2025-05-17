@@ -1,6 +1,6 @@
 package es.udc.OpenHope.dto;
 
-import es.udc.OpenHope.service.providers.ProviderService;
+import es.udc.OpenHope.service.providers.Provider;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,5 +9,5 @@ import lombok.Data;
 public class AspspDto {
   private String name;
   private String code;
-  private ProviderService.Provider provider;
+  private Provider provider;
 }

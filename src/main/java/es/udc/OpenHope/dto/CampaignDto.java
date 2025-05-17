@@ -21,6 +21,7 @@ public class CampaignDto {
   private Float amountCollected;
   private Float percentageCollected;
   private LocalDate finalizedDate;
+  private boolean hasBankAccount;
 
   public CampaignDto isOnGoing(Boolean isOnGoing) {
     this.isOnGoing = isOnGoing;
@@ -37,8 +38,13 @@ public class CampaignDto {
     return this;
   }
 
-  public CampaignDto percentageCollected(LocalDate finalizedDate) {
+  public CampaignDto finalizedDate(LocalDate finalizedDate) {
     this.finalizedDate = finalizedDate;
+    return this;
+  }
+
+  public CampaignDto hasBankAccount(boolean hasBankAccount) {
+    this.hasBankAccount = hasBankAccount;
     return this;
   }
 }

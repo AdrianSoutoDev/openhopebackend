@@ -125,7 +125,10 @@ public class CampaignServiceImpl implements CampaignService {
     return CampaignMapper.toCampaignDto(campaign)
         .amountCollected(amountCollected(campaign))
         .percentageCollected(percentageCollected(campaign))
-        .isOnGoing(isOnGoing(campaign));
+        .isOnGoing(isOnGoing(campaign))
+
+        //TODO cambiar valor de hasBankAccount comprobando si tiene cuenta asignada.
+        .hasBankAccount(false);
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,
