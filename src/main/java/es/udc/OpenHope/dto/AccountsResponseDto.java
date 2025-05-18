@@ -9,6 +9,7 @@ import java.util.List;
 public class AccountsResponseDto {
   private List<AccountDto> accounts;
   private boolean notAllowed;
+  private String redirection;
 
   public AccountsResponseDto(){
     this.accounts = new ArrayList<>();

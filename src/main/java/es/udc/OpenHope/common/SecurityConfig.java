@@ -42,10 +42,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .requestMatchers(HttpMethod.POST,  "/api/resources").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
-            .requestMatchers(HttpMethod.GET,  "/api/providers/aspsp").permitAll()
-            .requestMatchers(HttpMethod.GET,  "/api/providers/{provider}/{aspsp}/oauth").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
-            .requestMatchers(HttpMethod.GET,  "/api/providers/{provider}/{aspsp}/accounts").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
@@ -68,6 +65,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     registry.addMapping("/**")
         .allowedOrigins("http://localhost:5173")
         .allowedMethods("*")
+        .allowedHeaders("*")
         .allowCredentials(true);
   }
 }

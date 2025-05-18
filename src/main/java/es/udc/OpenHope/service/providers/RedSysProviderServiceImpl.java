@@ -1,15 +1,21 @@
 package es.udc.OpenHope.service.providers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.OpenHope.dto.AccountDto;
 import es.udc.OpenHope.dto.AspspDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
-import es.udc.OpenHope.dto.client.AspspClientDto;
-import es.udc.OpenHope.dto.client.CredentialsDto;
+import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.exception.ProviderException;
+import es.udc.OpenHope.model.Account;
+import es.udc.OpenHope.model.Consent;
+import es.udc.OpenHope.repository.AccountRepository;
+import es.udc.OpenHope.repository.ConsentRepository;
 import es.udc.OpenHope.repository.RedSysProviderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -25,6 +31,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +43,9 @@ import java.util.UUID;
 public class RedSysProviderServiceImpl implements ProviderService {
 
   private final RedSysProviderRepository redSysProviderRepository;
+  private final ConsentRepository consentRepository;
+  private final AccountRepository accountRepository;
+
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -71,6 +83,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
   @Value("${redsys.oauth.code.verifier}")
   private String oauthCodeVerifier;
+
+  @Value("${redsys.api.post.consent.endpoint}")
+  private String createConsentEndpoint;
+
+  @Value("${frontend.base.url}")
+  private String frontendBaseUrl;
 
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
@@ -159,7 +177,70 @@ public class RedSysProviderServiceImpl implements ProviderService {
     }
   }
 
+  @Transactional
+  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String refreshTokenOAuth, String owner, String ipClient, String consentId) throws ProviderException {
+    try {
+      return new ArrayList<>();
+    } catch(Exception e) {
+      throw new ProviderException(e.getMessage());
+    }
+  }
 
+  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, String campaignId) throws ProviderException {
+
+    try {
+      LocalDate dateNowPlus60Days = LocalDate.now().plusDays(60);
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+      String dateFormated = dateNowPlus60Days.format(formatter);
+
+      AccessDto accessDto = new AccessDto("allAccounts");
+      PostConsentDto postConsentDto = new PostConsentDto(accessDto, true, dateFormated, 5, false);
+      String body = new ObjectMapper().writeValueAsString(postConsentDto);
+
+      String bodyHashed = hashSha256Base64(body);
+      String digest = "SHA-256=" + bodyHashed;
+      String xRequestID = UUID.randomUUID().toString();
+
+      String digestRequestId = "digest: " + digest + "\n" + "x-request-id: " + xRequestID;
+      String digestRequestIdSigned = sign(digestRequestId, privateKey);
+
+      String keyId = getKeyIdFromCertificate(certificate);
+      String keyIdHeader = "keyId=\"" + keyId + "\"";
+
+      String signatureForHeader = "signature=\"" + digestRequestIdSigned + "\"";
+
+      String signature = keyIdHeader + "," + ALGORITHM_HEADER + "," + HEADERS_HEADER + "," + signatureForHeader;
+      String certificateContent = getCertificateContent(certificate);
+
+      String uri = redSysApiUrl + createConsentEndpoint.replace("{aspsp}", aspsp);
+
+      StringBuilder sb = new StringBuilder(frontendBaseUrl)
+          .append("openbanking/bank-selection")
+          .append("?aspsp=").append(aspsp);
+
+      if(campaignId != null){
+        sb.append("&campaign=").append(campaignId);
+      }
+
+      PostConsentClientDto response = redSysProviderRepository.postConsent(digest, signature, certificateContent,
+          xRequestID, uri, redSysClientId, body, aspsp, ipClient, "Bearer ".concat(token), sb.toString());
+
+
+      Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+
+      Consent consent = new Consent();
+      consent.setConsentId(response.getConsentId());
+      consent.setAspsp(aspsp);
+      consent.setProvider(Provider.REDSSYS.toString());
+      consent.setAccount(account);
+      consentRepository.save(consent);
+
+      return response;
+    } catch(Exception e) {
+      throw new ProviderException(e.getMessage());
+    }
+
+  }
 
   private String hashSha256Base64(String value) throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
