@@ -141,28 +141,13 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Override
   public CredentialsDto authorize(String code, String aspsp) throws ProviderException {
     try {
-      RestClient restClient = RestClient.create();
 
-      MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-      params.add("grant_type", "authorization_code");
-      params.add("client_id", redSysClientId);
-      params.add("code", code);
-      params.add("redirect_uri", oauthCallback);
-      params.add("code_verifier", oauthCodeVerifier);
-
-      StringBuilder sb = new StringBuilder(redSysApiUrl)
+      StringBuilder uri = new StringBuilder(redSysApiUrl)
           .append(oauthEndpoint)
           .append(aspsp)
           .append("/token");
 
-      System.out.println("authorize");
-
-      return restClient.post()
-          .uri(sb.toString())
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(params)
-          .retrieve()
-          .body(CredentialsDto.class);
+      return redSysProviderRepository.authorize(redSysClientId, code, oauthCallback, oauthCodeVerifier, uri.toString());
 
     }catch(Exception e) {
       throw new ProviderException(e.getMessage());
@@ -172,24 +157,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Override
   public CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException {
     try {
-      RestClient restClient = RestClient.create();
-
-      MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-      params.add("grant_type", "refresh_token");
-      params.add("client_id", redSysClientId);
-      params.add("refresh_token", refreshToken);
-
-      StringBuilder sb = new StringBuilder(redSysApiUrl)
+      StringBuilder uri = new StringBuilder(redSysApiUrl)
           .append(oauthEndpoint)
           .append(aspsp)
           .append("/token");
 
-      return restClient.post()
-          .uri(sb.toString())
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(params)
-          .retrieve()
-          .body(CredentialsDto.class);
+      return redSysProviderRepository.refreshToken(redSysClientId, refreshToken, uri.toString());
 
     } catch (HttpClientErrorException e){
       if(e.getStatusCode().is4xxClientError()){

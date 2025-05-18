@@ -3,7 +3,10 @@ package es.udc.OpenHope.repository;
 import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.exception.UnauthorizedException;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
@@ -34,6 +37,44 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
     return response != null && response.getAspsps() != null
         ? response.getAspsps()
         : List.of();
+  }
+
+  @Override
+  public CredentialsDto authorize(String redSysClientId, String code, String oauthCallback, String oauthCodeVerifier, String uri) {
+    RestClient restClient = RestClient.create();
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("grant_type", "authorization_code");
+    params.add("client_id", redSysClientId);
+    params.add("code", code);
+    params.add("redirect_uri", oauthCallback);
+    params.add("code_verifier", oauthCodeVerifier);
+
+    System.out.println("authorize");
+
+    return restClient.post()
+        .uri(uri)
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .body(params)
+        .retrieve()
+        .body(CredentialsDto.class);
+  }
+
+  @Override
+  public CredentialsDto refreshToken(String redSysClientId, String refreshToken, String uri) {
+    RestClient restClient = RestClient.create();
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("grant_type", "refresh_token");
+    params.add("client_id", redSysClientId);
+    params.add("refresh_token", refreshToken);
+
+    return restClient.post()
+        .uri(uri)
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .body(params)
+        .retrieve()
+        .body(CredentialsDto.class);
   }
 
   @Override
