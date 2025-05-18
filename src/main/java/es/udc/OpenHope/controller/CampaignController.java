@@ -1,5 +1,6 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.CampaignParamsDto;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
@@ -46,6 +47,13 @@ public class CampaignController {
   @GetMapping("/{id}")
   public ResponseEntity<CampaignDto> getCampaign(@PathVariable long id) {
     CampaignDto campaignDto = campaignService.get(id);
+    return ResponseEntity.ok(campaignDto);
+  }
+
+  @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<CampaignDto> updateCampaign(@PathVariable long id, @RequestBody BankAccountParams bankAccountParams, @RequestHeader(name="Authorization") String token) {
+    String owner = tokenService.extractsubject(token);
+    CampaignDto campaignDto = campaignService.updateBankAccount(id, bankAccountParams, owner);
     return ResponseEntity.ok(campaignDto);
   }
 }

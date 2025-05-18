@@ -1,11 +1,14 @@
 package es.udc.OpenHope.service;
 
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
+import es.udc.OpenHope.model.BankAccount;
 import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
+import es.udc.OpenHope.repository.BankAccountRepository;
 import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
@@ -30,6 +33,7 @@ public class CampaignServiceImpl implements CampaignService {
   private final OrganizationRepository organizationRepository;
   private final CategoryRepository categoryRepository;
   private final ResourceService resourceService;
+  private final BankAccountRepository bankAccountRepository;
 
   @Override
   @Transactional
@@ -71,6 +75,33 @@ public class CampaignServiceImpl implements CampaignService {
     Optional<Campaign> campaign = campaignRepository.findById(id);
     if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
     return toCampaignDto(campaign.get());
+  }
+
+  @Override
+  @Transactional
+  public CampaignDto updateBankAccount(Long id, BankAccountParams bankAccountParams, String owner) {
+    Optional<Campaign> campaign = campaignRepository.findById(id);
+    if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    if(!campaign.get().getOrganization().getEmail().equals(owner)){
+      throw new SecurityException(Messages.get("validation.campaign.update.not.allowed"));
+    }
+
+    Optional<BankAccount> bankAccount = bankAccountRepository.findByIban(bankAccountParams.getIban());
+    if(bankAccount.isEmpty()){
+      BankAccount newBankAccount = new BankAccount();
+      newBankAccount.setIban(bankAccountParams.getIban());
+      newBankAccount.setName(bankAccountParams.getName());
+      newBankAccount.setResourceId(bankAccountParams.getResourceId());
+      newBankAccount.setOwnerName(bankAccountParams.getOwnerName());
+      bankAccountRepository.save(newBankAccount);
+      campaign.get().setBankAccount(newBankAccount);
+    } else {
+      campaign.get().setBankAccount(bankAccount.get());
+    }
+
+    campaignRepository.save(campaign.get());
+
+    return CampaignMapper.toCampaignDto(campaign.get());
   }
 
   private boolean campaignExists(String name) {
@@ -121,14 +152,16 @@ public class CampaignServiceImpl implements CampaignService {
     return 0f;
   }
 
+  private boolean hasBankAccount(Campaign campaign) {
+    return campaign.getBankAccount() != null;
+  }
+
   private CampaignDto toCampaignDto(Campaign campaign) {
     return CampaignMapper.toCampaignDto(campaign)
         .amountCollected(amountCollected(campaign))
         .percentageCollected(percentageCollected(campaign))
         .isOnGoing(isOnGoing(campaign))
-
-        //TODO cambiar valor de hasBankAccount comprobando si tiene cuenta asignada.
-        .hasBankAccount(false);
+        .hasBankAccount(hasBankAccount(campaign));
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,

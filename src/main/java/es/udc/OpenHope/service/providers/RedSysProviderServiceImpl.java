@@ -153,6 +153,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append(aspsp)
           .append("/token");
 
+      System.out.println("authorize");
+
       return restClient.post()
           .uri(sb.toString())
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)

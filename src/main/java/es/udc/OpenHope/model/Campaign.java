@@ -38,6 +38,9 @@ public class Campaign {
 
   private Date finalizedDate;
 
+  @OneToOne
+  private BankAccount bankAccount;
+
   public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
                   Organization organization, String description, Set<Category> categories) {
     this.name = name;

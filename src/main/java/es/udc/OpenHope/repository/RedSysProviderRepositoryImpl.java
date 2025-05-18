@@ -1,6 +1,5 @@
 package es.udc.OpenHope.repository;
 
-import es.udc.OpenHope.dto.AccountsResponseDto;
 import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.client.*;
 import org.springframework.stereotype.Repository;
@@ -15,6 +14,8 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
 
   @Override
   public List<AspspClientDto> getAspsps(CommonHeadersDto commonHeaders, String uri) {
+
+    System.out.println("getAspsps");
     RestClient restClient = RestClient.create();
 
     GetAspspResponseDto response = restClient.get()
@@ -37,6 +38,8 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
   public PostConsentClientDto postConsent(CommonHeadersDto commonHeaders, String uri,  String body, String aspsp,
                                           String PsuIpAddress, String authorization, String redirectionUri) {
 
+    System.out.println("postConsent");
+
     RestClient restClient = RestClient.create();
 
     PostConsentClientDto response = restClient.post()
@@ -46,7 +49,7 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
         .header("Content-Type", APPLICATION_JSON)
         .header("digest", commonHeaders.getDigest())
         .header("signature", commonHeaders.getSignature())
-        .header("tpp-signature-certificate", commonHeaders.getClientId())
+        .header("tpp-signature-certificate", commonHeaders.getCertificateContent())
         .header("x-ibm-client-id", commonHeaders.getClientId())
         .header("x-request-id", commonHeaders.getXRequestID())
         .header("authorization", authorization)
@@ -62,6 +65,8 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
 
   @Override
   public List<AccountClientDto> getAccounts(CommonHeadersDto commonHeaders, String uri, String consentId, String authorization) {
+    System.out.println("getAccounts");
+
     RestClient restClient = RestClient.create();
 
     AccountsClientResponseDto response = restClient.get()
