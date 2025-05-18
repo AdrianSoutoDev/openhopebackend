@@ -8,6 +8,7 @@ import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.exception.ProviderException;
+import es.udc.OpenHope.exception.UnauthorizedException;
 import es.udc.OpenHope.model.Account;
 import es.udc.OpenHope.model.Consent;
 import es.udc.OpenHope.repository.AccountRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.io.BufferedReader;
@@ -167,20 +169,53 @@ public class RedSysProviderServiceImpl implements ProviderService {
     }
   }
 
+  @Override
+  public CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException {
+    try {
+      RestClient restClient = RestClient.create();
+
+      MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+      params.add("grant_type", "refresh_token");
+      params.add("client_id", redSysClientId);
+      params.add("refresh_token", refreshToken);
+
+      StringBuilder sb = new StringBuilder(redSysApiUrl)
+          .append(oauthEndpoint)
+          .append(aspsp)
+          .append("/token");
+
+      return restClient.post()
+          .uri(sb.toString())
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(params)
+          .retrieve()
+          .body(CredentialsDto.class);
+
+    } catch (HttpClientErrorException e){
+      if(e.getStatusCode().is4xxClientError()){
+        throw new UnauthorizedException("");
+      } else {
+        throw new ProviderException(e.getMessage());
+      }
+    }
+  }
+
   @Transactional
-  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String refreshTokenOAuth, String owner, String ipClient, String consentId) throws ProviderException {
+  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String owner, String ipClient, String consentId) throws ProviderException, UnauthorizedException {
     try {
       CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
       List<AccountClientDto> accountClientDtos = redSysProviderRepository.getAccounts(commonHeadersDto, uri, consentId, "Bearer ".concat(tokenOAuth));
       return BankAccountMapper.toAccountDto(accountClientDtos);
+    } catch (UnauthorizedException e){
+      throw e;
     } catch(Exception e) {
       throw new ProviderException(e.getMessage());
     }
   }
 
   @Transactional
-  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String refreshTokenOAuth, String ipClient, String campaignId) throws ProviderException {
+  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, String campaignId) throws ProviderException, UnauthorizedException {
     //TODO validaciones
     try {
       LocalDate dateNowPlus60Days = LocalDate.now().plusDays(60);
@@ -216,6 +251,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
       consentRepository.save(consent);
 
       return response;
+    } catch (UnauthorizedException e){
+      throw e;
     } catch(Exception e) {
       throw new ProviderException(e.getMessage());
     }

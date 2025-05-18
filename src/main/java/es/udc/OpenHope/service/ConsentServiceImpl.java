@@ -17,11 +17,18 @@ public class ConsentServiceImpl implements ConsentService {
   private final AccountRepository accountRepository;
 
   @Override
-  public ConsentDto getConsent(String owner, String aspsp, String provider) {
-
+  public ConsentDto get(String owner, String aspsp, String provider) {
     //TODO validaciones
     Account ownerAccount = accountRepository.getUserByEmailIgnoreCase(owner);
     Consent consent = consentRepository.findByAccountAndAspspAndProvider(ownerAccount, aspsp, provider);
     return consent != null ? ConsentMapper.toCategoryDto(consent) : null;
+  }
+
+  @Override
+  public void delete(String owner, String aspsp, String provider) {
+    //TODO validaciones
+    Account ownerAccount = accountRepository.getUserByEmailIgnoreCase(owner);
+    Consent consent = consentRepository.findByAccountAndAspspAndProvider(ownerAccount, aspsp, provider);
+    consentRepository.delete(consent);
   }
 }

@@ -1,10 +1,10 @@
 package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.*;
-import es.udc.OpenHope.dto.client.AccountClientDto;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.exception.ProviderException;
+import es.udc.OpenHope.exception.UnauthorizedException;
 import es.udc.OpenHope.service.ConsentService;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.providers.Provider;
@@ -94,11 +94,10 @@ public class ProviderController {
   public ResponseEntity<AccountsResponseDto> getAccounts(@PathVariable Provider provider, @PathVariable String aspsp,
                                                          @RequestParam(required = false) Integer campaign,
                                                          @RequestHeader(name="Authorization") String token,
-                                                      HttpServletRequest request, HttpServletResponse response) throws ProviderException, IOException {
+                                                      HttpServletRequest request, HttpServletResponse response) throws ProviderException, UnauthorizedException {
 
     String owner = tokenService.extractsubject(token);
     AccountsResponseDto accountsResponseDto = new AccountsResponseDto();
-    List<AccountDto> accounts = new ArrayList<>();
 
     Cookie tokenCookie = CookieUtils.getCookieFromRequest("token_".concat(aspsp), request);
     String tokenOauth = tokenCookie != null ? tokenCookie.getValue() : null;
@@ -108,21 +107,61 @@ public class ProviderController {
 
     accountsResponseDto.setNotAllowed(token == null || refresh == null);
 
-    if(!accountsResponseDto.isNotAllowed()){
-      ConsentDto consentDto = consentService.getConsent(owner, aspsp, provider.toString());
-      ProviderService providerService = providerManager.getProviderService(provider);
-      String ipClient = getClientIp(request);
+    try {
+      if (!accountsResponseDto.isNotAllowed()) {
+        ConsentDto consentDto = consentService.get(owner, aspsp, provider.toString());
+        ProviderService providerService = providerManager.getProviderService(provider);
+        String ipClient = getClientIp(request);
 
-      if(consentDto != null) {
-        accounts = providerService.getAccounts(aspsp, tokenOauth, refresh, owner, ipClient, consentDto.getConsentId());
-        accountsResponseDto.setAccounts(accounts);
-      } else {
-        PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, refresh, ipClient, campaign.toString());
-        String redirection = postConsentClientDto.get_links().getScaRedirect().getHref();
-        accountsResponseDto.setRedirection(redirection);
+        if (consentDto != null) {
+
+          try {
+            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, owner, ipClient, consentDto.getConsentId());
+            accountsResponseDto.setAccounts(accounts);
+          } catch (UnauthorizedException e) {
+            tokenOauth = refreshToken(providerService, refresh, aspsp, response);
+            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, owner, ipClient, consentDto.getConsentId());
+            accountsResponseDto.setAccounts(accounts);
+          }
+
+        } else {
+
+          try {
+            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+          } catch (UnauthorizedException e) {
+            tokenOauth = refreshToken(providerService, refresh, aspsp, response);
+            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+          }
+
+        }
       }
+    } catch(UnauthorizedException e) {
+      restartSession(accountsResponseDto, owner, aspsp, provider.toString());
     }
 
     return ResponseEntity.ok(accountsResponseDto);
+  }
+
+  private void createConsent(ProviderService providerService, String owner, String aspsp, String tokenOauth, String ipClient,
+                    String campaign, AccountsResponseDto accountsResponseDto) throws ProviderException, UnauthorizedException {
+    PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, ipClient, campaign);
+    String redirection = postConsentClientDto.get_links().getScaRedirect().getHref();
+    accountsResponseDto.setRedirection(redirection);
+  }
+
+  private String refreshToken(ProviderService providerService, String refresh, String aspsp, HttpServletResponse response) throws ProviderException, UnauthorizedException {
+    CredentialsDto credentialsDto = providerService.refreshToken(refresh, aspsp);
+    if(credentialsDto == null){
+      throw new UnauthorizedException("");
+    }
+    CookieUtils.reNewCookies(credentialsDto, aspsp, response);
+    return credentialsDto.getAccess_token();
+  }
+
+  private void restartSession(AccountsResponseDto accountsResponseDto, String owner, String aspsp, String provider) {
+    accountsResponseDto.setAccounts(new ArrayList<>());
+    accountsResponseDto.setNotAllowed(true);
+    accountsResponseDto.setRedirection(null);
+    consentService.delete(owner, aspsp, provider);
   }
 }
