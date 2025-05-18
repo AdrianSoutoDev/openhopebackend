@@ -1,6 +1,7 @@
 package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.*;
+import es.udc.OpenHope.dto.client.AccountClientDto;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.exception.ProviderException;
@@ -16,8 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -118,7 +117,7 @@ public class ProviderController {
         accounts = providerService.getAccounts(aspsp, tokenOauth, refresh, owner, ipClient, consentDto.getConsentId());
         accountsResponseDto.setAccounts(accounts);
       } else {
-        PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, ipClient, campaign.toString());
+        PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, refresh, ipClient, campaign.toString());
         String redirection = postConsentClientDto.get_links().getScaRedirect().getHref();
         accountsResponseDto.setRedirection(redirection);
       }

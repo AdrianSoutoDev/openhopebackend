@@ -3,8 +3,10 @@ package es.udc.OpenHope.service.providers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.OpenHope.dto.AccountDto;
 import es.udc.OpenHope.dto.AspspDto;
+import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.*;
+import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.model.Account;
 import es.udc.OpenHope.model.Consent;
@@ -33,7 +35,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +46,6 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final RedSysProviderRepository redSysProviderRepository;
   private final ConsentRepository consentRepository;
   private final AccountRepository accountRepository;
-
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -66,8 +66,11 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Value("${redsys.api.url}")
   private String redSysApiUrl;
 
-  @Value("${redsys.api.aspsp.endpoint}")
+  @Value("${redsys.api.get.aspsp.endpoint}")
   private String aspspEndpoint;
+
+  @Value("${redsys.api.get.accounts.endpoint}")
+  private String accountsEndpoint;
 
   @Value("${redsys.oauth.uri}")
   private String oauthEndpoint;
@@ -93,24 +96,9 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
     try {
-      String bodyHashed = hashSha256Base64("");
-      String digest = "SHA-256=" + bodyHashed;
-      String xRequestID = UUID.randomUUID().toString();
-
-      String digestRequestId = "digest: " + digest + "\n" + "x-request-id: " + xRequestID;
-      String digestRequestIdSigned = sign(digestRequestId, privateKey);
-
-      String keyId = getKeyIdFromCertificate(certificate);
-      String keyIdHeader = "keyId=\"" + keyId + "\"";
-
-      String signatureForHeader = "signature=\"" + digestRequestIdSigned + "\"";
-
-      String signature = keyIdHeader + "," + ALGORITHM_HEADER + "," + HEADERS_HEADER + "," + signatureForHeader;
-      String certificateContent = getCertificateContent(certificate);
-
+      CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + aspspEndpoint;
-
-      List<AspspClientDto> response = redSysProviderRepository.getAspsps(digest, signature, certificateContent, xRequestID, uri, redSysClientId);
+      List<AspspClientDto> response = redSysProviderRepository.getAspsps(commonHeadersDto, uri);
 
       return response.stream()
           .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSSYS))
@@ -180,14 +168,18 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Transactional
   public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String refreshTokenOAuth, String owner, String ipClient, String consentId) throws ProviderException {
     try {
-      return new ArrayList<>();
+      CommonHeadersDto commonHeadersDto = getCommonHeaders("");
+      String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
+      List<AccountClientDto> accountClientDtos = redSysProviderRepository.getAccounts(commonHeadersDto, uri, consentId, "Bearer ".concat(tokenOAuth));
+      return BankAccountMapper.toAccountDto(accountClientDtos);
     } catch(Exception e) {
       throw new ProviderException(e.getMessage());
     }
   }
 
-  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, String campaignId) throws ProviderException {
-
+  @Transactional
+  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String refreshTokenOAuth, String ipClient, String campaignId) throws ProviderException {
+    //TODO validaciones
     try {
       LocalDate dateNowPlus60Days = LocalDate.now().plusDays(60);
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -197,20 +189,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       PostConsentDto postConsentDto = new PostConsentDto(accessDto, true, dateFormated, 5, false);
       String body = new ObjectMapper().writeValueAsString(postConsentDto);
 
-      String bodyHashed = hashSha256Base64(body);
-      String digest = "SHA-256=" + bodyHashed;
-      String xRequestID = UUID.randomUUID().toString();
-
-      String digestRequestId = "digest: " + digest + "\n" + "x-request-id: " + xRequestID;
-      String digestRequestIdSigned = sign(digestRequestId, privateKey);
-
-      String keyId = getKeyIdFromCertificate(certificate);
-      String keyIdHeader = "keyId=\"" + keyId + "\"";
-
-      String signatureForHeader = "signature=\"" + digestRequestIdSigned + "\"";
-
-      String signature = keyIdHeader + "," + ALGORITHM_HEADER + "," + HEADERS_HEADER + "," + signatureForHeader;
-      String certificateContent = getCertificateContent(certificate);
+      CommonHeadersDto commonHeadersDto = getCommonHeaders(body);
 
       String uri = redSysApiUrl + createConsentEndpoint.replace("{aspsp}", aspsp);
 
@@ -222,9 +201,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
         sb.append("&campaign=").append(campaignId);
       }
 
-      PostConsentClientDto response = redSysProviderRepository.postConsent(digest, signature, certificateContent,
-          xRequestID, uri, redSysClientId, body, aspsp, ipClient, "Bearer ".concat(token), sb.toString());
-
+      PostConsentClientDto response = redSysProviderRepository.postConsent(commonHeadersDto, uri, body, aspsp, ipClient,
+          "Bearer ".concat(token), sb.toString());
 
       Account account = accountRepository.getUserByEmailIgnoreCase(owner);
 
@@ -279,7 +257,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
     return privateKeyPEM;
   }
 
-  private static String getKeyIdFromCertificate(String certificate) throws CertificateException, IOException {
+  private String getKeyIdFromCertificate(String certificate) throws CertificateException, IOException {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     InputStream inputStream = classLoader.getResourceAsStream(certificate);
 
@@ -294,7 +272,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
     return String.format("SN=%s,CA=%s", serialNumber, issuer).replace(" ", "");
   }
 
-  private static String getCertificateContent(String certificate)  throws IOException {
+  private String getCertificateContent(String certificate)  throws IOException {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     {
       InputStream inputStream = classLoader.getResourceAsStream(certificate);
@@ -312,5 +290,30 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .replace(CERTIFICATE_FOOTER, "")
           .replaceAll("\\s", "");
     }
+  }
+
+  private CommonHeadersDto getCommonHeaders(String body) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, SignatureException, InvalidKeyException, CertificateException {
+    String bodyHashed = hashSha256Base64(body);
+    String digest = "SHA-256=" + bodyHashed;
+    String xRequestID = UUID.randomUUID().toString();
+
+    String digestRequestId = "digest: " + digest + "\n" + "x-request-id: " + xRequestID;
+    String digestRequestIdSigned = sign(digestRequestId, privateKey);
+
+    String keyId = getKeyIdFromCertificate(certificate);
+    String keyIdHeader = "keyId=\"" + keyId + "\"";
+
+    String signatureForHeader = "signature=\"" + digestRequestIdSigned + "\"";
+
+    String signature = keyIdHeader + "," + ALGORITHM_HEADER + "," + HEADERS_HEADER + "," + signatureForHeader;
+    String certificateContent = getCertificateContent(certificate);
+
+    CommonHeadersDto commonHeadersDto = new CommonHeadersDto();
+    commonHeadersDto.setDigest(digest);
+    commonHeadersDto.setSignature(signature);
+    commonHeadersDto.setCertificateContent(certificateContent);
+    commonHeadersDto.setXRequestID(xRequestID);
+    commonHeadersDto.setClientId(redSysClientId);
+    return commonHeadersDto;
   }
 }

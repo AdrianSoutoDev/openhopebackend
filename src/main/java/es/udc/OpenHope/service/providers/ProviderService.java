@@ -14,5 +14,5 @@ public interface ProviderService {
   ProviderAuthDto getOAuthUri(String aspsp, Integer campaign) throws ProviderException;
   CredentialsDto authorize(String code, String aspsp) throws ProviderException;
   List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String refreshTokenOAuth, String token, String ipClient, String consentId) throws ProviderException;
-  PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String ipClient, String campaignId) throws ProviderException;
+  PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String refreshTokenOAuth, String ipClient, String campaignId) throws ProviderException;
 }

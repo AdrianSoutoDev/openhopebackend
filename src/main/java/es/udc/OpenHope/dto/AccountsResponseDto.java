@@ -1,5 +1,6 @@
 package es.udc.OpenHope.dto;
 
+import es.udc.OpenHope.dto.client.AccountClientDto;
 import lombok.Data;
 
 import java.util.ArrayList;
