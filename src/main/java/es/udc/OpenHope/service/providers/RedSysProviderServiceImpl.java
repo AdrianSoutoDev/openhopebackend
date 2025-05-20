@@ -14,6 +14,7 @@ import es.udc.OpenHope.model.Consent;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.ConsentRepository;
 import es.udc.OpenHope.repository.RedSysProviderRepository;
+import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -106,7 +107,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSSYS))
           .toList();
     } catch(Exception e) {
-      throw new ProviderException("");
+      throw new ProviderException(Messages.get("provider.error.generic"));
     }
   }
 
@@ -134,7 +135,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       providerAuthDto.setUri(sb.toString());
       return providerAuthDto;
     } catch(Exception e) {
-      throw new ProviderException(e.getMessage());
+      throw new ProviderException(Messages.get("provider.error.generic"));
     }
   }
 
@@ -150,7 +151,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       return redSysProviderRepository.authorize(redSysClientId, code, oauthCallback, oauthCodeVerifier, uri.toString());
 
     }catch(Exception e) {
-      throw new ProviderException(e.getMessage());
+      throw new ProviderException(Messages.get("provider.error.generic"));
     }
   }
 
@@ -168,13 +169,13 @@ public class RedSysProviderServiceImpl implements ProviderService {
       if(e.getStatusCode().is4xxClientError()){
         throw new UnauthorizedException("");
       } else {
-        throw new ProviderException(e.getMessage());
+        throw new ProviderException(Messages.get("provider.error.generic"));
       }
     }
   }
 
   @Transactional
-  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String owner, String ipClient, String consentId) throws ProviderException, UnauthorizedException {
+  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException {
     try {
       CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
@@ -183,13 +184,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
     } catch (UnauthorizedException e){
       throw e;
     } catch(Exception e) {
-      throw new ProviderException(e.getMessage());
+      throw new ProviderException(Messages.get("provider.error.generic"));
     }
   }
 
   @Transactional
   public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, String campaignId) throws ProviderException, UnauthorizedException {
-    //TODO validaciones
     try {
       LocalDate dateNowPlus60Days = LocalDate.now().plusDays(60);
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -229,7 +229,6 @@ public class RedSysProviderServiceImpl implements ProviderService {
     } catch(Exception e) {
       throw new ProviderException(e.getMessage());
     }
-
   }
 
   private String hashSha256Base64(String value) throws NoSuchAlgorithmException {

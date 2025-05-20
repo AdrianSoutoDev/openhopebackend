@@ -14,7 +14,7 @@ public interface ProviderService {
   List<AspspDto> getAspsps() throws ProviderException;
   ProviderAuthDto getOAuthUri(String aspsp, Integer campaign) throws ProviderException;
   CredentialsDto authorize(String code, String aspsp) throws ProviderException;
-  List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String token, String ipClient, String consentId) throws ProviderException, UnauthorizedException;
+  List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException;
   PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String ipClient, String campaignId) throws ProviderException, UnauthorizedException;
-  CredentialsDto refreshToken(String refreshToken, String aspsps) throws ProviderException, UnauthorizedException;
+  CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException;
 }

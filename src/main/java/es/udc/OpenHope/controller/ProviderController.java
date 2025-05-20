@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,8 +70,8 @@ public class ProviderController {
     ProviderService providerService = providerManager.getProviderService(provider);
     CredentialsDto credentialsDto = providerService.authorize(code, aspsp);
 
-    Cookie tokenCookie = CookieUtils.getCookie("token_".concat(aspsp), credentialsDto.getAccess_token());
-    Cookie refreshCookie = CookieUtils.getCookie("refresh_".concat(aspsp), credentialsDto.getRefresh_token());
+    Cookie tokenCookie = CookieUtils.getCookie("token_".concat(aspsp), credentialsDto.getAccess_token(), credentialsDto.getExpires_in());
+    Cookie refreshCookie = CookieUtils.getCookie("refresh_".concat(aspsp), credentialsDto.getRefresh_token(), credentialsDto.getExpires_in());
 
     response.addCookie(tokenCookie);
     response.addCookie(refreshCookie);
@@ -116,11 +115,11 @@ public class ProviderController {
         if (consentDto != null) {
 
           try {
-            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, owner, ipClient, consentDto.getConsentId());
+            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
             accountsResponseDto.setAccounts(accounts);
           } catch (UnauthorizedException e) {
             tokenOauth = refreshToken(providerService, refresh, aspsp, response);
-            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, owner, ipClient, consentDto.getConsentId());
+            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
             accountsResponseDto.setAccounts(accounts);
           }
 
@@ -154,7 +153,7 @@ public class ProviderController {
     if(credentialsDto == null){
       throw new UnauthorizedException("");
     }
-    CookieUtils.reNewCookies(credentialsDto, aspsp, response);
+    CookieUtils.reNewCookies(credentialsDto.getAccess_token(), credentialsDto.getRefresh_token(), credentialsDto.getExpires_in(), aspsp, response);
     return credentialsDto.getAccess_token();
   }
 
