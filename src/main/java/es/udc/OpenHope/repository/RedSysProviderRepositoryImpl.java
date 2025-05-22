@@ -2,7 +2,9 @@ package es.udc.OpenHope.repository;
 
 import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.client.*;
+import es.udc.OpenHope.exception.ConsentInvalidException;
 import es.udc.OpenHope.exception.UnauthorizedException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.LinkedMultiValueMap;
@@ -13,6 +15,7 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 
 @Repository
+@Profile("default")
 public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
 
   private static final String APPLICATION_JSON = "application/json";
@@ -20,7 +23,6 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
   @Override
   public List<AspspClientDto> getAspsps(CommonHeadersDto commonHeaders, String uri) {
 
-    System.out.println("getAspsps");
     RestClient restClient = RestClient.create();
 
     GetAspspResponseDto response = restClient.get()
@@ -49,8 +51,6 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
     params.add("code", code);
     params.add("redirect_uri", oauthCallback);
     params.add("code_verifier", oauthCodeVerifier);
-
-    System.out.println("authorize");
 
     return restClient.post()
         .uri(uri)
@@ -81,11 +81,10 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
   public PostConsentClientDto postConsent(CommonHeadersDto commonHeaders, String uri,  String body, String aspsp,
                                           String PsuIpAddress, String authorization, String redirectionUri) throws UnauthorizedException {
 
-    System.out.println("postConsent");
     try {
       RestClient restClient = RestClient.create();
 
-      PostConsentClientDto response = restClient.post()
+      return restClient.post()
           .uri(uri)
           .body(body)
           .header("accept", APPLICATION_JSON)
@@ -101,12 +100,9 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
           .retrieve()
           .body(PostConsentClientDto.class);
 
-      System.out.println(response.toString());
-
-      return response;
     } catch (HttpClientErrorException e){
       if(e.getStatusCode().is4xxClientError()){
-        throw new UnauthorizedException("");
+        throw new UnauthorizedException(e.getMessage());
       } else {
         throw e;
       }
@@ -114,8 +110,7 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
   }
 
   @Override
-  public List<AccountClientDto> getAccounts(CommonHeadersDto commonHeaders, String uri, String consentId, String authorization) throws UnauthorizedException {
-    System.out.println("getAccounts");
+  public List<AccountClientDto> getAccounts(CommonHeadersDto commonHeaders, String uri, String consentId, String authorization) throws UnauthorizedException, ConsentInvalidException {
 
     try{
       RestClient restClient = RestClient.create();
@@ -136,9 +131,14 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
       return response != null && response.getAccounts() != null
           ? response.getAccounts()
           : List.of();
+
     } catch (HttpClientErrorException e){
       if(e.getStatusCode().is4xxClientError()){
-        throw new UnauthorizedException("");
+        if(e.getMessage().contains("\"code\":\"CONSENT_INVALID\"")) {
+          throw new ConsentInvalidException(e.getMessage());
+        } else {
+          throw new UnauthorizedException(e.getMessage());
+        }
       } else {
         throw e;
       }

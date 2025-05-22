@@ -7,6 +7,7 @@ import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.exception.ConsentInvalidException;
 import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.exception.UnauthorizedException;
 import es.udc.OpenHope.model.Account;
@@ -14,16 +15,13 @@ import es.udc.OpenHope.model.Consent;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.ConsentRepository;
 import es.udc.OpenHope.repository.RedSysProviderRepository;
+import es.udc.OpenHope.service.ConsentService;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClient;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,6 +47,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final RedSysProviderRepository redSysProviderRepository;
   private final ConsentRepository consentRepository;
   private final AccountRepository accountRepository;
+  private final ConsentService consentService;
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -167,7 +166,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
     } catch (HttpClientErrorException e){
       if(e.getStatusCode().is4xxClientError()){
-        throw new UnauthorizedException("");
+        throw new UnauthorizedException(e.getMessage());
       } else {
         throw new ProviderException(Messages.get("provider.error.generic"));
       }
@@ -175,13 +174,13 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Transactional
-  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException {
+  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException {
     try {
       CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
       List<AccountClientDto> accountClientDtos = redSysProviderRepository.getAccounts(commonHeadersDto, uri, consentId, "Bearer ".concat(tokenOAuth));
       return BankAccountMapper.toAccountDto(accountClientDtos);
-    } catch (UnauthorizedException e){
+    } catch (UnauthorizedException | ConsentInvalidException e){
       throw e;
     } catch(Exception e) {
       throw new ProviderException(Messages.get("provider.error.generic"));
@@ -215,7 +214,6 @@ public class RedSysProviderServiceImpl implements ProviderService {
           "Bearer ".concat(token), sb.toString());
 
       Account account = accountRepository.getUserByEmailIgnoreCase(owner);
-
       Consent consent = new Consent();
       consent.setConsentId(response.getConsentId());
       consent.setAspsp(aspsp);

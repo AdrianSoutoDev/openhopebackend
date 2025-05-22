@@ -38,4 +38,11 @@ public class CookieUtils {
     response.addCookie(tokenCookie);
     response.addCookie(refreshCookie);
   }
+
+  public static void removeCookie(String name, HttpServletResponse response) {
+    Cookie cookie = new Cookie(name, "");
+    cookie.setMaxAge(0);
+    cookie.setPath("/");
+    response.addCookie(cookie);
+  }
 }

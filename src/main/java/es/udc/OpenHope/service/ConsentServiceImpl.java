@@ -31,6 +31,8 @@ public class ConsentServiceImpl implements ConsentService {
   public void delete(String owner, String aspsp, String provider) {
     Account ownerAccount = accountRepository.getUserByEmailIgnoreCase(owner);
     Consent consent = consentRepository.findByAccountAndAspspAndProvider(ownerAccount, aspsp, provider);
-    consentRepository.delete(consent);
+    if(consent != null) {
+      consentRepository.delete(consent);
+    }
   }
 }

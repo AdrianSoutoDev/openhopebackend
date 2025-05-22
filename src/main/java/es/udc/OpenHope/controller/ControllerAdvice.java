@@ -94,4 +94,13 @@ public class ControllerAdvice {
   public ErrorDto handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
     return new ErrorDto(e.getMessage());
   }
+
+  @ExceptionHandler(UnauthorizedException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDto handleUnauthorizedExceptionException(UnauthorizedException e) {
+    System.out.println("UnauthorizedException: " + e.getMessage());
+    String message = Messages.get("error.generic");
+    return new ErrorDto(message);
+  }
+
 }
