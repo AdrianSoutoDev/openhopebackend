@@ -22,4 +22,7 @@ public class BankAccount {
 
   @Column(nullable = false)
   private String ownerName;
+
+  @ManyToOne
+  Aspsp aspsp;
 }

@@ -36,6 +36,6 @@ public class ProviderControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$").isNotEmpty())
-        .andExpect(jsonPath("$[0].provider").value("REDSSYS"));
+        .andExpect(jsonPath("$[0].provider").value("REDSYS"));
   }
 }

@@ -4,7 +4,6 @@ import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.exception.ConsentInvalidException;
 import es.udc.OpenHope.exception.UnauthorizedException;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.LinkedMultiValueMap;
@@ -15,7 +14,6 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 
 @Repository
-@Profile("default")
 public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
 
   private static final String APPLICATION_JSON = "application/json";

@@ -14,7 +14,7 @@ public class ProviderManagerImpl implements ProviderManager {
   @Override
   public ProviderService getProviderService(Provider provider) {
     ProviderService providerService = null;
-    if(provider.equals(Provider.REDSSYS)) providerService = redSysProviderService;
+    if(provider.equals(Provider.REDSYS)) providerService = redSysProviderService;
     return providerService;
   }
 }

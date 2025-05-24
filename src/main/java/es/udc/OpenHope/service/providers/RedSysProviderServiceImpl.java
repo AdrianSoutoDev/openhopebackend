@@ -37,6 +37,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,7 +104,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
       List<AspspClientDto> response = redSysProviderRepository.getAspsps(commonHeadersDto, uri);
 
       return response.stream()
-          .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSSYS))
+          .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSYS))
+          .sorted(Comparator.comparing(AspspDto::getName))
           .toList();
     } catch(Exception e) {
       throw new ProviderException(Messages.get("provider.error.generic"));
@@ -121,7 +123,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("&client_id=").append(redSysClientId)
           .append("&redirect_uri=").append(oauthCallback)
           .append("&scope=PIS%20AIS%20SVA")
-          .append("&state=").append("provider=").append(Provider.REDSSYS).append(",aspsp=").append(aspsp);
+          .append("&state=").append("provider=").append(Provider.REDSYS).append(",aspsp=").append(aspsp);
 
       if(campaign != null) {
           sb.append(",campaign=").append(campaign);
@@ -217,7 +219,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       Consent consent = new Consent();
       consent.setConsentId(response.getConsentId());
       consent.setAspsp(aspsp);
-      consent.setProvider(Provider.REDSSYS.toString());
+      consent.setProvider(Provider.REDSYS.toString());
       consent.setAccount(account);
       consentRepository.save(consent);
 

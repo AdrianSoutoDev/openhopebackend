@@ -142,11 +142,9 @@ public class ProviderController {
             tokenOauth = refreshToken(providerService, refresh, aspsp, response);
             createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
           }
-
         }
       }
     } catch(UnauthorizedException e) {
-        //TODO no ha sido posible autenticarse en su banco, intentelo de nuevo.
         restartSession(accountsResponseDto, owner, aspsp, provider.toString(), response);
     }
 

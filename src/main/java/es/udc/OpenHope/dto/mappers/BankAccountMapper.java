@@ -22,10 +22,11 @@ public class BankAccountMapper {
     }
 
     sb.append(accountClientDtos.getIban().substring(0, 4))
-        .append("****").append(accountClientDtos.getIban().substring(accountClientDtos.getIban().length() - 4));
+        .append(" **** **** **** **** ").append(accountClientDtos.getIban().substring(accountClientDtos.getIban().length() - 4));
 
     accountDto.setName(sb.toString());
     accountDto.setOwnerName(accountClientDtos.getOwnerName());
+    accountDto.setOriginalName(accountClientDtos.getName());
 
     return accountDto;
   }

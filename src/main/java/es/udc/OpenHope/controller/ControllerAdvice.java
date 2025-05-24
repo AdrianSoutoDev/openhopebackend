@@ -97,7 +97,7 @@ public class ControllerAdvice {
 
   @ExceptionHandler(UnauthorizedException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ErrorDto handleUnauthorizedExceptionException(UnauthorizedException e) {
+  public ErrorDto handleUnauthorizedException(UnauthorizedException e) {
     System.out.println("UnauthorizedException: " + e.getMessage());
     String message = Messages.get("error.generic");
     return new ErrorDto(message);

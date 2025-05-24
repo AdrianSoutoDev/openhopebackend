@@ -4,14 +4,8 @@ import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
-import es.udc.OpenHope.model.BankAccount;
-import es.udc.OpenHope.model.Campaign;
-import es.udc.OpenHope.model.Category;
-import es.udc.OpenHope.model.Organization;
-import es.udc.OpenHope.repository.BankAccountRepository;
-import es.udc.OpenHope.repository.CampaignRepository;
-import es.udc.OpenHope.repository.CategoryRepository;
-import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +28,7 @@ public class CampaignServiceImpl implements CampaignService {
   private final CategoryRepository categoryRepository;
   private final ResourceService resourceService;
   private final BankAccountRepository bankAccountRepository;
+  private final AspspRepository aspspRepository;
 
   @Override
   @Transactional
@@ -87,12 +82,25 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     Optional<BankAccount> bankAccount = bankAccountRepository.findByIban(bankAccountParams.getIban());
+    Optional<Aspsp> aspsp = aspspRepository.findByProviderAndCode(bankAccountParams.getAspsp().getProvider(), bankAccountParams.getAspsp().getCode());
+
     if(bankAccount.isEmpty()){
       BankAccount newBankAccount = new BankAccount();
       newBankAccount.setIban(bankAccountParams.getIban());
-      newBankAccount.setName(bankAccountParams.getName());
+      newBankAccount.setName(bankAccountParams.getOriginalName());
       newBankAccount.setResourceId(bankAccountParams.getResourceId());
       newBankAccount.setOwnerName(bankAccountParams.getOwnerName());
+
+      if(aspsp.isEmpty()){
+        Aspsp newAspsp = new Aspsp();
+        newAspsp.setCode(bankAccountParams.getAspsp().getCode());
+        newAspsp.setName(bankAccountParams.getAspsp().getName());
+        newAspsp.setProvider(bankAccountParams.getAspsp().getProvider());
+        aspspRepository.save(newAspsp);
+        aspsp = Optional.of(newAspsp);
+      }
+
+      newBankAccount.setAspsp(aspsp.get());
       bankAccountRepository.save(newBankAccount);
       campaign.get().setBankAccount(newBankAccount);
     } else {
