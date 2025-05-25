@@ -26,7 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @Transactional
@@ -178,5 +179,18 @@ public class AccountControllerTest {
     ResultActions result = mockMvc.perform(post("/api/accounts/logout")
         .contentType(MediaType.APPLICATION_JSON));
     result.andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  public void validateTest() throws Exception {
+    userService.create(USER_EMAIL, PASSWORD);
+    String authToken = userService.authenticate(USER_EMAIL, PASSWORD);
+    ResultActions result = mockMvc.perform(post("/api/accounts/validate")
+        .header("Authorization", "Bearer " + authToken)
+        .contentType(MediaType.APPLICATION_JSON));
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.email").value(USER_EMAIL));
   }
 }
