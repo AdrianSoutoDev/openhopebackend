@@ -143,13 +143,6 @@
 							<goal>report</goal>
 						</goals>
 					</execution>
-					<execution>
-						<configuration>
-							<excludes>
-								<exclude>es.udc.OpenHope.repository.RedSysProviderRepositoryImpl.class</exclude>
-							</excludes>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 		</plugins>

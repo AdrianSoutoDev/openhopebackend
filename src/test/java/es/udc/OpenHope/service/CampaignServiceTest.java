@@ -265,7 +265,7 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccount() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+  public void updateCampaignBankAccountTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
@@ -280,7 +280,7 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccountThatDoesntExist() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+  public void updateCampaignBankAccountThatDoesntExistTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
 
     AspspParamsDto aspspParamsDto = Utils.getAspspParams();
@@ -292,7 +292,7 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccountWithNoPermission() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+  public void updateCampaignBankAccountWithNoPermissionTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
