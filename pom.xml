@@ -146,7 +146,7 @@
 					<execution>
 						<configuration>
 							<excludes>
-								<exclude>es.udc.OpenHope.repository.RedSysProviderRepositoryImpl</exclude>
+								<exclude>es.udc.OpenHope.repository.RedSysProviderRepositoryImpl.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>

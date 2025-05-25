@@ -1,5 +1,7 @@
 package es.udc.OpenHope.utils;
 
+import es.udc.OpenHope.dto.AspspParamsDto;
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,5 +58,22 @@ public class Utils {
     return categories;
   }
 
+  public static AspspParamsDto getAspspParams(){
+    AspspParamsDto aspspParamsDto = new AspspParamsDto();
+    aspspParamsDto.setCode(ASPSP_CODE);
+    aspspParamsDto.setName(ASPSP_NAME);
+    aspspParamsDto.setProvider(ASPSP_PROVIDER);
+
+    return aspspParamsDto;
+  }
+
+  public static BankAccountParams getBankAccountParams() {
+    BankAccountParams bankAccountParams = new BankAccountParams();
+    bankAccountParams.setIban(BANK_IBAN);
+    bankAccountParams.setResourceId(BANK_RESOURCE_ID);
+    bankAccountParams.setOwnerName(BANK_OWNER_NAME);
+    bankAccountParams.setOriginalName(BANK_ORIGINAL_NAME);
+    return bankAccountParams;
+  }
 
 }

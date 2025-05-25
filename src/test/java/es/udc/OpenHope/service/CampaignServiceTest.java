@@ -1,5 +1,7 @@
 package es.udc.OpenHope.service;
 
+import es.udc.OpenHope.dto.AspspParamsDto;
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
@@ -260,5 +262,47 @@ public class CampaignServiceTest {
   public void getCampaignThatDoesntExistsTest() {
     assertThrows(NoSuchElementException.class, () ->
         campaignService.get(0L));
+  }
+
+  @Test
+  public void updateCampaignBankAccount() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+
+    AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+    BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+    bankAccountParams.setAspsp(aspspParamsDto);
+
+    CampaignDto campaignDtoUpdated = campaignService.updateBankAccount(campaignDto.getId(), bankAccountParams, ORG_EMAIL);
+    assertTrue(campaignDtoUpdated.isHasBankAccount());
+  }
+
+  @Test
+  public void updateCampaignBankAccountThatDoesntExist() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+
+    AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+    BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+    bankAccountParams.setAspsp(aspspParamsDto);
+
+    assertThrows(NoSuchElementException.class, () ->
+        campaignService.updateBankAccount(-1L, bankAccountParams, ORG_EMAIL));
+  }
+
+  @Test
+  public void updateCampaignBankAccountWithNoPermission() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+
+    AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+    BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+    bankAccountParams.setAspsp(aspspParamsDto);
+
+    assertThrows(SecurityException.class, () ->
+        campaignService.updateBankAccount(campaignDto.getId(), bankAccountParams, "another_email@openhope.com"));
   }
 }

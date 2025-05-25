@@ -109,7 +109,7 @@ public class CampaignServiceImpl implements CampaignService {
 
     campaignRepository.save(campaign.get());
 
-    return CampaignMapper.toCampaignDto(campaign.get());
+    return toCampaignDto(campaign.get());
   }
 
   private boolean campaignExists(String name) {

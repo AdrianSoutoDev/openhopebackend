@@ -31,4 +31,14 @@ public abstract class Constants {
   public static final LocalDate CAMPAIGN_START_AT = LocalDate.now();
   public static final LocalDate CAMPAIGN_DATE_LIMIT = LocalDate.now().plusMonths(1);
 
+  //Aspsp
+  public static final String ASPSP_CODE = "BBVA";
+  public static final String ASPSP_NAME = "BANCO BILBAO VIZCAYA ARGENTARIA, S.A.";
+  public static final String ASPSP_PROVIDER = "REDSYS";
+
+  //Bank account
+  public static final String BANK_IBAN = "ES2501822200160201933547";
+  public static final String BANK_RESOURCE_ID = "ES018202000000000500000000361787589";
+  public static final String BANK_OWNER_NAME = "Nombre Apellido1 Apellido2";
+  public static final String BANK_ORIGINAL_NAME = "CUENTA PARA AHORROS";
 }
