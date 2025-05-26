@@ -65,6 +65,12 @@ public class ControllerAdvice {
     return new ErrorDto(e.getMessage());
   }
 
+  @ExceptionHandler(MaxTopicsExceededException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDto handleMaxTopicsExceededException(MaxTopicsExceededException e) {
+    return new ErrorDto(e.getMessage());
+  }
+
   @ExceptionHandler(NoSuchElementException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ErrorDto handleNoSuchElementException(NoSuchElementException e) {

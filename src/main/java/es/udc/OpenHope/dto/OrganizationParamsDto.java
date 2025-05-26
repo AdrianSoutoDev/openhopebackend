@@ -27,4 +27,5 @@ public class OrganizationParamsDto {
 
   private String description;
   private List<String> categories;
+  private List<String> topics;
 }

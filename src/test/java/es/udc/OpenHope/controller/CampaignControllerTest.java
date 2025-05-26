@@ -308,4 +308,6 @@ public class CampaignControllerTest {
     ResultActions result = mockMvc.perform(get("/api/campaigns/{id}", 0));
     result.andExpect(status().isNotFound());
   }
+
+  //TODO testear update campaign
 }

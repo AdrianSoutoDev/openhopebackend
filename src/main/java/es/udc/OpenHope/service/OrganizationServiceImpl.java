@@ -5,11 +5,13 @@ import es.udc.OpenHope.dto.mappers.OrganizationMapper;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Messages;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,27 +25,30 @@ import java.util.*;
 public class OrganizationServiceImpl extends AccountServiceImpl implements OrganizationService {
 
   private static final int MAX_CATEGORIES_ALLOWED = 3;
+  private static final int MAX_TOPICS_ALLOWED = 5;
 
   private final OrganizationRepository organizationRepository;
   private final ResourceService resourceService;
   private final CategoryRepository categoryRepository;
+  private final TopicService topicService;
 
   public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  BCryptPasswordEncoder bCryptPasswordEncoder, AccountRepository accountRepository,
                                  ResourceService resourceService, CategoryRepository categoryRepository,
-                                 TokenService tokenService) {
+                                 TokenService tokenService, TopicRepository topicRepository, TopicService topicService) {
     super(bCryptPasswordEncoder, accountRepository, tokenService);
     this.organizationRepository = organizationRepository;
     this.resourceService = resourceService;
     this.categoryRepository = categoryRepository;
+    this.topicService = topicService;
   }
 
   @Override
   @Transactional
-  public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image)
-      throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+  public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image)
+      throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
 
-    validateParamsCreate(email, password, name, categoryNames);
+    validateParamsCreate(email, password, name, categoryNames, topics);
 
     //Create organization
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
@@ -54,7 +59,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     Organization organization = new Organization(email, encryptedPassword, name, description ,imagePath, categories);
     organizationRepository.save(organization);
-
+    topicService.saveTopics(topics, organization);
     return OrganizationMapper.toOrganizationDto(organization);
   }
 
@@ -67,10 +72,10 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   @Override
   @Transactional
-  public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+  public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException, MaxTopicsExceededException {
 
     Optional<Organization> organization = organizationRepository.findById(id);
-    validateParamsUpdate(organization, name, categoryNames, owner);
+    validateParamsUpdate(organization, name, categoryNames, topics, owner);
 
     //Update organization
     if(image != null) {
@@ -94,6 +99,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     organization.get().setCategories(categories);
 
     organizationRepository.save(organization.get());
+    topicService.updateTopics(topics, organization.get());
     return OrganizationMapper.toOrganizationDto(organization.get());
   }
 
@@ -106,7 +112,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     return organization != null && !organization.getId().equals(id);
   }
 
-  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames, List<String> topics) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
     if(email == null || email.isBlank()) throw new IllegalArgumentException( Messages.get("validation.email.null") );
     if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
     if(name == null || name.isBlank())  throw new IllegalArgumentException( Messages.get("validation.name.null") );
@@ -117,9 +123,13 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
     }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
+    }
   }
 
-  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException {
+  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, List<String> topics,  String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
 
     if(!owner.equals(organization.get().getEmail())){
@@ -133,6 +143,10 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
+    }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
     }
   }
 }

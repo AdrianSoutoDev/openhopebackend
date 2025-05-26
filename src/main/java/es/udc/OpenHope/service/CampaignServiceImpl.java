@@ -4,6 +4,7 @@ import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.*;
 import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.utils.Messages;
@@ -23,21 +24,24 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CampaignServiceImpl implements CampaignService {
 
+  private static final int MAX_TOPICS_ALLOWED = 5;
+
   private final CampaignRepository campaignRepository;
   private final OrganizationRepository organizationRepository;
   private final CategoryRepository categoryRepository;
   private final ResourceService resourceService;
   private final BankAccountRepository bankAccountRepository;
   private final AspspRepository aspspRepository;
+  private final TopicService topicService;
 
   @Override
   @Transactional
   public CampaignDto create(Long organizationId, String owner, String name, String description, LocalDate startAt,
                             LocalDate dateLimit, Long economicTarget, Float minimumDonation, List<String> categoryNames,
-                            MultipartFile image) throws DuplicatedCampaignException {
+                            List<String> topics, MultipartFile image) throws DuplicatedCampaignException, MaxTopicsExceededException {
 
     Optional<Organization> organization = organizationRepository.findById(organizationId);
-    validateParamsCreate(organization, owner, name, startAt, dateLimit, economicTarget);
+    validateParamsCreate(organization, owner, name, startAt, dateLimit, economicTarget, topics);
 
     //create Campaign
     Date startAtDate = Date.valueOf(startAt);
@@ -50,6 +54,7 @@ public class CampaignServiceImpl implements CampaignService {
         organization.get(), description,  categories);
 
     campaignRepository.save(campaign);
+    topicService.saveTopics(topics, campaign);
 
     return CampaignMapper.toCampaignDto(campaign).amountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
   }
@@ -173,7 +178,7 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,
-                               LocalDate dateLimit, Long economicTarget) throws DuplicatedCampaignException {
+                               LocalDate dateLimit, Long economicTarget, List<String> topics) throws DuplicatedCampaignException, MaxTopicsExceededException {
 
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
 
@@ -196,6 +201,10 @@ public class CampaignServiceImpl implements CampaignService {
 
     if(dateLimit != null && (startAt.isEqual(dateLimit) ||  startAt.isAfter(dateLimit)) ){
       throw new IllegalArgumentException( Messages.get("validation.datelimit.startAt.invalid"));
+    }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
     }
   }
 }
