@@ -6,7 +6,9 @@ import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.Organization;
+import es.udc.OpenHope.model.Topic;
 import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Utils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -44,16 +46,18 @@ public class OrganizationServiceTest {
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final ResourceService resourceService;
   private final Utils utils;
+  private final TopicRepository topicRepository;
 
   @Autowired
   public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository,
                                  final BCryptPasswordEncoder bCryptPasswordEncoder, final ResourceService resourceService,
-                                 final ResourceService resourceService1 , final Utils utils) {
+                                 final ResourceService resourceService1 , final Utils utils, final TopicRepository topicRepository) {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     this.resourceService = resourceService;
     this.utils = utils;
+    this.topicRepository = topicRepository;
   }
 
   @AfterEach
@@ -169,11 +173,12 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void createOrganizationWithCategories() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+  public void createOrganizationWithCategoriesAndTopics() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
     utils.initCategories();
 
+    List<String> topics = Utils.getTopics();
     List<String> categoryNames = utils.getCategoryNames();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, categoryNames, topics, null);
     Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
 
     assertFalse(organizationDto.getCategories().isEmpty());
@@ -226,7 +231,6 @@ public class OrganizationServiceTest {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, testImage);
 
     createdFileNames.add(organizationDto.getImage());
-
     organizationService.update(organizationDto.getId(), "New Name", "New Description",
         null, null, testImage, organizationDto.getEmail());
 
@@ -244,6 +248,28 @@ public class OrganizationServiceTest {
     assertEquals(1, imageCount);
     assertEquals("New Name", organizationFinded.get().getName());
     assertEquals("New Description", organizationFinded.get().getDescription());
+  }
+
+  @Test
+  public void updateChangingTopicsTest() throws IOException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    MockMultipartFile testImage = utils.getTestImg();
+    List<String> topics = Utils.getTopics();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, topics, testImage);
+    createdFileNames.add(organizationDto.getImage());
+    List<String> newTopics = Utils.getAnotherTopics();
+
+    organizationService.update(organizationDto.getId(), "New Name", "New Description",
+        null, newTopics, testImage, organizationDto.getEmail());
+
+    Optional<Organization> organizationFinded = organizationRepository.findById(organizationDto.getId());
+
+    List<Topic> topicFinded = topicRepository.findByOrganization(organizationFinded.get());
+
+    assertEquals(topicFinded.size(), newTopics.size());
+    assertTrue(topicFinded.stream().anyMatch(t -> t.getName().equals(newTopics.getFirst())));
+    assertTrue(topicFinded.stream().anyMatch(t -> t.getName().equals(newTopics.get(1))));
+    assertTrue(topicFinded.stream().anyMatch(t -> t.getName().equals(newTopics.get(2))));
+    assertTrue(topicFinded.stream().anyMatch(t -> t.getName().equals(newTopics.getLast())));
   }
 
   @Test
@@ -313,7 +339,4 @@ public class OrganizationServiceTest {
         organizationService.update(organizationDto.getId(), ORG_NAME, ORG_DESCRIPTION,
             categories, null, null, ORG_EMAIL));
   }
-
-  //TODO testear crear organizacion con topics
-  //TODO testear update organizacion con topics
 }

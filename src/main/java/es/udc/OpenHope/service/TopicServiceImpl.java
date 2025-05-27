@@ -6,7 +6,6 @@ import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
-import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Messages;

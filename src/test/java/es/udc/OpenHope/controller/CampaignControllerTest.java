@@ -1,9 +1,7 @@
 package es.udc.OpenHope.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.OpenHope.dto.*;
-import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.utils.Utils;
@@ -68,6 +66,7 @@ public class CampaignControllerTest {
         .param("minimumDonation", params.getMinimumDonation() == null ? "" : String.valueOf(params.getMinimumDonation()))
         .param("description", params.getDescription())
         .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
+        .param("topics", params.getTopics() != null ? String.join(",", params.getTopics()) : "")
         .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -101,6 +100,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
     campaignParamsDto.setCategories(categories);
+    campaignParamsDto.setTopics(Utils.getTopics());
 
     ResultActions result = createCampaign(campaignParamsDto, authToken);
 
@@ -342,7 +342,7 @@ public class CampaignControllerTest {
 
   @Test
   public void updateCampaignBankAccountThatDoesntExistTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
     ResultActions result = updateCampaign(-1L, authToken);
     result.andExpect(status().isNotFound());
@@ -351,14 +351,14 @@ public class CampaignControllerTest {
   @Test
   public void updateCampaignBankAccountWithNoPermissionTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope.com", PASSWORD, "another org name", null, null, null, null);
+    organizationService.create("another_email@openhope.com", PASSWORD, "another org name", null, null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
         CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     String authToken = organizationService.authenticate("another_email@openhope.com", PASSWORD);
 
-    ResultActions result = updateCampaign(organizationDto.getId(), authToken);
+    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
     result.andExpect(status().isForbidden());
   }
 }

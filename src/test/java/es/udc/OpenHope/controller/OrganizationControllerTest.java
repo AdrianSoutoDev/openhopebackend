@@ -99,6 +99,7 @@ public class OrganizationControllerTest {
         .param("name", params.getName())
         .param("description", params.getDescription())
         .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
+        .param("topics", params.getTopics() != null ? String.join(",", params.getTopics()) : "")
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
@@ -123,6 +124,7 @@ public class OrganizationControllerTest {
         .param("name", params.getName())
         .param("description", params.getDescription())
         .param("categories", String.valueOf(params.getCategories()))
+        .param("topics", String.valueOf(params.getCategories()))
         .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -297,6 +299,19 @@ public class OrganizationControllerTest {
   }
 
   @Test
+  void registerOrganizationWithTopicsTest() throws Exception {
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setTopics(Utils.getTopics());
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+  }
+
+  @Test
   void registerOrganizationWithMoreThanThreeCategoriesTest() throws Exception {
     utils.initCategories();
 
@@ -336,13 +351,15 @@ public class OrganizationControllerTest {
 
   @Test
   void UpdateOrganizationTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    List<String> topics = Utils.getTopics();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, topics, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setName("New Name");
     editOrganizationParamsDto.setDescription("New Description");
+    editOrganizationParamsDto.setTopics(Utils.getAnotherTopics());
 
     ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
 

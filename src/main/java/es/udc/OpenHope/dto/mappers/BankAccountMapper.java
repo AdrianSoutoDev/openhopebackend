@@ -1,9 +1,7 @@
 package es.udc.OpenHope.dto.mappers;
 
 import es.udc.OpenHope.dto.AccountDto;
-import es.udc.OpenHope.dto.CategoryDto;
 import es.udc.OpenHope.dto.client.AccountClientDto;
-import es.udc.OpenHope.model.Category;
 
 import java.util.ArrayList;
 import java.util.List;

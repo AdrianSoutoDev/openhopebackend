@@ -89,8 +89,10 @@ public class CampaignServiceTest {
     List<String> categories = utils.getCategoryNames().subList(0,1);
     MockMultipartFile testImage = utils.getTestImg();
 
+    List<String> topics = Utils.getTopics();
+
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, MINIMUM_DONATION, categories, null, testImage);
+        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, MINIMUM_DONATION, categories, topics, testImage);
 
     createdFileNames.add(campaignDto.getImage());
     Path filePath = Path.of(uploadDir, createdFileNames.getFirst());
@@ -302,6 +304,4 @@ public class CampaignServiceTest {
     assertThrows(SecurityException.class, () ->
         campaignService.updateBankAccount(campaignDto.getId(), bankAccountParams, "another_email@openhope.com"));
   }
-
-  //TODO testear crear organizacion con topics
 }

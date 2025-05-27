@@ -1,9 +1,7 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.TopicDto;
-import es.udc.OpenHope.service.CampaignService;
-import es.udc.OpenHope.service.OrganizationService;
+import es.udc.OpenHope.dto.TopicsResponseDto;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.TopicService;
 import lombok.RequiredArgsConstructor;
@@ -22,15 +20,18 @@ public class TopicController {
   private final TokenService tokenService;
 
   @GetMapping
-  public ResponseEntity<List<TopicDto>> getTopics(@RequestParam(required = true) Long organization,
-                                                  @RequestHeader(name="Authorization") String token) {
+  public ResponseEntity<TopicsResponseDto> getTopics(@RequestParam(required = true) Long organization,
+                                                     @RequestHeader(name="Authorization") String token) {
 
     String owner = tokenService.extractsubject(token);
-    List<TopicDto> topicDtos = new ArrayList<>();
+    TopicsResponseDto topicsResponseDto = new TopicsResponseDto();
+    topicsResponseDto.setTopics(new ArrayList<>());
+
     if(organization != null) {
-      topicDtos = topicService.getFromOrganization(organization, owner);
+      List<TopicDto> topicDtos = topicService.getFromOrganization(organization, owner);
+      topicsResponseDto.setTopics(topicDtos);
     }
 
-    return ResponseEntity.ok(topicDtos);
+    return ResponseEntity.ok(topicsResponseDto);
   }
 }
