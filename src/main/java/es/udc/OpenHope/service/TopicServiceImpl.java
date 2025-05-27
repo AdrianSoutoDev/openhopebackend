@@ -26,17 +26,21 @@ public class TopicServiceImpl implements TopicService {
   @Override
   @Transactional
   public void saveTopics(List<String> topics, Organization organization) {
-    List<Topic> topicsToSave = new ArrayList<>();
-    topics.forEach(t ->  topicsToSave.add(new Topic(t, organization)));
-    topicRepository.saveAll(topicsToSave);
+    if(topics != null) {
+      List<Topic> topicsToSave = new ArrayList<>();
+      topics.forEach(t -> topicsToSave.add(new Topic(t, organization)));
+      topicRepository.saveAll(topicsToSave);
+    }
   }
 
   @Override
   @Transactional
   public void saveTopics(List<String> topics, Campaign campaign) {
-    List<Topic> topicsToSave = new ArrayList<>();
-    topics.forEach(t ->  topicsToSave.add(new Topic(t, campaign)));
-    topicRepository.saveAll(topicsToSave);
+    if(topics != null) {
+      List<Topic> topicsToSave = new ArrayList<>();
+      topics.forEach(t -> topicsToSave.add(new Topic(t, campaign)));
+      topicRepository.saveAll(topicsToSave);
+    }
   }
 
   @Override
@@ -53,27 +57,29 @@ public class TopicServiceImpl implements TopicService {
   @Override
   @Transactional
   public void updateTopics(List<String> topics, Organization organization) {
-    List<Topic> topicsFinded = topicRepository.findByOrganization(organization);
+    if(topics != null) {
+      List<Topic> topicsFinded = topicRepository.findByOrganization(organization);
 
-    Set<String> foundTopics = topicsFinded.stream().map(Topic::getName).collect(Collectors.toSet());
-    Set<String> inputTopics = new HashSet<>(topics);
+      Set<String> foundTopics = topicsFinded.stream().map(Topic::getName).collect(Collectors.toSet());
+      Set<String> inputTopics = new HashSet<>(topics);
 
-    Set<String> topicsToRemove = new HashSet<>(foundTopics);
-    topicsToRemove.removeAll(inputTopics);
+      Set<String> topicsToRemove = new HashSet<>(foundTopics);
+      topicsToRemove.removeAll(inputTopics);
 
-    Set<String> topicsToAdd = new HashSet<>(inputTopics);
-    topicsToAdd.removeAll(foundTopics);
+      Set<String> topicsToAdd = new HashSet<>(inputTopics);
+      topicsToAdd.removeAll(foundTopics);
 
-    topicsToRemove.forEach(topicName -> {
-      Topic topic = topicRepository.findByNameAndOrganization(topicName, organization);
-      if (topic != null) {
-        topicRepository.delete(topic);
-      }
-    });
+      topicsToRemove.forEach(topicName -> {
+        Topic topic = topicRepository.findByNameAndOrganization(topicName, organization);
+        if (topic != null) {
+          topicRepository.delete(topic);
+        }
+      });
 
-    topicsToAdd.forEach(topicName -> {
-      Topic newTopic = new Topic(topicName, organization);
-      topicRepository.save(newTopic);
-    });
+      topicsToAdd.forEach(topicName -> {
+        Topic newTopic = new Topic(topicName, organization);
+        topicRepository.save(newTopic);
+      });
+    }
   }
 }

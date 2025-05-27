@@ -88,7 +88,7 @@ public class AccountControllerTest {
 
   @Test
   public void loginOrganizationTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
 
     ResultActions result = loginUser(ORG_EMAIL, PASSWORD);
 

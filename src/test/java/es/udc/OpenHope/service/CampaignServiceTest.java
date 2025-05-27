@@ -4,10 +4,7 @@ import es.udc.OpenHope.dto.AspspParamsDto;
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.OrganizationDto;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.DuplicatedCampaignException;
-import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.utils.Utils;
@@ -69,11 +66,11 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void createCampaignTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+  public void createCampaignTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
 
@@ -85,15 +82,15 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void createCampaignWithOptionalInfoTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, IOException {
+  public void createCampaignWithOptionalInfoTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, IOException, MaxTopicsExceededException {
     utils.initCategories();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     List<String> categories = utils.getCategoryNames().subList(0,1);
     MockMultipartFile testImage = utils.getTestImg();
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, MINIMUM_DONATION, categories, testImage);
+        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, MINIMUM_DONATION, categories, null, testImage);
 
     createdFileNames.add(campaignDto.getImage());
     Path filePath = Path.of(uploadDir, createdFileNames.getFirst());
@@ -117,100 +114,100 @@ public class CampaignServiceTest {
   public void createCampaignForOrganizationThatDoesntExistsTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
     assertThrows(NoSuchElementException.class, () ->
         campaignService.create(0L, ORG_EMAIL, CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithIncorrectOwnerTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithIncorrectOwnerTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(SecurityException.class, () ->
         campaignService.create(organizationDto.getId(), "another-email@openhope.com", CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithNameNullTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithNameNullTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), null, null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithNameEmptyTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithNameEmptyTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "", null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithNameBlankTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithNameBlankTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), " ", null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithDuplicatedNameTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithDuplicatedNameTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     assertThrows(DuplicatedCampaignException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithStartAtNullTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithStartAtNullTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, null,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithStartAtBeforeTodayTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithStartAtBeforeTodayTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     LocalDate StartAtBeforeToday = LocalDate.now().minusDays(1);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, StartAtBeforeToday,
-            CAMPAIGN_DATE_LIMIT, null, null, null, null));
+            CAMPAIGN_DATE_LIMIT, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithouthDateLimitAndEconomicTagetTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithouthDateLimitAndEconomicTagetTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-            null, null, null, null, null));
+            null, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithhDateLimitEqualsStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithhDateLimitEqualsStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     LocalDate dateLimit = CAMPAIGN_START_AT;
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-            dateLimit, null, null, null, null));
+            dateLimit, null, null, null, null, null));
   }
 
   @Test
-  public void createCampaignWithDateLimitBeforeStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+  public void createCampaignWithDateLimitBeforeStartAtTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     LocalDate startAt = CAMPAIGN_START_AT.plusDays(5);
 
@@ -218,15 +215,15 @@ public class CampaignServiceTest {
 
     assertThrows(IllegalArgumentException.class, () ->
         campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, startAt,
-            dateLimit, null, null, null, null));
+            dateLimit, null, null, null, null, null));
   }
 
   @Test
-  public void getCampaignsByOrganizationTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+  public void getCampaignsByOrganizationTest() throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     Page<CampaignDto> campaignPage = campaignService.getByOrganization(organizationDto.getId(), 0 ,PAGE_SIZE);
 
@@ -243,11 +240,11 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void getCampaignTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+  public void getCampaignTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     CampaignDto campaignFinded = campaignService.get(campaignDto.getId());
 
@@ -265,11 +262,11 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccountTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+  public void updateCampaignBankAccountTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     AspspParamsDto aspspParamsDto = Utils.getAspspParams();
     BankAccountParams bankAccountParams = Utils.getBankAccountParams();
@@ -280,8 +277,8 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccountThatDoesntExistTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null);
+  public void updateCampaignBankAccountThatDoesntExistTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
 
     AspspParamsDto aspspParamsDto = Utils.getAspspParams();
     BankAccountParams bankAccountParams = Utils.getBankAccountParams();
@@ -292,11 +289,11 @@ public class CampaignServiceTest {
   }
 
   @Test
-  public void updateCampaignBankAccountWithNoPermissionTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+  public void updateCampaignBankAccountWithNoPermissionTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     AspspParamsDto aspspParamsDto = Utils.getAspspParams();
     BankAccountParams bankAccountParams = Utils.getBankAccountParams();
