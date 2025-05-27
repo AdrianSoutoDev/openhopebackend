@@ -1,8 +1,9 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.CampaignParamsDto;
-import es.udc.OpenHope.dto.OrganizationDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.OpenHope.dto.*;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.utils.Utils;
@@ -25,6 +26,7 @@ import java.util.List;
 
 import static es.udc.OpenHope.utils.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -37,14 +39,16 @@ public class CampaignControllerTest {
   private final CampaignService campaignService;
   private final MockMvc mockMvc;
   private final Utils utils;
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public CampaignControllerTest(final OrganizationService organizationService, final CampaignService campaignService,
-                                final MockMvc mockMvc, final Utils utils) {
+                                final MockMvc mockMvc, final Utils utils, final ObjectMapper objectMapper) {
     this.organizationService = organizationService;
     this.campaignService = campaignService;
     this.mockMvc = mockMvc;
     this.utils = utils;
+    this.objectMapper = objectMapper;
   }
 
   private ResultActions createCampaign(CampaignParamsDto params, String authToken) throws Exception {
@@ -68,6 +72,19 @@ public class CampaignControllerTest {
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
+  }
+
+  private ResultActions updateCampaign(Long id, String authToken) throws Exception {
+    AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+    BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+    bankAccountParams.setAspsp(aspspParamsDto);
+
+    String jsonContent = objectMapper.writeValueAsString(bankAccountParams);
+
+    return mockMvc.perform(put("/api/campaigns/" + id.toString())
+        .header("Authorization", "Bearer " + authToken)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(jsonContent));
   }
 
   @Test
@@ -309,5 +326,39 @@ public class CampaignControllerTest {
     result.andExpect(status().isNotFound());
   }
 
-  //TODO testear update campaign
+  @Test
+  public void updateCampaignBankAccountTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.hasBankAccount").value(true));
+  }
+
+  @Test
+  public void updateCampaignBankAccountThatDoesntExistTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(-1L, authToken);
+    result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateCampaignBankAccountWithNoPermissionTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope.com", PASSWORD, "another org name", null, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    String authToken = organizationService.authenticate("another_email@openhope.com", PASSWORD);
+
+    ResultActions result = updateCampaign(organizationDto.getId(), authToken);
+    result.andExpect(status().isForbidden());
+  }
 }

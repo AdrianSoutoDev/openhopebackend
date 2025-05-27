@@ -313,4 +313,7 @@ public class OrganizationServiceTest {
         organizationService.update(organizationDto.getId(), ORG_NAME, ORG_DESCRIPTION,
             categories, null, null, ORG_EMAIL));
   }
+
+  //TODO testear crear organizacion con topics
+  //TODO testear update organizacion con topics
 }

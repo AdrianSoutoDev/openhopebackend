@@ -302,4 +302,6 @@ public class CampaignServiceTest {
     assertThrows(SecurityException.class, () ->
         campaignService.updateBankAccount(campaignDto.getId(), bankAccountParams, "another_email@openhope.com"));
   }
+
+  //TODO testear crear organizacion con topics
 }
