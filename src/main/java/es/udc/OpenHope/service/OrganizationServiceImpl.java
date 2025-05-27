@@ -25,7 +25,6 @@ import java.util.*;
 public class OrganizationServiceImpl extends AccountServiceImpl implements OrganizationService {
 
   private static final int MAX_CATEGORIES_ALLOWED = 3;
-  private static final int MAX_TOPICS_ALLOWED = 5;
 
   private final OrganizationRepository organizationRepository;
   private final ResourceService resourceService;
@@ -59,7 +58,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     Organization organization = new Organization(email, encryptedPassword, name, description ,imagePath, categories);
     organizationRepository.save(organization);
-    topicService.saveTopics(topics, organization);
+    topicService.saveTopics(topics, organization, email);
     return OrganizationMapper.toOrganizationDto(organization);
   }
 
@@ -99,7 +98,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     organization.get().setCategories(categories);
 
     organizationRepository.save(organization.get());
-    topicService.updateTopics(topics, organization.get());
+    topicService.updateTopics(topics, organization.get(), owner);
     return OrganizationMapper.toOrganizationDto(organization.get());
   }
 
@@ -112,7 +111,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     return organization != null && !organization.getId().equals(id);
   }
 
-  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames, List<String> topics) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
+  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames, List<String> topics) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
     if(email == null || email.isBlank()) throw new IllegalArgumentException( Messages.get("validation.email.null") );
     if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
     if(name == null || name.isBlank())  throw new IllegalArgumentException( Messages.get("validation.name.null") );
@@ -123,13 +122,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
     }
-
-    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
-      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
-    }
   }
 
-  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, List<String> topics,  String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
+  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, List<String> topics,  String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException {
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
 
     if(!owner.equals(organization.get().getEmail())){
@@ -143,10 +138,6 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
-    }
-
-    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
-      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
     }
   }
 }

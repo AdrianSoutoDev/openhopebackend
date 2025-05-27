@@ -2,12 +2,14 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.TopicDto;
 import es.udc.OpenHope.dto.mappers.TopicMapper;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
 import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.repository.TopicRepository;
+import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +21,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TopicServiceImpl implements TopicService {
 
+  private static final int MAX_TOPICS_ALLOWED = 5;
+
   private final TopicRepository topicRepository;
   private final OrganizationRepository organizationRepository;
-  private final CampaignRepository campaignRepository;
 
   @Override
   @Transactional
-  public void saveTopics(List<String> topics, Organization organization) {
+  public void saveTopics(List<String> topics, Organization organization, String owner) throws MaxTopicsExceededException {
+    if(!owner.equals(organization.getEmail())){
+      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
+    }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
+    }
+
     if(topics != null) {
       List<Topic> topicsToSave = new ArrayList<>();
       topics.forEach(t -> topicsToSave.add(new Topic(t, organization)));
@@ -35,7 +46,15 @@ public class TopicServiceImpl implements TopicService {
 
   @Override
   @Transactional
-  public void saveTopics(List<String> topics, Campaign campaign) {
+  public void saveTopics(List<String> topics, Campaign campaign, String owner) throws MaxTopicsExceededException {
+    if(!owner.equals(campaign.getOrganization().getEmail())){
+      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
+    }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
+    }
+
     if(topics != null) {
       List<Topic> topicsToSave = new ArrayList<>();
       topics.forEach(t -> topicsToSave.add(new Topic(t, campaign)));
@@ -56,7 +75,15 @@ public class TopicServiceImpl implements TopicService {
 
   @Override
   @Transactional
-  public void updateTopics(List<String> topics, Organization organization) {
+  public void updateTopics(List<String> topics, Organization organization, String owner) throws MaxTopicsExceededException {
+    if(!owner.equals(organization.getEmail())){
+      throw new SecurityException(Messages.get("validation.organization.update.not.allowed"));
+    }
+
+    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
+      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
+    }
+
     if(topics != null) {
       List<Topic> topicsFinded = topicRepository.findByOrganization(organization);
 

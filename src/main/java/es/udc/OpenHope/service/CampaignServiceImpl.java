@@ -24,8 +24,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CampaignServiceImpl implements CampaignService {
 
-  private static final int MAX_TOPICS_ALLOWED = 5;
-
   private final CampaignRepository campaignRepository;
   private final OrganizationRepository organizationRepository;
   private final CategoryRepository categoryRepository;
@@ -54,7 +52,7 @@ public class CampaignServiceImpl implements CampaignService {
         organization.get(), description,  categories);
 
     campaignRepository.save(campaign);
-    topicService.saveTopics(topics, campaign);
+    topicService.saveTopics(topics, campaign, owner);
 
     return CampaignMapper.toCampaignDto(campaign).amountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
   }
@@ -178,7 +176,7 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,
-                               LocalDate dateLimit, Long economicTarget, List<String> topics) throws DuplicatedCampaignException, MaxTopicsExceededException {
+                               LocalDate dateLimit, Long economicTarget, List<String> topics) throws DuplicatedCampaignException {
 
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
 
@@ -201,10 +199,6 @@ public class CampaignServiceImpl implements CampaignService {
 
     if(dateLimit != null && (startAt.isEqual(dateLimit) ||  startAt.isAfter(dateLimit)) ){
       throw new IllegalArgumentException( Messages.get("validation.datelimit.startAt.invalid"));
-    }
-
-    if(topics != null && topics.size() > MAX_TOPICS_ALLOWED){
-      throw new MaxTopicsExceededException(Messages.get("validation.max.topics") );
     }
   }
 }

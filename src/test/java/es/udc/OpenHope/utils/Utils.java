@@ -76,4 +76,23 @@ public class Utils {
     return bankAccountParams;
   }
 
+  public static List<String> getTopics() {
+    List<String> topics = new ArrayList<>();
+    topics.add("topic1");
+    topics.add("topic2");
+    topics.add("topic3");
+    topics.add("topic4");
+    topics.add("topic5");
+    return topics;
+  }
+
+  public static List<String> getAnotherTopics() {
+    List<String> topics = new ArrayList<>();
+    topics.add("topic7");
+    topics.add("topic6");
+    topics.add("topic4");
+    topics.add("topic5");
+    return topics;
+  }
+
 }
