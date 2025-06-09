@@ -1,6 +1,6 @@
 package es.udc.OpenHope.dto;
 
-import es.udc.OpenHope.service.providers.Provider;
+import es.udc.OpenHope.enums.Provider;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
