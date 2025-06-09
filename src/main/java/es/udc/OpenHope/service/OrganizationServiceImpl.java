@@ -162,6 +162,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
       List<Predicate> predicatesText = new ArrayList<>();
       List<Predicate> predicatesCategories = new ArrayList<>();
 
+      // Search by text on organization Name, topics or description
       if (searchParamsDto.getText() != null && !searchParamsDto.getText().isBlank()) {
         String likePattern = "%" + searchParamsDto.getText() + "%";
 
@@ -176,32 +177,42 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
         predicatesText.add(criteriaBuilder.like(criteriaBuilder.lower(topicsJoin.get("name")), searchParamsDto.getText().toLowerCase()));
       }
 
+      // Search by categories asigner to Organization.
       if (searchParamsDto.getCategories() != null && !searchParamsDto.getCategories().isEmpty()) {
         Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
         predicatesCategories.add(categoriesJoin.get("name").in(searchParamsDto.getCategories()));
       }
 
-      Predicate finalPredicate;
-      if (!predicatesText.isEmpty() && !predicatesCategories.isEmpty()) {
-        finalPredicate = criteriaBuilder.and(
-            criteriaBuilder.or(predicatesText.toArray(new Predicate[0])),
-            criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]))
-        );
-      } else if (!predicatesText.isEmpty()) {
-        finalPredicate = criteriaBuilder.or(predicatesText.toArray(new Predicate[0]));
-      } else if (!predicatesCategories.isEmpty()) {
-        finalPredicate = criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]));
-      } else {
-        finalPredicate = criteriaBuilder.conjunction();
-      }
+      // Combine filtrers
+      Predicate combinedPredicate = getCombinedPredicate(predicatesText, predicatesCategories, criteriaBuilder);
 
+      // Apply order by
       if(searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
         query.orderBy(criteriaBuilder.desc(root.get("name")));
       } else {
         query.orderBy(criteriaBuilder.asc(root.get("name")));
       }
 
-      return finalPredicate;
+      return combinedPredicate;
     };
+  }
+
+  private Predicate getCombinedPredicate(List<Predicate> predicatesText,  List<Predicate> predicatesCategories, CriteriaBuilder criteriaBuilder) {
+    Predicate combinedPredicate;
+
+    if (!predicatesText.isEmpty() && !predicatesCategories.isEmpty()) {
+      combinedPredicate = criteriaBuilder.and(
+          criteriaBuilder.or(predicatesText.toArray(new Predicate[0])),
+          criteriaBuilder.or(predicatesCategories.toArray(new Predicate[0]))
+      );
+    } else if (!predicatesText.isEmpty()) {
+      combinedPredicate = criteriaBuilder.or(predicatesText.toArray(new Predicate[0]));
+    } else if (!predicatesCategories.isEmpty()) {
+      combinedPredicate = criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]));
+    } else {
+      combinedPredicate = criteriaBuilder.conjunction();
+    }
+
+    return combinedPredicate;
   }
 }
