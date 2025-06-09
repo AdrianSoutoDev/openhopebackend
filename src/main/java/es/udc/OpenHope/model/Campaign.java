@@ -41,6 +41,9 @@ public class Campaign {
   @OneToOne
   private BankAccount bankAccount;
 
+  @OneToMany(mappedBy = "campaign")
+  private Set<Topic> topics;
+
   public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
                   Organization organization, String description, Set<Category> categories) {
     this.name = name;

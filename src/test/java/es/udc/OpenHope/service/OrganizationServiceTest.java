@@ -1,6 +1,8 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
+import es.udc.OpenHope.dto.searcher.SearchParamsDto;
+import es.udc.OpenHope.dto.searcher.SearchResultDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,10 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -338,5 +338,22 @@ public class OrganizationServiceTest {
     assertThrows(MaxCategoriesExceededException.class, () ->
         organizationService.update(organizationDto.getId(), ORG_NAME, ORG_DESCRIPTION,
             categories, null, null, ORG_EMAIL));
+  }
+
+  @Test
+  public void searchOrganiztionByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    utils.initCategories();
+    List<String> topics = Utils.getTopics();
+    List<String> categoryNames = utils.getCategoryNames();
+
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, categoryNames, topics, null);
+
+    List<String> searchCategories = new ArrayList<>(List.of(CATEGORY_2));
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setCategories(searchCategories);
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 3);
+    assertEquals(organizationDto.getName(), page.getContent().getFirst().getName());
   }
 }

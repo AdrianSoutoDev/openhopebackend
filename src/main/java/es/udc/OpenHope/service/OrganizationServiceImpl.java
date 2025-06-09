@@ -2,17 +2,27 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.mappers.OrganizationMapper;
+import es.udc.OpenHope.dto.mappers.SearchResultMapper;
+import es.udc.OpenHope.dto.searcher.SearchParamsDto;
+import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
+import es.udc.OpenHope.model.Topic;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Messages;
+import jakarta.persistence.criteria.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -139,5 +149,59 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
     }
+  }
+
+  public Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size){
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Organization> organizationPage = organizationRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
+    return organizationPage.map(SearchResultMapper::toOrganizationSearchResultDto);
+  }
+
+  private Specification<Organization> getSearchSpecification(SearchParamsDto searchParamsDto) {
+    return (root, query, criteriaBuilder) -> {
+      List<Predicate> predicatesText = new ArrayList<>();
+      List<Predicate> predicatesCategories = new ArrayList<>();
+
+      if (searchParamsDto.getText() != null && !searchParamsDto.getText().isBlank()) {
+        String likePattern = "%" + searchParamsDto.getText() + "%";
+
+        predicatesText.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern.toLowerCase()));
+
+        predicatesText.add(criteriaBuilder.like(
+            criteriaBuilder.lower(root.get("description")),
+            likePattern.toLowerCase()
+        ));
+
+        Join<Organization, Topic> topicsJoin = root.join("topics", JoinType.LEFT);
+        predicatesText.add(criteriaBuilder.like(criteriaBuilder.lower(topicsJoin.get("name")), searchParamsDto.getText().toLowerCase()));
+      }
+
+      if (searchParamsDto.getCategories() != null && !searchParamsDto.getCategories().isEmpty()) {
+        Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
+        predicatesCategories.add(categoriesJoin.get("name").in(searchParamsDto.getCategories()));
+      }
+
+      Predicate finalPredicate;
+      if (!predicatesText.isEmpty() && !predicatesCategories.isEmpty()) {
+        finalPredicate = criteriaBuilder.and(
+            criteriaBuilder.or(predicatesText.toArray(new Predicate[0])),
+            criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]))
+        );
+      } else if (!predicatesText.isEmpty()) {
+        finalPredicate = criteriaBuilder.or(predicatesText.toArray(new Predicate[0]));
+      } else if (!predicatesCategories.isEmpty()) {
+        finalPredicate = criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]));
+      } else {
+        finalPredicate = criteriaBuilder.conjunction();
+      }
+
+      if(searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
+        query.orderBy(criteriaBuilder.desc(root.get("name")));
+      } else {
+        query.orderBy(criteriaBuilder.asc(root.get("name")));
+      }
+
+      return finalPredicate;
+    };
   }
 }
