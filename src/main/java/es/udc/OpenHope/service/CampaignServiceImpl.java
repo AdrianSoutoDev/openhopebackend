@@ -87,8 +87,12 @@ public class CampaignServiceImpl implements CampaignService {
   @Transactional
   public CampaignDto updateBankAccount(Long id, BankAccountParams bankAccountParams, String owner) {
     Optional<Campaign> campaign = campaignRepository.findById(id);
+
     if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
-    if(!campaign.get().getOrganization().getEmail().equals(owner)){
+
+    Organization organization = campaign.get().getOrganization();
+
+    if(!organization.getEmail().equals(owner)){
       throw new SecurityException(Messages.get("validation.campaign.update.not.allowed"));
     }
 
@@ -112,6 +116,7 @@ public class CampaignServiceImpl implements CampaignService {
       }
 
       newBankAccount.setAspsp(aspsp.get());
+      newBankAccount.setAccount(organization);
       bankAccountRepository.save(newBankAccount);
       campaign.get().setBankAccount(newBankAccount);
     } else {

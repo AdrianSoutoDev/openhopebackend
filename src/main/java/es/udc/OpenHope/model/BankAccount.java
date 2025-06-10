@@ -27,6 +27,6 @@ public class BankAccount {
   private Aspsp aspsp;
 
   @ManyToOne
-  @JoinColumn(name = "user_id", nullable = true)
-  private User user;
+  @JoinColumn(name = "account_id")
+  private Account account;
 }
