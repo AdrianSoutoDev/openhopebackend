@@ -136,8 +136,8 @@ public class CampaignServiceImpl implements CampaignService {
       Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
       Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate);
 
-      if (searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
-        query.orderBy(criteriaBuilder.desc(root.get("name")));
+      if (searchParamsDto.getSortCriteria() != null) {
+        sortCampaignsBySortCriteria(searchParamsDto.getSortCriteria(), query, criteriaBuilder, root);
       } else {
         query.orderBy(criteriaBuilder.asc(root.get("name")));
       }
@@ -146,7 +146,39 @@ public class CampaignServiceImpl implements CampaignService {
     };
   }
 
-  private Predicate buildTextPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, String text) {
+  private CriteriaQuery<?> sortCampaignsBySortCriteria(SortCriteria sortCriteria, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Root<Campaign> root) {
+
+    if(SortCriteria.NAME_DESC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(root.get("name")));
+
+    if(SortCriteria.START_DATE_ASC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(root.get("startAt")));
+    if(SortCriteria.START_DATE_DESC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(root.get("startAt")));
+
+    if(SortCriteria.END_DATE_ASC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(root.get("dateLimit")));
+    if(SortCriteria.END_DATE_DESC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(root.get("dateLimit")));
+
+    if(SortCriteria.TARGET_AMOUNT_ASC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(root.get("economicTarget")));
+    if(SortCriteria.TARGET_AMOUNT_DESC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(root.get("economicTarget")));
+
+    if(SortCriteria.MIN_DONATION_ASC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(root.get("minimumDonation")));
+    if(SortCriteria.MIN_DONATION_DESC.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(root.get("minimumDonation")));
+
+    // get sum donations
+    Subquery<Float> donationSumSubquery = query.subquery(Float.class);
+    Root<Donation> donationRoot = donationSumSubquery.from(Donation.class);
+    donationSumSubquery.select(criteriaBuilder.coalesce(criteriaBuilder.sum(donationRoot.get("amount")), 0F));
+    donationSumSubquery.where(criteriaBuilder.equal(donationRoot.get("campaign"), root));
+
+    if (SortCriteria.CLOSEST_TO_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(
+          criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+
+    if (SortCriteria.FARTHEST_FROM_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(
+          criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+
+    //default
+    return query.orderBy(criteriaBuilder.asc(root.get("name")));
+  }
+
+    private Predicate buildTextPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, String text) {
     if (text == null || text.isBlank()) {
       return criteriaBuilder.conjunction();
     }

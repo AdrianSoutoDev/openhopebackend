@@ -352,6 +352,7 @@ public class OrganizationServiceTest {
 
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setCategories(searchCategories);
+    searchParamsDto.setText("Apa");
 
     Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 3);
     assertEquals(organizationDto.getName(), page.getContent().getFirst().getName());

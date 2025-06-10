@@ -10,6 +10,7 @@ import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
+import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
@@ -159,35 +160,13 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   private Specification<Organization> getSearchSpecification(SearchParamsDto searchParamsDto) {
     return (root, query, criteriaBuilder) -> {
-      List<Predicate> predicatesText = new ArrayList<>();
-      List<Predicate> predicatesCategories = new ArrayList<>();
+      List<Predicate> predicates = new ArrayList<>();
 
-      // Search by text on organization Name, topics or description
-      if (searchParamsDto.getText() != null && !searchParamsDto.getText().isBlank()) {
-        String likePattern = "%" + searchParamsDto.getText() + "%";
+      Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
+      Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
+      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate);
 
-        predicatesText.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern.toLowerCase()));
-
-        predicatesText.add(criteriaBuilder.like(
-            criteriaBuilder.lower(root.get("description")),
-            likePattern.toLowerCase()
-        ));
-
-        Join<Organization, Topic> topicsJoin = root.join("topics", JoinType.LEFT);
-        predicatesText.add(criteriaBuilder.like(criteriaBuilder.lower(topicsJoin.get("name")), searchParamsDto.getText().toLowerCase()));
-      }
-
-      // Search by categories asigner to Organization.
-      if (searchParamsDto.getCategories() != null && !searchParamsDto.getCategories().isEmpty()) {
-        Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
-        predicatesCategories.add(categoriesJoin.get("name").in(searchParamsDto.getCategories()));
-      }
-
-      // Combine filters
-      Predicate combinedPredicate = getCombinedPredicate(predicatesText, predicatesCategories, criteriaBuilder);
-
-      // Apply order by
-      if(searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
+      if (searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
         query.orderBy(criteriaBuilder.desc(root.get("name")));
       } else {
         query.orderBy(criteriaBuilder.asc(root.get("name")));
@@ -197,22 +176,25 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     };
   }
 
-  private Predicate getCombinedPredicate(List<Predicate> predicatesText,  List<Predicate> predicatesCategories, CriteriaBuilder criteriaBuilder) {
-    Predicate combinedPredicate;
-
-    if (!predicatesText.isEmpty() && !predicatesCategories.isEmpty()) {
-      combinedPredicate = criteriaBuilder.and(
-          criteriaBuilder.or(predicatesText.toArray(new Predicate[0])),
-          criteriaBuilder.or(predicatesCategories.toArray(new Predicate[0]))
-      );
-    } else if (!predicatesText.isEmpty()) {
-      combinedPredicate = criteriaBuilder.or(predicatesText.toArray(new Predicate[0]));
-    } else if (!predicatesCategories.isEmpty()) {
-      combinedPredicate = criteriaBuilder.and(predicatesCategories.toArray(new Predicate[0]));
-    } else {
-      combinedPredicate = criteriaBuilder.conjunction();
+  private Predicate buildTextPredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, String text) {
+    if (text == null || text.isBlank()) {
+      return criteriaBuilder.conjunction();
     }
 
-    return combinedPredicate;
+    String likePattern = "%" + text.toLowerCase() + "%";
+    return criteriaBuilder.or(
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.join("topics", JoinType.LEFT).get("name")), likePattern)
+    );
+  }
+
+  private Predicate buildCategoriesPredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, List<String> categories) {
+    if (categories == null || categories.isEmpty()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
+    return categoriesJoin.get("name").in(categories);
   }
 }
