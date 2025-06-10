@@ -132,7 +132,6 @@ public class CampaignServiceImpl implements CampaignService {
 
   private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {
     return (root, query, criteriaBuilder) -> {
-      List<Predicate> predicates = new ArrayList<>();
 
       Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
       Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
@@ -142,9 +141,10 @@ public class CampaignServiceImpl implements CampaignService {
       Predicate finalizeDatePredicate = buildFinalizeDatePredicate(root, criteriaBuilder, searchParamsDto.getFinalizeDateFrom(), searchParamsDto.getFinalizeDateTo());
       Predicate economicTagetPredicate = buildEconomicTagetPredicate(root, criteriaBuilder, searchParamsDto.getEconomicTargetFrom(), searchParamsDto.getEconomicTargetTo());
       Predicate minimumDonationPredicate = buildMinimumDonationPredicate(root, criteriaBuilder, searchParamsDto.getMinimumDonationFrom(), searchParamsDto.getMinimumDonationTo());
+      Predicate hasMinimumDonationPredicate = buildHasMinimumDonationPredicate(root, criteriaBuilder, searchParamsDto.isHasMinimumDonation());
 
       Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate, startDatePredicate,
-          statePredicate, finalizeTypePredicate, finalizeDatePredicate, economicTagetPredicate, minimumDonationPredicate);
+          statePredicate, finalizeTypePredicate, finalizeDatePredicate, economicTagetPredicate, minimumDonationPredicate, hasMinimumDonationPredicate);
 
       if (searchParamsDto.getSortCriteria() != null) {
         sortCampaignsBySortCriteria(searchParamsDto.getSortCriteria(), query, criteriaBuilder, root);
@@ -301,6 +301,15 @@ public class CampaignServiceImpl implements CampaignService {
         criteriaBuilder.isNotNull(root.get("minimumDonation")),
         criteriaBuilder.between(root.get("minimumDonation"), minimumDonationFrom, minimumDonationTo)
     );
+  }
+
+  private Predicate buildHasMinimumDonationPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder,
+                                                  boolean hasMinimumDonation) {
+    if (!hasMinimumDonation) {
+      return criteriaBuilder.conjunction();
+    }
+
+    return criteriaBuilder.isNotNull(root.get("minimumDonation"));
   }
 
   private CriteriaQuery<?> sortCampaignsBySortCriteria(SortCriteria sortCriteria, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Root<Campaign> root) {

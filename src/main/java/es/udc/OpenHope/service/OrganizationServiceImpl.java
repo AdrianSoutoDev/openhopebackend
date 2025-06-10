@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -164,7 +165,9 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
       Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
       Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
-      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate);
+      Predicate hasCampaignsOnGoingPredicate = buildOrganizationsWithCampaignsActivePredicate(root, criteriaBuilder, searchParamsDto.isHasCampaignsOnGoing());
+
+      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate, hasCampaignsOnGoingPredicate);
 
       if (searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
         query.orderBy(criteriaBuilder.desc(root.get("name")));
@@ -196,5 +199,22 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
     return categoriesJoin.get("name").in(categories);
+  }
+
+  private Predicate buildOrganizationsWithCampaignsActivePredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, boolean hasCampaignsOnGoing) {
+
+    if(!hasCampaignsOnGoing) return criteriaBuilder.conjunction();
+
+    Subquery<Long> activeCampaignsSubquery = criteriaBuilder.createQuery().subquery(Long.class);
+    Root<Campaign> campaignRoot = activeCampaignsSubquery.from(Campaign.class);
+
+    activeCampaignsSubquery.select(criteriaBuilder.count(campaignRoot))
+        .where(
+            criteriaBuilder.equal(campaignRoot.get("organization"), root),
+            criteriaBuilder.isNull(campaignRoot.get("finalizedDate")),
+            criteriaBuilder.greaterThan(campaignRoot.get("dateLimit"), LocalDate.now())
+        );
+
+    return criteriaBuilder.greaterThan(activeCampaignsSubquery.getSelection(), 0L);
   }
 }
