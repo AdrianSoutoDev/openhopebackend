@@ -3,12 +3,10 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.searcher.SearchParamsDto;
 import es.udc.OpenHope.dto.searcher.SearchResultDto;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.MaxCategoriesExceededException;
-import es.udc.OpenHope.exception.MaxTopicsExceededException;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
+import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Utils;
@@ -42,6 +40,7 @@ public class OrganizationServiceTest {
   private List<String> createdFileNames = new ArrayList<>();
 
   private final OrganizationRepository organizationRepository;
+  private final CampaignService campaignService;
   private final OrganizationService organizationService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final ResourceService resourceService;
@@ -50,10 +49,11 @@ public class OrganizationServiceTest {
 
   @Autowired
   public OrganizationServiceTest(final OrganizationService organizationService, final OrganizationRepository organizationRepository,
-                                 final BCryptPasswordEncoder bCryptPasswordEncoder, final ResourceService resourceService,
-                                 final ResourceService resourceService1 , final Utils utils, final TopicRepository topicRepository) {
+                                 final CampaignService campaignService, final BCryptPasswordEncoder bCryptPasswordEncoder,
+                                 final ResourceService resourceService, final Utils utils, final TopicRepository topicRepository) {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
+    this.campaignService = campaignService;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     this.resourceService = resourceService;
     this.utils = utils;
@@ -341,6 +341,17 @@ public class OrganizationServiceTest {
   }
 
   @Test
+  public void searchOrganizationWithNoFiltersTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+  }
+
+  @Test
   public void searchOrganizationNameByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
     organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
@@ -379,5 +390,96 @@ public class OrganizationServiceTest {
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchOrganizationByCategoryTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    utils.initCategories();
+    List<String> categories = utils.getCategoryNames();
+
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, categories, null, null);
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
+    List<String> categoryToSearch = new ArrayList<>();
+    categoryToSearch.add(CATEGORY_2);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setCategories(categoryToSearch);
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(1, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchOrganizationByCategoryWithNoMatchesTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    utils.initCategories();
+    List<String> categories = utils.getCategoryNames();
+    categories.remove(CATEGORY_2);
+
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, categories, null, null);
+
+    List<String> categoryToSearch = new ArrayList<>();
+    categoryToSearch.add(CATEGORY_2);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setCategories(categoryToSearch);
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    assertEquals(0, page.getTotalElements());
+  }
+
+  @Test
+  public void searchOrganizationByHasActiveCampaignsTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setHasCampaignsOnGoing(true);
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(1, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchOrganizationByHasActiveCampaignsFalseTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setHasCampaignsOnGoing(false);
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+  }
+
+  @Test
+  public void searchOrganizationByHasActiveCampaignsAndTextWithNoResultsTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setHasCampaignsOnGoing(true);
+    searchParamsDto.setText("no match text");
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(0, page.getTotalElements());
   }
 }
