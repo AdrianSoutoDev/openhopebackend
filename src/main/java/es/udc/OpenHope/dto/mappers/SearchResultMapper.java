@@ -9,6 +9,7 @@ public abstract class SearchResultMapper {
 
   public static OrganizationSearchResultDto toOrganizationSearchResultDto(Organization organization){
     OrganizationSearchResultDto organizationSearchResultDto = new OrganizationSearchResultDto();
+    organizationSearchResultDto.setId(organization.getId());
     organizationSearchResultDto.setName(organization.getName());
     organizationSearchResultDto.setDescription(organization.getDescription());
     organizationSearchResultDto.setImage(organization.getImage());
@@ -18,6 +19,7 @@ public abstract class SearchResultMapper {
 
   public static CampaignSearchResultDto toCampaignSearchResultDto(Campaign campaign){
     CampaignSearchResultDto campaignSearchResultDto = new CampaignSearchResultDto();
+    campaignSearchResultDto.setId(campaign.getId());
     campaignSearchResultDto.setName(campaign.getName());
     campaignSearchResultDto.setDescription(campaign.getDescription());
     campaignSearchResultDto.setImage(campaign.getImage());

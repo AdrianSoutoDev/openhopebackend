@@ -13,4 +13,8 @@ public class Donation {
 
   @ManyToOne
   Campaign campaign;
+
+  @ManyToOne
+  BankAccount bankAccount;
+
 }

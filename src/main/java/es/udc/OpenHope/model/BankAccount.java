@@ -24,5 +24,9 @@ public class BankAccount {
   private String ownerName;
 
   @ManyToOne
-  Aspsp aspsp;
+  private Aspsp aspsp;
+
+  @ManyToOne
+  @JoinColumn(name = "user_id", nullable = true)
+  private User user;
 }

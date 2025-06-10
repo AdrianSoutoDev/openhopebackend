@@ -341,20 +341,39 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void searchOrganiztionByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
-    utils.initCategories();
-    List<String> topics = Utils.getTopics();
-    List<String> categoryNames = utils.getCategoryNames();
-
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, categoryNames, topics, null);
-
-    List<String> searchCategories = new ArrayList<>(List.of(CATEGORY_2));
-
+  public void searchOrganizationNameByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
     SearchParamsDto searchParamsDto = new SearchParamsDto();
-    searchParamsDto.setCategories(searchCategories);
-    searchParamsDto.setText("Apa");
+    searchParamsDto.setText("pada");
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 3);
-    assertEquals(organizationDto.getName(), page.getContent().getFirst().getName());
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(1, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchOrganizationDescripcionByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setText("animales domésticos");
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(1, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchOrganizationTopicByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    List<String> topics = Utils.getTopics();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, topics, null);
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setText("topic2");
+
+    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(1, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
   }
 }
