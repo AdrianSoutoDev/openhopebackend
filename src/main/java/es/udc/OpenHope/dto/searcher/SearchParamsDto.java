@@ -20,11 +20,14 @@ public class SearchParamsDto {
   private CampaignState campaignState;
   private CampaignFinalizeType campaignFinalizeType;
   private boolean hasMinimumDonation;
+
+  //TODO implementar?
   private boolean hasCampaignsOnGoing;
+
   private LocalDate finalizeDateFrom;
   private LocalDate finalizeDateTo;
   private Long economicTargetFrom;
   private Long economicTargetTo;
-  private Float minimumDonationFrom;
-  private Float minimumDonationTo;
+  private Long minimumDonationFrom;
+  private Long minimumDonationTo;
 }

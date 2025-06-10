@@ -6,6 +6,8 @@ import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.dto.mappers.SearchResultMapper;
 import es.udc.OpenHope.dto.searcher.SearchParamsDto;
 import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.enums.CampaignFinalizeType;
+import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
@@ -134,7 +136,15 @@ public class CampaignServiceImpl implements CampaignService {
 
       Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
       Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
-      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate);
+      Predicate startDatePredicate = buildStartDatePredicate(root, criteriaBuilder, searchParamsDto.getStartDateFrom(), searchParamsDto.getStartDateTo());
+      Predicate statePredicate = buildStatePredicate(root, criteriaBuilder, searchParamsDto.getCampaignState());
+      Predicate finalizeTypePredicate = buildFinalizeType(root, criteriaBuilder, searchParamsDto.getCampaignFinalizeType());
+      Predicate finalizeDatePredicate = buildFinalizeDatePredicate(root, criteriaBuilder, searchParamsDto.getFinalizeDateFrom(), searchParamsDto.getFinalizeDateTo());
+      Predicate economicTagetPredicate = buildEconomicTagetPredicate(root, criteriaBuilder, searchParamsDto.getEconomicTargetFrom(), searchParamsDto.getEconomicTargetTo());
+      Predicate minimumDonationPredicate = buildMinimumDonationPredicate(root, criteriaBuilder, searchParamsDto.getMinimumDonationFrom(), searchParamsDto.getMinimumDonationTo());
+
+      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate, startDatePredicate,
+          statePredicate, finalizeTypePredicate, finalizeDatePredicate, economicTagetPredicate, minimumDonationPredicate);
 
       if (searchParamsDto.getSortCriteria() != null) {
         sortCampaignsBySortCriteria(searchParamsDto.getSortCriteria(), query, criteriaBuilder, root);
@@ -144,6 +154,153 @@ public class CampaignServiceImpl implements CampaignService {
 
       return combinedPredicate;
     };
+  }
+
+  private Predicate buildTextPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, String text) {
+    if (text == null || text.isBlank()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    String likePattern = "%" + text.toLowerCase() + "%";
+    return criteriaBuilder.or(
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.join("topics", JoinType.LEFT).get("name")), likePattern)
+    );
+  }
+
+  private Predicate buildCategoriesPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, List<String> categories) {
+    if (categories == null || categories.isEmpty()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
+    return categoriesJoin.get("name").in(categories);
+  }
+
+  private Predicate buildStartDatePredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder,
+                                            LocalDate startDateFrom, LocalDate startDateTo) {
+    if (startDateFrom == null && startDateTo == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if (startDateFrom == null){
+      return criteriaBuilder.lessThanOrEqualTo(root.get("startAt"), startDateTo);
+    }
+
+    if (startDateTo == null){
+      return criteriaBuilder.greaterThanOrEqualTo(root.get("startAt"), startDateFrom);
+    }
+
+    return criteriaBuilder.between(root.get("startAt"), startDateFrom, startDateTo);
+  }
+
+  private Predicate buildStatePredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, CampaignState campaignState) {
+    if (campaignState == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if(campaignState.equals(CampaignState.FINALIZED)) {
+      return criteriaBuilder.or(
+          criteriaBuilder.isNotNull(root.get("finalizedDate")),
+          criteriaBuilder.lessThanOrEqualTo(root.get("dateLimit"), LocalDate.now())
+      );
+    }
+
+    return criteriaBuilder.and(
+        criteriaBuilder.isNull(root.get("finalizedDate")),
+        criteriaBuilder.greaterThan(root.get("dateLimit"), LocalDate.now())
+    );
+  }
+
+  private Predicate buildFinalizeType(Root<Campaign> root, CriteriaBuilder criteriaBuilder, CampaignFinalizeType finalizeType) {
+    if (finalizeType == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if(finalizeType.equals(CampaignFinalizeType.DATE)) {
+      return criteriaBuilder.isNotNull(root.get("dateLimit"));
+    }
+
+    return criteriaBuilder.isNotNull(root.get("economicTarget"));
+  }
+
+  private Predicate buildFinalizeDatePredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder,
+                                            LocalDate finalizeDateFrom, LocalDate finalizeDateTo) {
+    if (finalizeDateFrom == null && finalizeDateTo == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if (finalizeDateFrom == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("dateLimit")),
+          criteriaBuilder.lessThanOrEqualTo(root.get("dateLimit"), finalizeDateTo)
+      );
+    }
+
+    if (finalizeDateTo == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("dateLimit")),
+          criteriaBuilder.greaterThanOrEqualTo(root.get("dateLimit"), finalizeDateFrom)
+      );
+    }
+
+    return criteriaBuilder.and(
+        criteriaBuilder.isNotNull(root.get("dateLimit")),
+        criteriaBuilder.between(root.get("dateLimit"), finalizeDateFrom, finalizeDateTo)
+    );
+  }
+
+  private Predicate buildEconomicTagetPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder,
+                                                Long economicTargetFrom, Long economicTargetTo) {
+    if (economicTargetFrom == null && economicTargetTo == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if (economicTargetFrom == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("economicTarget")),
+          criteriaBuilder.lessThanOrEqualTo(root.get("economicTarget"), economicTargetTo)
+      );
+    }
+
+    if (economicTargetTo == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("economicTarget")),
+          criteriaBuilder.greaterThanOrEqualTo(root.get("economicTarget"), economicTargetFrom)
+      );
+    }
+
+    return criteriaBuilder.and(
+        criteriaBuilder.isNotNull(root.get("economicTarget")),
+        criteriaBuilder.between(root.get("economicTarget"), economicTargetFrom, economicTargetTo)
+    );
+  }
+
+  private Predicate buildMinimumDonationPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder,
+                                                Long minimumDonationFrom, Long minimumDonationTo) {
+    if (minimumDonationFrom == null && minimumDonationTo == null) {
+      return criteriaBuilder.conjunction();
+    }
+
+    if (minimumDonationFrom == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("minimumDonation")),
+          criteriaBuilder.lessThanOrEqualTo(root.get("minimumDonation"), minimumDonationTo)
+      );
+    }
+
+    if (minimumDonationTo == null){
+      return criteriaBuilder.and(
+          criteriaBuilder.isNotNull(root.get("minimumDonation")),
+          criteriaBuilder.greaterThanOrEqualTo(root.get("minimumDonation"), minimumDonationFrom)
+      );
+    }
+
+    return criteriaBuilder.and(
+        criteriaBuilder.isNotNull(root.get("minimumDonation")),
+        criteriaBuilder.between(root.get("minimumDonation"), minimumDonationFrom, minimumDonationTo)
+    );
   }
 
   private CriteriaQuery<?> sortCampaignsBySortCriteria(SortCriteria sortCriteria, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Root<Campaign> root) {
@@ -169,35 +326,13 @@ public class CampaignServiceImpl implements CampaignService {
     donationSumSubquery.where(criteriaBuilder.equal(donationRoot.get("campaign"), root));
 
     if (SortCriteria.CLOSEST_TO_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(
-          criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+        criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
 
     if (SortCriteria.FARTHEST_FROM_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(
-          criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+        criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
 
     //default
     return query.orderBy(criteriaBuilder.asc(root.get("name")));
-  }
-
-    private Predicate buildTextPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, String text) {
-    if (text == null || text.isBlank()) {
-      return criteriaBuilder.conjunction();
-    }
-
-    String likePattern = "%" + text.toLowerCase() + "%";
-    return criteriaBuilder.or(
-        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
-        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern),
-        criteriaBuilder.like(criteriaBuilder.lower(root.join("topics", JoinType.LEFT).get("name")), likePattern)
-    );
-  }
-
-  private Predicate buildCategoriesPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, List<String> categories) {
-    if (categories == null || categories.isEmpty()) {
-      return criteriaBuilder.conjunction();
-    }
-
-    Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
-    return categoriesJoin.get("name").in(categories);
   }
 
   private boolean campaignExists(String name) {
