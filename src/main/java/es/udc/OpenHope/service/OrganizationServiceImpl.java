@@ -183,7 +183,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
         predicatesCategories.add(categoriesJoin.get("name").in(searchParamsDto.getCategories()));
       }
 
-      // Combine filtrers
+      // Combine filters
       Predicate combinedPredicate = getCombinedPredicate(predicatesText, predicatesCategories, criteriaBuilder);
 
       // Apply order by

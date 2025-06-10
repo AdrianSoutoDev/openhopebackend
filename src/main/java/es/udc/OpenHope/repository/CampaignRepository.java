@@ -5,12 +5,13 @@ import es.udc.OpenHope.model.Organization;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 
 @Repository
-public interface CampaignRepository extends JpaRepository<Campaign, Long> {
+public interface CampaignRepository extends JpaRepository<Campaign, Long>, JpaSpecificationExecutor<Campaign> {
   Page<Campaign> findByOrganizationAndStartAtLessThanOrderByStartAtDesc(Organization organization, Date now, Pageable pageable);
   Campaign findByNameIgnoreCase(String name);
 }

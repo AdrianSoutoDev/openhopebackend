@@ -3,15 +3,21 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
+import es.udc.OpenHope.dto.mappers.SearchResultMapper;
+import es.udc.OpenHope.dto.searcher.SearchParamsDto;
+import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.model.*;
 import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.utils.Messages;
+import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -113,6 +119,53 @@ public class CampaignServiceImpl implements CampaignService {
     campaignRepository.save(campaign.get());
 
     return toCampaignDto(campaign.get());
+  }
+
+  @Override
+  public Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Campaign> campaignPage = campaignRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
+    return campaignPage.map(SearchResultMapper::toCampaignSearchResultDto);
+  }
+
+  private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {
+    return (root, query, criteriaBuilder) -> {
+      List<Predicate> predicates = new ArrayList<>();
+
+      Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
+      Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
+      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate);
+
+      if (searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
+        query.orderBy(criteriaBuilder.desc(root.get("name")));
+      } else {
+        query.orderBy(criteriaBuilder.asc(root.get("name")));
+      }
+
+      return combinedPredicate;
+    };
+  }
+
+  private Predicate buildTextPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, String text) {
+    if (text == null || text.isBlank()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    String likePattern = "%" + text.toLowerCase() + "%";
+    return criteriaBuilder.or(
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.join("topics", JoinType.LEFT).get("name")), likePattern)
+    );
+  }
+
+  private Predicate buildCategoriesPredicate(Root<Campaign> root, CriteriaBuilder criteriaBuilder, List<String> categories) {
+    if (categories == null || categories.isEmpty()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
+    return categoriesJoin.get("name").in(categories);
   }
 
   private boolean campaignExists(String name) {

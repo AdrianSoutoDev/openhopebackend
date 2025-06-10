@@ -2,6 +2,8 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.searcher.SearchParamsDto;
+import es.udc.OpenHope.dto.searcher.SearchResultDto;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import org.springframework.data.domain.Page;
@@ -18,4 +20,5 @@ public interface CampaignService {
 
   CampaignDto get(Long id);
   CampaignDto updateBankAccount(Long id, BankAccountParams bankAccountParams, String owner);
+  Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size);
 }

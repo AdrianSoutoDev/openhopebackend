@@ -42,6 +42,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
+            .requestMatchers(HttpMethod.POST,  "/api/search").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
