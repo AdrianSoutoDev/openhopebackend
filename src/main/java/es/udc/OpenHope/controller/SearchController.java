@@ -1,7 +1,8 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.searcher.SearchParamsDto;
-import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.dto.ISearcheableDto;
+import es.udc.OpenHope.dto.OrganizationDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.EntityType;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
@@ -16,24 +17,26 @@ import java.util.Collections;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/search")
-public class searchController {
+public class SearchController {
 
   private final OrganizationService organizationService;
   private final CampaignService campaignService;
 
   @PostMapping
-  public ResponseEntity<Page<SearchResultDto>> search(@RequestBody SearchParamsDto searchParamsDto,
+  public ResponseEntity<Page<ISearcheableDto>> search(@RequestBody SearchParamsDto searchParamsDto,
                                                       @RequestParam(defaultValue = "0") int page,
                                                       @RequestParam(defaultValue = "10") int size) {
 
-    Page<SearchResultDto> results = new PageImpl<>(Collections.emptyList());
+    Page<ISearcheableDto> results = new PageImpl<>(Collections.emptyList());
 
     if(searchParamsDto.getShow() != null && searchParamsDto.getShow().equals(EntityType.ORGANIZATION)){
-      results = organizationService.search(searchParamsDto, page, size);
+      results = organizationService.search(searchParamsDto, page, size)
+          .map(organization -> (ISearcheableDto) organization);
     }
 
     if(searchParamsDto.getShow() != null && searchParamsDto.getShow().equals(EntityType.ORGANIZATION)){
-       results = campaignService.search(searchParamsDto, page, size);
+       results = campaignService.search(searchParamsDto, page, size)
+           .map(campaign -> (ISearcheableDto) campaign);
     }
 
     return ResponseEntity.ok(results);

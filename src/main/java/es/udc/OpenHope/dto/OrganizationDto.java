@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class OrganizationDto {
+public class OrganizationDto implements ISearcheableDto {
   private Long id;
   private String email;
   private String name;

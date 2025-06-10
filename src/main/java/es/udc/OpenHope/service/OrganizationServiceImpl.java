@@ -2,9 +2,8 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.mappers.OrganizationMapper;
-import es.udc.OpenHope.dto.mappers.SearchResultMapper;
-import es.udc.OpenHope.dto.searcher.SearchParamsDto;
-import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.dto.ISearcheableDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
@@ -152,10 +151,10 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     }
   }
 
-  public Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size){
+  public Page<OrganizationDto> search(SearchParamsDto searchParamsDto, int page, int size){
     Pageable pageable = PageRequest.of(page, size);
     Page<Organization> organizationPage = organizationRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
-    return organizationPage.map(SearchResultMapper::toOrganizationSearchResultDto);
+    return organizationPage.map(OrganizationMapper::toOrganizationDto);
   }
 
   private Specification<Organization> getSearchSpecification(SearchParamsDto searchParamsDto) {

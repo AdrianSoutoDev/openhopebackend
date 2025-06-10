@@ -3,9 +3,7 @@ package es.udc.OpenHope.service;
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
-import es.udc.OpenHope.dto.mappers.SearchResultMapper;
-import es.udc.OpenHope.dto.searcher.SearchParamsDto;
-import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;
@@ -129,10 +127,10 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   @Override
-  public Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size) {
+  public Page<CampaignDto> search(SearchParamsDto searchParamsDto, int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     Page<Campaign> campaignPage = campaignRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
-    return campaignPage.map(SearchResultMapper::toCampaignSearchResultDto);
+    return campaignPage.map(this::toCampaignDto);
   }
 
   private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {

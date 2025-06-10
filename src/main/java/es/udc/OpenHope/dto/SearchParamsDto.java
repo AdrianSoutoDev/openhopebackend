@@ -1,4 +1,4 @@
-package es.udc.OpenHope.dto.searcher;
+package es.udc.OpenHope.dto;
 
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;

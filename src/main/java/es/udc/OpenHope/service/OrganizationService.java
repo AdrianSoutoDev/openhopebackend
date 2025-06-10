@@ -1,8 +1,7 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
-import es.udc.OpenHope.dto.searcher.SearchParamsDto;
-import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
@@ -19,5 +18,5 @@ public interface OrganizationService extends AccountService {
   OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException;
   OrganizationDto get(Long id);
   OrganizationDto update(Long id, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException, MaxTopicsExceededException;
-  Page<SearchResultDto> search(SearchParamsDto searchParamsDto, int page, int size);
+  Page<OrganizationDto> search(SearchParamsDto searchParamsDto, int page, int size);
 }

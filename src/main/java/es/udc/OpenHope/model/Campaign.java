@@ -27,7 +27,7 @@ public class Campaign {
   private String image;
   private Float minimumDonation;
 
-  @Lob
+  @Column(columnDefinition = "TEXT")
   private String description;
 
   @ManyToOne

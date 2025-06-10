@@ -1,12 +1,10 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
-import es.udc.OpenHope.dto.searcher.SearchParamsDto;
-import es.udc.OpenHope.dto.searcher.SearchResultDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
-import es.udc.OpenHope.repository.CampaignRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
 import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Utils;
@@ -320,7 +318,7 @@ public class OrganizationServiceTest {
 
   @Test
   public void updateWithDuplicatedNameTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null,null, null);
     OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "Another name", ORG_DESCRIPTION, null,null, null);
 
     assertThrows(DuplicateOrganizationException.class, () ->
@@ -346,7 +344,7 @@ public class OrganizationServiceTest {
     organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
 
     SearchParamsDto searchParamsDto = new SearchParamsDto();
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(2, page.getTotalElements());
   }
@@ -359,7 +357,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("pada");
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
@@ -372,7 +370,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("animales domésticos");
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
@@ -386,7 +384,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("topic2");
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
@@ -406,7 +404,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setCategories(categoryToSearch);
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
@@ -426,7 +424,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setCategories(categoryToSearch);
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
     assertEquals(0, page.getTotalElements());
   }
 
@@ -442,7 +440,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setHasCampaignsOnGoing(true);
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(1, page.getTotalElements());
     assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
@@ -460,7 +458,7 @@ public class OrganizationServiceTest {
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setHasCampaignsOnGoing(false);
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(2, page.getTotalElements());
   }
@@ -478,7 +476,7 @@ public class OrganizationServiceTest {
     searchParamsDto.setHasCampaignsOnGoing(true);
     searchParamsDto.setText("no match text");
 
-    Page<SearchResultDto> page = organizationService.search(searchParamsDto, 0, 5);
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(0, page.getTotalElements());
   }
