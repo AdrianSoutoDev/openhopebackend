@@ -343,6 +343,8 @@ public class OrganizationServiceTest {
   @Test
   public void searchOrganizationNameByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
+
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("pada");
 
@@ -355,6 +357,7 @@ public class OrganizationServiceTest {
   @Test
   public void searchOrganizationDescripcionByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("animales domésticos");
 
@@ -368,6 +371,7 @@ public class OrganizationServiceTest {
   public void searchOrganizationTopicByTextTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException {
     List<String> topics = Utils.getTopics();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, topics, null);
+    organizationService.create("another_email@openhope", PASSWORD, "another Name", "another desc", null, null, null);
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setText("topic2");
 
