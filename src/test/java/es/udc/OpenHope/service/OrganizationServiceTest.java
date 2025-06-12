@@ -2,6 +2,7 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
+import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.model.Topic;
@@ -479,5 +480,34 @@ public class OrganizationServiceTest {
     Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
 
     assertEquals(0, page.getTotalElements());
+  }
+
+  @Test
+  public void searchOrganizationOrderByNameAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope", PASSWORD, "Y organization", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(organizationDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(organizationDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchOrganizationOrderByNameDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope", PASSWORD, "Y organization", "another desc", null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.NAME_DESC);
+
+    Page<OrganizationDto> page = organizationService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(organizationDto2.getId(), page.getContent().getFirst().getId());
+    assertEquals(organizationDto.getId(), page.getContent().getLast().getId());
   }
 }
