@@ -340,11 +340,11 @@ public class CampaignServiceImpl implements CampaignService {
     donationSumSubquery.select(criteriaBuilder.coalesce(criteriaBuilder.sum(donationRoot.get("amount")), 0F));
     donationSumSubquery.where(criteriaBuilder.equal(donationRoot.get("campaign"), root));
 
-    if (SortCriteria.CLOSEST_TO_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(
-        criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+    if (SortCriteria.CLOSEST_TO_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(
+        criteriaBuilder.quot(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
 
-    if (SortCriteria.FARTHEST_FROM_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.desc(
-        criteriaBuilder.diff(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
+    if (SortCriteria.FARTHEST_FROM_GOAL.equals(sortCriteria)) return query.orderBy(criteriaBuilder.asc(
+        criteriaBuilder.quot(donationSumSubquery.getSelection(), root.get("economicTarget")) ));
 
     //default
     return query.orderBy(criteriaBuilder.asc(root.get("name")));

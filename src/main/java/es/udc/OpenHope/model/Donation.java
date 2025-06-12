@@ -2,9 +2,13 @@ package es.udc.OpenHope.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.sql.Date;
 
 @Data
 @Entity
+@NoArgsConstructor
 public class Donation {
 
   @Id
@@ -12,9 +16,14 @@ public class Donation {
   private Long id;
 
   @ManyToOne
-  Campaign campaign;
+  private Campaign campaign;
 
   @ManyToOne
-  BankAccount bankAccount;
+  private BankAccount bankAccount;
 
+  @Column(nullable = false)
+  private Float amount;
+
+  @Column(nullable = false)
+  private Date date;
 }

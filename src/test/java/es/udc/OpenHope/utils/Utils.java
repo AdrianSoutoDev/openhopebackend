@@ -2,8 +2,11 @@ package es.udc.OpenHope.utils;
 
 import es.udc.OpenHope.dto.AspspParamsDto;
 import es.udc.OpenHope.dto.BankAccountParams;
-import es.udc.OpenHope.model.Category;
-import es.udc.OpenHope.repository.CategoryRepository;
+import es.udc.OpenHope.dto.UserDto;
+import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.*;
+import es.udc.OpenHope.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
@@ -11,9 +14,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static es.udc.OpenHope.utils.Constants.*;
 
@@ -21,10 +27,21 @@ import static es.udc.OpenHope.utils.Constants.*;
 public class Utils {
 
   private final CategoryRepository categoryRepository;
+  private final DonationRepository donationRepository;
+  private final AspspRepository aspspRepository;
+  private final BankAccountRepository bankAccountRepository;
+  private final UserService userService;
+  private final UserRepository userRepository;
+
 
   @Autowired
-  public Utils(CategoryRepository categoryRepository) {
+  public Utils(CategoryRepository categoryRepository, DonationRepository donationRepository, AspspRepository aspspRepository, BankAccountRepository bankAccountRepository, UserService userService, UserRepository userRepository) {
     this.categoryRepository = categoryRepository;
+    this.donationRepository = donationRepository;
+    this.aspspRepository = aspspRepository;
+    this.bankAccountRepository = bankAccountRepository;
+    this.userService = userService;
+    this.userRepository = userRepository;
   }
 
   public void initCategories() {
@@ -93,6 +110,48 @@ public class Utils {
     topics.add("topic4");
     topics.add("topic5");
     return topics;
+  }
+
+  public void createDonation(Campaign campaign, Float amount, User user) {
+    Aspsp aspsp = getAspsps();
+    aspspRepository.save(aspsp);
+    BankAccount bankAccount = getBankAccount(aspsp, user);
+    bankAccountRepository.save(bankAccount);
+    Donation donation = getDonation(bankAccount, campaign, amount);
+    donationRepository.save(donation);
+  }
+
+  public User getUser(String email, String password) throws DuplicateEmailException {
+    UserDto userDto = userService.create(email, password);
+    Optional<User> userFinded = userRepository.findById(userDto.getId());
+    return userFinded.get();
+  }
+
+  public Aspsp getAspsps(){
+    Aspsp aspsp = new Aspsp();
+    aspsp.setCode(ASPSP_CODE);
+    aspsp.setName(ASPSP_NAME);
+    aspsp.setProvider(ASPSP_PROVIDER);
+    return aspsp;
+  }
+
+  public BankAccount getBankAccount(Aspsp aspsp, User user) {
+    BankAccount bankAccount = new BankAccount();
+    bankAccount.setResourceId(BANK_RESOURCE_ID);
+    bankAccount.setIban(BANK_IBAN);
+    bankAccount.setOwnerName(BANK_OWNER_NAME);
+    bankAccount.setAspsp(aspsp);
+    bankAccount.setAccount(user);
+    return bankAccount;
+  }
+
+  public Donation getDonation(BankAccount bankAccount, Campaign campaign, Float amount) {
+    Donation donation = new Donation();
+    donation.setCampaign(campaign);
+    donation.setBankAccount(bankAccount);
+    donation.setDate(Date.valueOf(LocalDate.now()));
+    donation.setAmount(amount);
+    return donation;
   }
 
 }

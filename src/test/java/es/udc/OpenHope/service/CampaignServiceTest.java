@@ -2,10 +2,17 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.enums.CampaignState;
+import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.*;
-import es.udc.OpenHope.model.Campaign;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.AspspRepository;
+import es.udc.OpenHope.repository.BankAccountRepository;
 import es.udc.OpenHope.repository.CampaignRepository;
+import es.udc.OpenHope.repository.DonationRepository;
 import es.udc.OpenHope.utils.Utils;
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +56,8 @@ public class CampaignServiceTest {
 
   @Autowired
   public CampaignServiceTest(final OrganizationService organizationService, final CampaignService campaignService,
-                             final CampaignRepository campaignRepository, final ResourceService resourceService, final Utils utils) {
+                             final CampaignRepository campaignRepository, final ResourceService resourceService,
+                             final Utils utils) {
     this.organizationService = organizationService;
     this.campaignService = campaignService;
     this.campaignRepository = campaignRepository;
@@ -720,6 +728,258 @@ public class CampaignServiceTest {
 
     assertEquals(1, page.getTotalElements());
     assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByNameAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Z - Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByNameDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "A - Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.NAME_DESC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByStartDateAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT.plusDays(5),
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.START_DATE_ASC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByStartDateDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT.plusDays(5),
+        null, ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.START_DATE_DESC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByEndDateAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT.plusDays(5), ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.END_DATE_ASC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByEndDateDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT.plusDays(5), ECONOMIC_TARGET, 3F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.END_DATE_DESC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByTargetAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, null, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, 2000L, null, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.TARGET_AMOUNT_ASC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByTargetDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 2000L, null, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, 1000L, null, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.TARGET_AMOUNT_DESC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByMinDonationAscTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 10F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.MIN_DONATION_ASC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByMinDonationDescTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 10F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, ECONOMIC_TARGET, 5F, null, null, null);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.MIN_DONATION_DESC);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByClosestToGoalTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, 1000L, 5F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+    Optional<Campaign> campaign2 = campaignRepository.findById(campaignDto2.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 500F, user);
+    utils.createDonation(campaign2.get(), 300F, user);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.CLOSEST_TO_GOAL);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
+  }
+
+  @Test
+  public void searchCampaignOrderByfarthestToGoalTest() throws DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, MaxTopicsExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto =campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    CampaignDto campaignDto2 = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
+        null, 1000L, 5F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+    Optional<Campaign> campaign2 = campaignRepository.findById(campaignDto2.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 300F, user);
+    utils.createDonation(campaign2.get(), 500F, user);
+
+    SearchParamsDto searchParamsDto = new SearchParamsDto();
+    searchParamsDto.setSortCriteria(SortCriteria.FARTHEST_FROM_GOAL);
+
+    Page<CampaignDto> page = campaignService.search(searchParamsDto, 0, 5);
+
+    assertEquals(2, page.getTotalElements());
+    assertEquals(campaignDto.getId(), page.getContent().getFirst().getId());
+    assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
   }
 
 }
