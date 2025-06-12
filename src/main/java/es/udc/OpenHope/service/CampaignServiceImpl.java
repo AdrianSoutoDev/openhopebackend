@@ -212,7 +212,10 @@ public class CampaignServiceImpl implements CampaignService {
 
     return criteriaBuilder.and(
         criteriaBuilder.isNull(root.get("finalizedDate")),
-        criteriaBuilder.greaterThan(root.get("dateLimit"), LocalDate.now())
+        criteriaBuilder.or(
+          criteriaBuilder.isNull(root.get("dateLimit")),
+          criteriaBuilder.greaterThan(root.get("dateLimit"), LocalDate.now())
+        )
     );
   }
 
