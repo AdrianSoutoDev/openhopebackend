@@ -34,7 +34,7 @@ public class SearchController {
           .map(organization -> (ISearcheableDto) organization);
     }
 
-    if(searchParamsDto.getShow() != null && searchParamsDto.getShow().equals(EntityType.ORGANIZATION)){
+    if(searchParamsDto.getShow() != null && searchParamsDto.getShow().equals(EntityType.CAMPAING)){
        results = campaignService.search(searchParamsDto, page, size)
            .map(campaign -> (ISearcheableDto) campaign);
     }
