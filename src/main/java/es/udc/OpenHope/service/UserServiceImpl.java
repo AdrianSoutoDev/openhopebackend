@@ -16,24 +16,27 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                           AccountRepository accountRepository) {
-        super(bCryptPasswordEncoder, accountRepository);
+                           AccountRepository accountRepository, TokenService tokenService) {
+        super(bCryptPasswordEncoder, accountRepository, tokenService);
         this.userRepository = userRepository;
     }
 
     @Override
     public UserDto create(String email, String password) throws DuplicateEmailException {
-        if(email == null) throw new IllegalArgumentException(  Messages.get("validation.email.null") );
-        if(password == null) throw new IllegalArgumentException( Messages.get("validation.password.null") );
-
-        if(accountExists(email)) {
-            throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
-        }
-
+        validateParamsCreate(email, password);
         String encryptedPassword = bCryptPasswordEncoder.encode(password);
         User user = new User(email, encryptedPassword);
 
         userRepository.save(user);
         return UserMapper.toUserDto(user);
+    }
+
+    private void validateParamsCreate(String email, String password) throws DuplicateEmailException {
+        if(email == null || email.isBlank()) throw new IllegalArgumentException(  Messages.get("validation.email.null") );
+        if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
+
+        if(accountExists(email)) {
+            throw new DuplicateEmailException( Messages.get("validation.email.duplicated") );
+        }
     }
 }

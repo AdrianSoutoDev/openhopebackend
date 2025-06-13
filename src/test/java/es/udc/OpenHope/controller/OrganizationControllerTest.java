@@ -1,9 +1,14 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.EditOrganizationParamsDto;
+import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.OrganizationParamsDto;
+import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
+import es.udc.OpenHope.utils.Utils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +26,14 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
+import static es.udc.OpenHope.utils.Constants.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -33,11 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class OrganizationControllerTest {
-
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
-  private static final String ORG_DESCRIPTION = "Asociación Protectora de Animales Domésticos Abandonados del Noroeste";
-  private static final String PASSWORD = "12345abc?";
 
   @Value("${upload.dir}")
   private String uploadDir;
@@ -50,18 +53,24 @@ public class OrganizationControllerTest {
   private final MockMvc mockMvc;
   private final ResourceService resourceService;
   private final OrganizationService organizationService;
+  private final Utils utils;
+  private final CampaignService campaignService;
 
   @Autowired
-  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService, OrganizationService organizationService) {
+  public OrganizationControllerTest(final MockMvc mockMvc, final ResourceService resourceService,
+                                    final OrganizationService organizationService, final Utils utils,
+                                    final CampaignService campaignService) {
     this.mockMvc = mockMvc;
     this.resourceService = resourceService;
     this.organizationService = organizationService;
+    this.utils = utils;
+    this.campaignService = campaignService;
   }
 
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileName != null) {
-      resourceService.removeImage(createdFileName);
+      resourceService.remove(createdFileName);
     }
   }
 
@@ -89,6 +98,32 @@ public class OrganizationControllerTest {
         .param("password", params.getPassword())
         .param("name", params.getName())
         .param("description", params.getDescription())
+        .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
+        .contentType(MediaType.MULTIPART_FORM_DATA);
+
+    return mockMvc.perform(builder);
+  }
+
+  private ResultActions updateOrganization(EditOrganizationParamsDto params, String authToken) throws Exception {
+    return updateOrganization(params, null, authToken);
+  }
+
+  private ResultActions updateOrganization(EditOrganizationParamsDto params, MultipartFile file, String authToken) throws Exception {
+    MockHttpServletRequestBuilder builder = file != null
+        ? MockMvcRequestBuilders.multipart("/api/organizations").file((MockMultipartFile) file).with(request -> {
+      request.setMethod("PUT");
+      return request;
+    })
+        : MockMvcRequestBuilders.multipart("/api/organizations").with(request -> {
+      request.setMethod("PUT");
+      return request;
+    });
+
+    builder.param("id", String.valueOf(params.getId()))
+        .param("name", params.getName())
+        .param("description", params.getDescription())
+        .param("categories", String.valueOf(params.getCategories()))
+        .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
@@ -120,12 +155,6 @@ public class OrganizationControllerTest {
 
     MockMultipartFile testImage = getTestImg();
 
-    String uriStarts = ServletUriComponentsBuilder
-        .fromCurrentContextPath()
-        .port(serverPort)
-        .path("/api/resources/")
-        .toUriString();
-
     String imageName = testImage.getOriginalFilename();
     String extension = imageName.substring(imageName.lastIndexOf("."));
 
@@ -137,13 +166,11 @@ public class OrganizationControllerTest {
         .andExpect(jsonPath("$.description").doesNotExist())
         .andExpect(jsonPath("$.image").exists())
         .andExpect(jsonPath("$.image").isString())
-        .andExpect(jsonPath("$.image").value(Matchers.startsWith(uriStarts)))
         .andExpect(jsonPath("$.image").value(Matchers.endsWith(extension)))
-        .andDo(r ->{
+        .andDo(r -> {
           //Get the image name to delete it when the test finilize.
           String response = r.getResponse().getContentAsString();
-          String image = JsonPath.parse(response).read("$.image");
-          createdFileName = image.replace(uriStarts, "");
+          createdFileName = JsonPath.parse(response).read("$.image");
         });
   }
 
@@ -205,7 +232,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedEmailTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail(ORG_EMAIL);
@@ -218,7 +245,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedNameTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail("another_email@openhope.com");
@@ -249,5 +276,189 @@ public class OrganizationControllerTest {
 
     ResultActions result = registerOrganization(organizationParamsDto);
     result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void registerOrganizationWithCategoriesTest() throws Exception {
+    utils.initCategories();
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setCategories(utils.getCategoryNames());
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.categories").exists())
+        .andExpect(jsonPath("$.categories").isArray())
+        .andExpect(jsonPath("$.categories").isNotEmpty());
+  }
+
+  @Test
+  void registerOrganizationWithMoreThanThreeCategoriesTest() throws Exception {
+    utils.initCategories();
+
+    List<String> categories = utils.getCategoryNames();
+    categories.add(CATEGORY_4);
+
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setCategories(categories);
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void GetOrganizationByIdTest() throws Exception {
+    utils.initCategories();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}", organizationDto.getId()));
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.email").value(ORG_EMAIL))
+        .andExpect(jsonPath("$.name").value(ORG_NAME))
+        .andExpect(jsonPath("$.password").doesNotExist())
+        .andExpect(jsonPath("$.categories").exists())
+        .andExpect(jsonPath("$.categories").isArray())
+        .andExpect(jsonPath("$.categories").isNotEmpty());
+  }
+
+  @Test
+  void GetOrganizationByIdThatDoesntExistTest() throws Exception {
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}", 0));
+    result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  void UpdateOrganizationTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("New Name");
+    editOrganizationParamsDto.setDescription("New Description");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+
+    OrganizationDto organizationFinded = organizationService.get(organizationDto.getId());
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(organizationDto.getId()))
+        .andExpect(jsonPath("$.email").value(ORG_EMAIL))
+        .andExpect(jsonPath("$.name").value("New Name"))
+        .andExpect(jsonPath("$.description").value("New Description"))
+        .andExpect(jsonPath("$.password").doesNotExist());
+
+    assertEquals("New Name", organizationFinded.getName());
+    assertEquals("New Description", organizationFinded.getDescription());
+    assertEquals(organizationDto.getId(), organizationFinded.getId());
+  }
+
+  @Test
+  public void updateOrganizationWithNoPermissionTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+
+    String authToken = organizationService.authenticate("org2@openhope.com", PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("New Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void updateOrganizationThatNotExistTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(0L);
+    editOrganizationParamsDto.setName("New Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateOrganizationWithNameNullTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName(null);
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void updateOrganizationWithDuplicatedNameTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setName("another Name");
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isConflict());
+  }
+
+  @Test
+  public void updateOrganizationWithMaxCategoriesExceededTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+
+    List<String> categories = utils.getCategoryNames();
+    categories.add(CATEGORY_4);
+
+    EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
+    editOrganizationParamsDto.setId(organizationDto.getId());
+    editOrganizationParamsDto.setCategories(categories);
+
+    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    result.andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void getCampaignsByOrganization() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}/campaigns", organizationDto.getId())
+        .param("page", String.valueOf(0))
+        .param("size", String.valueOf(10)));
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].id").value(campaignDto.getId()))
+        .andExpect(jsonPath("$.content[0].name").value(CAMPAIGN_NAME))
+        .andExpect(jsonPath("$.content[0].startAt").value(String.valueOf(CAMPAIGN_START_AT)))
+        .andExpect(jsonPath("$.content[0].dateLimit").value(String.valueOf(CAMPAIGN_DATE_LIMIT)));
+  }
+
+  @Test
+  public void getCampaignsByOrganizationThatDoesntExistTest() throws Exception {
+    ResultActions result = mockMvc.perform(get("/api/organizations/{id}/campaigns", 0L)
+        .param("page", String.valueOf(0))
+        .param("size", String.valueOf(10)));
+
+    result.andExpect(status().isNotFound());
   }
 }

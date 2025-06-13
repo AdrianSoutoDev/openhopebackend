@@ -2,17 +2,16 @@ package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.LoginParamsDto;
+import es.udc.OpenHope.dto.ValidateDto;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
 import es.udc.OpenHope.service.AccountService;
+import es.udc.OpenHope.service.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,11 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountController {
 
   private final AccountService accountService;
+  private final TokenService tokenService;
 
   @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<LoginDto> login(@Valid @RequestBody LoginParamsDto params) throws InvalidCredentialsException {
     String jwt = accountService.authenticate(params.getEmail(), params.getPassword());
-    return ResponseEntity.ok().body(new LoginDto(jwt));
+    return ResponseEntity.ok().body(new LoginDto(jwt, params.getEmail()));
   }
 
   @PostMapping("/logout")
@@ -34,7 +34,9 @@ public class AccountController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<Void> validate() {
-    return ResponseEntity.ok().build();
+  public ResponseEntity<ValidateDto> validate(@RequestHeader(name="Authorization") String token) {
+    String owner = tokenService.extractsubject(token);
+    ValidateDto validateDto = new ValidateDto(owner);
+    return ResponseEntity.ok().body(validateDto);
   }
 }

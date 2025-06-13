@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
   boolean existsByNameIgnoreCase(String name);
+  Organization findByNameIgnoreCase(String name);
+  Organization findByEmailIgnoreCase(String email);
 }

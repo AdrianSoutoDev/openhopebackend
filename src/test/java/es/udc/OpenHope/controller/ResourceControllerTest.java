@@ -45,7 +45,7 @@ public class ResourceControllerTest {
   @AfterEach
   public void cleanUp() throws IOException {
     if (createdFileName != null) {
-      resourceService.removeImage(createdFileName);
+      resourceService.remove(createdFileName);
     }
   }
 
@@ -63,7 +63,7 @@ public class ResourceControllerTest {
   @Test
   public void getImageTest() throws Exception {
     MockMultipartFile testImage = getTestImg();
-    createdFileName = resourceService.saveImage(testImage);
+    createdFileName = resourceService.save(testImage);
 
     ResultActions result = mockMvc.perform(get("/api/resources/".concat(createdFileName)));
 
