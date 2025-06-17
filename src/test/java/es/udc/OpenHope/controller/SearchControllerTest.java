@@ -96,7 +96,7 @@ public class SearchControllerTest {
         null, ECONOMIC_TARGET, null, null, null, null);
 
     SearchParamsDto searchParamsDto = new SearchParamsDto();
-    searchParamsDto.setShow(EntityType.CAMPAING);
+    searchParamsDto.setShow(EntityType.CAMPAIGN);
 
     String jsonContent = objectMapper.writeValueAsString(searchParamsDto);
     ResultActions result = mockMvc.perform(post("/api/search")
