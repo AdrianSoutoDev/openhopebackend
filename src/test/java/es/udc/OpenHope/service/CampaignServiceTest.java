@@ -542,10 +542,10 @@ public class CampaignServiceTest {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
-        null, ECONOMIC_TARGET, 0.5F, null, null, null);
+        null, ECONOMIC_TARGET, null, null, null, null);
 
     campaignService.create(organizationDto.getId(), organizationDto.getEmail(), "Another campaign", "Another description", CAMPAIGN_START_AT,
-        null, ECONOMIC_TARGET, null, null, null, null);
+        null, ECONOMIC_TARGET, 0.5F, null, null, null);
 
     SearchParamsDto searchParamsDto = new SearchParamsDto();
     searchParamsDto.setHasMinimumDonation(true);

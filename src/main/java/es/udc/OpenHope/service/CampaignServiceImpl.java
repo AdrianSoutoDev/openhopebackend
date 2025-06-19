@@ -315,7 +315,7 @@ public class CampaignServiceImpl implements CampaignService {
       return criteriaBuilder.conjunction();
     }
 
-    return criteriaBuilder.isNotNull(root.get("minimumDonation"));
+    return criteriaBuilder.isNull(root.get("minimumDonation"));
   }
 
   private CriteriaQuery<?> sortCampaignsBySortCriteria(SortCriteria sortCriteria, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, Root<Campaign> root) {
