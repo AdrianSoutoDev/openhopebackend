@@ -2,6 +2,7 @@ package es.udc.OpenHope.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.LoginParamsDto;
 import es.udc.OpenHope.service.AccountService;
 import es.udc.OpenHope.service.OrganizationService;
@@ -163,10 +164,10 @@ public class AccountControllerTest {
   @Test
   public void logoutLoggedAccountTest() throws Exception {
     userService.create(USER_EMAIL, PASSWORD);
-    String jwt = accountService.authenticate(USER_EMAIL, PASSWORD);
+    LoginDto loginDto =  accountService.authenticate(USER_EMAIL, PASSWORD);
 
     ResultActions result = mockMvc.perform(post("/api/accounts/logout")
-        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", jwt))
+        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", loginDto.getToken()))
         .contentType(MediaType.APPLICATION_JSON));
 
     result.andExpect(status().isNoContent());
@@ -183,9 +184,9 @@ public class AccountControllerTest {
   @Test
   public void validateTest() throws Exception {
     userService.create(USER_EMAIL, PASSWORD);
-    String authToken = userService.authenticate(USER_EMAIL, PASSWORD);
+    LoginDto loginDto =  userService.authenticate(USER_EMAIL, PASSWORD);
     ResultActions result = mockMvc.perform(post("/api/accounts/validate")
-        .header("Authorization", "Bearer " + authToken)
+        .header("Authorization", "Bearer " + loginDto.getToken())
         .contentType(MediaType.APPLICATION_JSON));
 
     result.andExpect(status().isOk())

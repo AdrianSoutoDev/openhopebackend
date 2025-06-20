@@ -1,10 +1,7 @@
 package es.udc.OpenHope.controller;
 
 import com.jayway.jsonpath.JsonPath;
-import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.EditOrganizationParamsDto;
-import es.udc.OpenHope.dto.OrganizationDto;
-import es.udc.OpenHope.dto.OrganizationParamsDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.ResourceService;
@@ -353,7 +350,7 @@ public class OrganizationControllerTest {
   void UpdateOrganizationTest() throws Exception {
     List<String> topics = Utils.getTopics();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, topics, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
@@ -361,7 +358,7 @@ public class OrganizationControllerTest {
     editOrganizationParamsDto.setDescription("New Description");
     editOrganizationParamsDto.setTopics(Utils.getAnotherTopics());
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
 
     OrganizationDto organizationFinded = organizationService.get(organizationDto.getId());
 
@@ -383,39 +380,39 @@ public class OrganizationControllerTest {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null, null);
 
-    String authToken = organizationService.authenticate("org2@openhope.com", PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate("org2@openhope.com", PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setName("New Name");
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
     result.andExpect(status().isForbidden());
   }
 
   @Test
   public void updateOrganizationThatNotExistTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(0L);
     editOrganizationParamsDto.setName("New Name");
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
     result.andExpect(status().isNotFound());
   }
 
   @Test
   public void updateOrganizationWithNameNullTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setName(null);
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -424,20 +421,20 @@ public class OrganizationControllerTest {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setName("another Name");
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
     result.andExpect(status().isConflict());
   }
 
   @Test
   public void updateOrganizationWithMaxCategoriesExceededTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     List<String> categories = utils.getCategoryNames();
     categories.add(CATEGORY_4);
@@ -446,7 +443,7 @@ public class OrganizationControllerTest {
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setCategories(categories);
 
-    ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
+    ResultActions result = updateOrganization(editOrganizationParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
