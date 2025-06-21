@@ -116,14 +116,14 @@ public class ProviderController {
         if (consentDto != null) {
 
           try {
-            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
+            List<BankAccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
             accountsResponseDto.setAccounts(accounts);
           } catch (UnauthorizedException e) {
 
             tokenOauth = refreshToken(providerService, refresh, aspsp, response);
 
             try {
-              List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
+              List<BankAccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
               accountsResponseDto.setAccounts(accounts);
             } catch (ConsentInvalidException ex) {
               consentService.delete(owner, aspsp, String.valueOf(provider));

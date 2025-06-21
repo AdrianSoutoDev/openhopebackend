@@ -1,7 +1,7 @@
 package es.udc.OpenHope.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.OpenHope.dto.AccountDto;
+import es.udc.OpenHope.dto.BankAccountDto;
 import es.udc.OpenHope.dto.AspspDto;
 import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
@@ -177,12 +177,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Transactional
-  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException {
+  public List<BankAccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException {
     try {
       CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
       List<AccountClientDto> accountClientDtos = redSysProviderRepository.getAccounts(commonHeadersDto, uri, consentId, "Bearer ".concat(tokenOAuth));
-      return BankAccountMapper.toAccountDto(accountClientDtos);
+      return BankAccountMapper.toBankAccountDto(accountClientDtos);
     } catch (UnauthorizedException | ConsentInvalidException e){
       throw e;
     } catch(Exception e) {

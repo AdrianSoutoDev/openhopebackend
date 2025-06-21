@@ -18,6 +18,8 @@ public interface CampaignService {
   Page<CampaignDto> getByOrganization(Long organizationId, int page, int size);
 
   CampaignDto get(Long id);
+
   CampaignDto updateBankAccount(Long id, BankAccountParams bankAccountParams, String owner);
+
   Page<CampaignDto> search(SearchParamsDto searchParamsDto, int page, int size);
 }

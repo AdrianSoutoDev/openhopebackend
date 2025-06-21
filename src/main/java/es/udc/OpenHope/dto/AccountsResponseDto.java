@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class AccountsResponseDto {
-  private List<AccountDto> accounts;
+  private List<BankAccountDto> accounts;
   private boolean notAllowed;
   private String redirection;
 
