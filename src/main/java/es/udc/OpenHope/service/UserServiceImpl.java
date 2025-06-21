@@ -1,15 +1,19 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.dto.UserDto;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.dto.mappers.UserMapper;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.model.Account;
 import es.udc.OpenHope.model.BankAccount;
+import es.udc.OpenHope.model.Donation;
 import es.udc.OpenHope.model.User;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.BankAccountRepository;
+import es.udc.OpenHope.repository.DonationRepository;
 import es.udc.OpenHope.repository.UserRepository;
 import es.udc.OpenHope.utils.Messages;
 import org.springframework.data.domain.Page;
@@ -25,12 +29,14 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final DonationRepository donationRepository;
 
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                           AccountRepository accountRepository, TokenService tokenService, BankAccountRepository bankAccountRepository) {
+                           AccountRepository accountRepository, TokenService tokenService, BankAccountRepository bankAccountRepository, DonationRepository donationRepository) {
         super(bCryptPasswordEncoder, accountRepository, tokenService);
         this.userRepository = userRepository;
         this.bankAccountRepository = bankAccountRepository;
+        this.donationRepository = donationRepository;
     }
 
     @Override
@@ -51,6 +57,16 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
 
         return bankAccounts.map(BankAccountMapper::toBankAccountDto);
     }
+
+    @Override
+    public Page<DonationDto> getDonations(String owner, int page, int size) {
+        Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Donation> donations = donationRepository.findByBankAccount_Account(account, pageable);
+
+        return donations.map(DonationMapper::toDonationDto);
+    }
+
 
     private void validateParamsCreate(String email, String password) throws DuplicateEmailException {
         if(email == null || email.isBlank()) throw new IllegalArgumentException(  Messages.get("validation.email.null") );

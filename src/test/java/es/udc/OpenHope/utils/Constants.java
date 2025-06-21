@@ -41,4 +41,8 @@ public abstract class Constants {
   public static final String BANK_RESOURCE_ID = "ES018202000000000500000000361787589";
   public static final String BANK_OWNER_NAME = "Nombre Apellido1 Apellido2";
   public static final String BANK_ORIGINAL_NAME = "CUENTA PARA AHORROS";
+
+  //donations
+  public static final Float AMOUNT_DONATION = 25f;
+
 }
