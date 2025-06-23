@@ -69,8 +69,8 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     @Override
     @Transactional
     public BankAccountDto addBankAccount(String owner, BankAccountParams bankAccountParams) {
-        Account account = accountRepository.getUserByEmailIgnoreCase(owner);
-        Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), account);
+        User user = userRepository.getUserByEmailIgnoreCase(owner);
+        Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), user);
         Optional<Aspsp> aspsp = aspspRepository.findByProviderAndCode(bankAccountParams.getAspsp().getProvider(),
             bankAccountParams.getAspsp().getCode());
 
@@ -84,12 +84,26 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
             }
 
             newBankAccount.setAspsp(aspsp.get());
-            newBankAccount.setAccount(account);
+            newBankAccount.setAccount(user);
             bankAccountRepository.save(newBankAccount);
+
+            if(user.getFavoriteAccount() == null) {
+                saveUserFavoriteAccount(user, newBankAccount);
+            }
+
             return BankAccountMapper.toBankAccountDto(newBankAccount);
         }
 
+        if(user.getFavoriteAccount() == null) {
+            saveUserFavoriteAccount(user, bankAccount.get());
+        }
+
         return BankAccountMapper.toBankAccountDto(bankAccount.get());
+    }
+
+    private void saveUserFavoriteAccount(User user, BankAccount bankAccount) {
+            user.setFavoriteAccount(bankAccount);
+            userRepository.save(user);
     }
 
     private void validateParamsCreate(String email, String password) throws DuplicateEmailException {
