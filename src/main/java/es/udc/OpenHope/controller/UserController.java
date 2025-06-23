@@ -1,10 +1,8 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.TopicDto;
-import es.udc.OpenHope.dto.TopicsResponseDto;
-import es.udc.OpenHope.dto.UserDto;
-import es.udc.OpenHope.dto.UserParamsDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.exception.DuplicateEmailException;
+import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +23,7 @@ import java.util.List;
 public class UserController {
 
   private final UserService userService;
+  private final TokenService tokenService;
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserDto> register(@Valid @RequestBody UserParamsDto params) throws DuplicateEmailException {
@@ -37,5 +36,15 @@ public class UserController {
         .toUri();
 
     return ResponseEntity.created(location).body(userDto);
+  }
+
+  @PostMapping("/bank-account")
+  public ResponseEntity<BankAccountDto> addBankAccount(@RequestHeader(name="Authorization") String token,
+                                                       @RequestBody BankAccountParams bankAccountParams) {
+
+    String owner = tokenService.extractsubject(token);
+    BankAccountDto bankAccountDto = userService.addBankAccount(owner, bankAccountParams);
+
+    return ResponseEntity.ok(bankAccountDto);
   }
 }

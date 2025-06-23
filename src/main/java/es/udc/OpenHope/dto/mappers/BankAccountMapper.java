@@ -1,8 +1,15 @@
 package es.udc.OpenHope.dto.mappers;
 
+import es.udc.OpenHope.dto.AspspParamsDto;
 import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.client.AccountClientDto;
+import es.udc.OpenHope.model.Account;
+import es.udc.OpenHope.model.Aspsp;
 import es.udc.OpenHope.model.BankAccount;
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,5 +67,14 @@ public class BankAccountMapper {
     });
 
     return bankAccountDtos;
+  }
+
+  public static BankAccount toBankAccount(BankAccountParams bankAccountParams) {
+    BankAccount bankAccount = new BankAccount();
+    bankAccount.setResourceId(bankAccountParams.getResourceId());
+    bankAccount.setIban(bankAccountParams.getIban());
+    bankAccount.setName(bankAccountParams.getOriginalName());
+    bankAccount.setOwnerName(bankAccountParams.getOwnerName());
+    return bankAccount;
   }
 }

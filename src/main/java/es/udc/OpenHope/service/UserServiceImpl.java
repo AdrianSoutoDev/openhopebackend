@@ -1,28 +1,25 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.dto.UserDto;
+import es.udc.OpenHope.dto.mappers.AspspMapper;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.dto.mappers.UserMapper;
 import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.model.Account;
-import es.udc.OpenHope.model.BankAccount;
-import es.udc.OpenHope.model.Donation;
-import es.udc.OpenHope.model.User;
-import es.udc.OpenHope.repository.AccountRepository;
-import es.udc.OpenHope.repository.BankAccountRepository;
-import es.udc.OpenHope.repository.DonationRepository;
-import es.udc.OpenHope.repository.UserRepository;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.utils.Messages;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl extends AccountServiceImpl implements UserService {
@@ -30,13 +27,15 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BankAccountRepository bankAccountRepository;
     private final DonationRepository donationRepository;
+    private final AspspRepository aspspRepository;
 
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                           AccountRepository accountRepository, TokenService tokenService, BankAccountRepository bankAccountRepository, DonationRepository donationRepository) {
+                           AccountRepository accountRepository, TokenService tokenService, BankAccountRepository bankAccountRepository, DonationRepository donationRepository, AspspRepository aspspRepository) {
         super(bCryptPasswordEncoder, accountRepository, tokenService);
         this.userRepository = userRepository;
         this.bankAccountRepository = bankAccountRepository;
         this.donationRepository = donationRepository;
+        this.aspspRepository = aspspRepository;
     }
 
     @Override
@@ -67,6 +66,31 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
         return donations.map(DonationMapper::toDonationDto);
     }
 
+    @Override
+    @Transactional
+    public BankAccountDto addBankAccount(String owner, BankAccountParams bankAccountParams) {
+        Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+        Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), account);
+        Optional<Aspsp> aspsp = aspspRepository.findByProviderAndCode(bankAccountParams.getAspsp().getProvider(),
+            bankAccountParams.getAspsp().getCode());
+
+        if(bankAccount.isEmpty()) {
+            BankAccount newBankAccount = BankAccountMapper.toBankAccount(bankAccountParams);
+
+            if(aspsp.isEmpty()){
+                Aspsp newAspsp = AspspMapper.toAspsp(bankAccountParams.getAspsp());
+                aspspRepository.save(newAspsp);
+                aspsp = Optional.of(newAspsp);
+            }
+
+            newBankAccount.setAspsp(aspsp.get());
+            newBankAccount.setAccount(account);
+            bankAccountRepository.save(newBankAccount);
+            return BankAccountMapper.toBankAccountDto(newBankAccount);
+        }
+
+        return BankAccountMapper.toBankAccountDto(bankAccount.get());
+    }
 
     private void validateParamsCreate(String email, String password) throws DuplicateEmailException {
         if(email == null || email.isBlank()) throw new IllegalArgumentException(  Messages.get("validation.email.null") );
