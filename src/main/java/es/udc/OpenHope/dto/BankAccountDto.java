@@ -9,4 +9,5 @@ public class BankAccountDto {
   private String name;
   private String ownerName;
   private String originalName;
+  private AspspDto aspsp;
 }

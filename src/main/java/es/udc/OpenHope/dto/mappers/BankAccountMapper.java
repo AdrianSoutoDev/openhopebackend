@@ -1,5 +1,6 @@
 package es.udc.OpenHope.dto.mappers;
 
+import es.udc.OpenHope.dto.AspspDto;
 import es.udc.OpenHope.dto.AspspParamsDto;
 import es.udc.OpenHope.dto.BankAccountDto;
 import es.udc.OpenHope.dto.BankAccountParams;
@@ -54,6 +55,9 @@ public class BankAccountMapper {
     bankAccountDto.setName(sb.toString());
     bankAccountDto.setOwnerName(bankAccount.getOwnerName());
     bankAccountDto.setOriginalName(bankAccount.getName());
+
+    AspspDto aspspDto = AspspMapper.toAspspDto(bankAccount.getAspsp());
+    bankAccountDto.setAspsp(aspspDto);
 
     return bankAccountDto;
   }
