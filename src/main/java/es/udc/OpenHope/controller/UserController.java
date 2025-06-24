@@ -47,4 +47,14 @@ public class UserController {
 
     return ResponseEntity.ok(bankAccountDto);
   }
+
+  @PutMapping("/bank-account")
+  public ResponseEntity<UserDto> updateBankAccount(@RequestHeader(name="Authorization") String token,
+                                                       @RequestBody BankAccountParams bankAccountParams) {
+
+    String owner = tokenService.extractsubject(token);
+    UserDto userDto = userService.updateFavoriteAccount(owner, bankAccountParams);
+
+    return ResponseEntity.ok(userDto);
+  }
 }

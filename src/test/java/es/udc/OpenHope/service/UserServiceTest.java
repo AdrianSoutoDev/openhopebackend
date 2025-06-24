@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static es.udc.OpenHope.utils.Constants.*;
@@ -159,5 +160,85 @@ public class UserServiceTest {
 
         assertFalse(donationDtos.getContent().isEmpty());
         assertEquals(2, donationDtos.getContent().size());
+    }
+
+    @Test
+    public void addBankAccount() throws DuplicateEmailException {
+        UserDto userDto = userService.create(USER_EMAIL, PASSWORD);
+        Optional<User> user = userRepository.findById(userDto.getId());
+
+        AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+        BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+        bankAccountParams.setAspsp(aspspParamsDto);
+
+        BankAccountDto bankAccountDto = userService.addBankAccount(user.get().getEmail(), bankAccountParams);
+        Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), user.get());
+
+        assertNotNull(bankAccountDto);
+        assertTrue(bankAccount.isPresent());
+        assertEquals(bankAccountParams.getIban(), bankAccountDto.getIban());
+        assertEquals(bankAccount.get().getIban(), bankAccountDto.getIban());
+    }
+
+    @Test
+    public void updateFavoriteAccount() throws DuplicateEmailException {
+        UserDto userDto = userService.create(USER_EMAIL, PASSWORD);
+        Optional<User> user = userRepository.findById(userDto.getId());
+
+        AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+        BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+        bankAccountParams.setAspsp(aspspParamsDto);
+
+        Aspsp aspsp = Utils.getAspsps();
+        aspspRepository.save(aspsp);
+
+        BankAccount bankAccount = Utils.getBankAccount(aspsp, user.get());
+        bankAccountRepository.save(bankAccount);
+
+        userService.updateFavoriteAccount(user.get().getEmail(), bankAccountParams);
+        user = userRepository.findById(userDto.getId());
+
+        assertNotNull(user.get().getFavoriteAccount());
+        assertEquals(bankAccountParams.getIban(), user.get().getFavoriteAccount().getIban());
+        assertEquals(bankAccount.getId(), user.get().getFavoriteAccount().getId());
+    }
+
+    @Test
+    public void updateFavoriteAccountUserDoesntExist() throws DuplicateEmailException {
+        UserDto userDto = userService.create(USER_EMAIL, PASSWORD);
+        Optional<User> user = userRepository.findById(userDto.getId());
+
+        AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+        BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+        bankAccountParams.setAspsp(aspspParamsDto);
+
+        Aspsp aspsp = Utils.getAspsps();
+        aspspRepository.save(aspsp);
+
+        BankAccount bankAccount = Utils.getBankAccount(aspsp, user.get());
+        bankAccountRepository.save(bankAccount);
+
+        assertThrows(NoSuchElementException.class, () ->
+            userService.updateFavoriteAccount("another_email@openhope.com", bankAccountParams));
+    }
+
+    @Test
+    public void updateFavoriteAccountBankAccountDoesntExist() throws DuplicateEmailException {
+        UserDto userDto = userService.create(USER_EMAIL, PASSWORD);
+        Optional<User> user = userRepository.findById(userDto.getId());
+
+        AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+        BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+        bankAccountParams.setAspsp(aspspParamsDto);
+        bankAccountParams.setIban("ES2500000000000000000000");
+
+        Aspsp aspsp = Utils.getAspsps();
+        aspspRepository.save(aspsp);
+
+        BankAccount bankAccount = Utils.getBankAccount(aspsp, user.get());
+        bankAccountRepository.save(bankAccount);
+
+        assertThrows(NoSuchElementException.class, () ->
+            userService.updateFavoriteAccount(user.get().getEmail(), bankAccountParams));
     }
 }

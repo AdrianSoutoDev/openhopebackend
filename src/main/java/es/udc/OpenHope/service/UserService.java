@@ -14,4 +14,5 @@ public interface UserService extends AccountService {
     Page<BankAccountDto> getBankAccounts(String owner, int page, int size);
     Page<DonationDto> getDonations(String owner, int page, int size);
     BankAccountDto addBankAccount(String owner, BankAccountParams bankAccountParams);
+    UserDto updateFavoriteAccount(String owner, BankAccountParams bankAccountParams);
 }

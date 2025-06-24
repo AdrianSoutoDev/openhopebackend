@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -99,6 +100,20 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
         }
 
         return BankAccountMapper.toBankAccountDto(bankAccount.get());
+    }
+
+    @Override
+    public UserDto updateFavoriteAccount(String owner, BankAccountParams bankAccountParams) {
+        User user = userRepository.getUserByEmailIgnoreCase(owner);
+        if(user == null) throw new NoSuchElementException(Messages.get("validation.user.not.exists"));
+
+        Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), user);
+        if(bankAccount.isEmpty()) throw new NoSuchElementException(Messages.get("validation.bank.account.not.exists"));
+
+        user.setFavoriteAccount(bankAccount.get());
+        userRepository.save(user);
+
+        return UserMapper.toUserDto(user);
     }
 
     private void saveUserFavoriteAccount(User user, BankAccount bankAccount) {
