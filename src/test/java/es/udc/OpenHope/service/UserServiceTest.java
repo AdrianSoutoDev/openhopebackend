@@ -120,10 +120,10 @@ public class UserServiceTest {
         BankAccount bankAccount = Utils.getBankAccount(aspsp, user.get());
         bankAccountRepository.save(bankAccount);
 
-        Page<BankAccountDto> bankAccountDtos = userService.getBankAccounts(userDto.getEmail(), 0, 5);
+        Page<BankAccountListDto> bankAccountListDtos = userService.getBankAccounts(userDto.getEmail(), 0, 5);
 
-        assertFalse(bankAccountDtos.getContent().isEmpty());
-        assertEquals(1, bankAccountDtos.getContent().size());
+        assertFalse(bankAccountListDtos.getContent().isEmpty());
+        assertEquals(1, bankAccountListDtos.getContent().size());
     }
 
     @Test

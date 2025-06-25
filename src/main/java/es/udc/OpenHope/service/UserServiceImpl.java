@@ -1,9 +1,6 @@
 package es.udc.OpenHope.service;
 
-import es.udc.OpenHope.dto.BankAccountDto;
-import es.udc.OpenHope.dto.BankAccountParams;
-import es.udc.OpenHope.dto.DonationDto;
-import es.udc.OpenHope.dto.UserDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.mappers.AspspMapper;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.dto.mappers.DonationMapper;
@@ -50,12 +47,16 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     }
 
     @Override
-    public Page<BankAccountDto> getBankAccounts(String owner, int page, int size) {
-        Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+    public Page<BankAccountListDto> getBankAccounts(String owner, int page, int size) {
+        User user = userRepository.getUserByEmailIgnoreCase(owner);
         Pageable pageable = PageRequest.of(page, size);
-        Page<BankAccount> bankAccounts = bankAccountRepository.findByAccount(account, pageable);
+        Page<BankAccount> bankAccounts = bankAccountRepository.findByAccount(user, pageable);
 
-        return bankAccounts.map(BankAccountMapper::toBankAccountDto);
+        return bankAccounts.map(BankAccountMapper::toBankAccountListDto)
+            .map(b -> {
+                b.setFavorite(user.getFavoriteAccount() != null && user.getFavoriteAccount().getIban().equals(b.getIban()));
+                return b;
+            });
     }
 
     @Override

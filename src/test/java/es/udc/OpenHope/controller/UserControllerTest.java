@@ -2,8 +2,6 @@ package es.udc.OpenHope.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.OpenHope.dto.*;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
 import es.udc.OpenHope.model.Aspsp;
 import es.udc.OpenHope.model.BankAccount;
 import es.udc.OpenHope.model.User;
@@ -133,11 +131,11 @@ public class UserControllerTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(jsonContent));
 
-    Page<BankAccountDto> bankAccountDtos = userService.getBankAccounts(USER_EMAIL, 0, 5);
+    Page<BankAccountListDto> bankAccountListDtos = userService.getBankAccounts(USER_EMAIL, 0, 5);
 
     result.andExpect(status().isOk());
-    assertFalse(bankAccountDtos.getContent().isEmpty());
-    assertEquals(1, bankAccountDtos.getContent().size());
+    assertFalse(bankAccountListDtos.getContent().isEmpty());
+    assertEquals(1, bankAccountListDtos.getContent().size());
   }
 
   @Test

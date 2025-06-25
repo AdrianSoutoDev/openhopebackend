@@ -24,10 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static es.udc.OpenHope.utils.Constants.*;
+import static es.udc.OpenHope.utils.Constants.PASSWORD;
+import static es.udc.OpenHope.utils.Constants.USER_EMAIL;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @Transactional

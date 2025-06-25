@@ -4,7 +4,6 @@ import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.UserAccountDto;
 import es.udc.OpenHope.dto.mappers.UserAccountMapper;
 import es.udc.OpenHope.enums.AccountType;
-import es.udc.OpenHope.enums.EntityType;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
 import es.udc.OpenHope.model.Account;
 import es.udc.OpenHope.model.User;

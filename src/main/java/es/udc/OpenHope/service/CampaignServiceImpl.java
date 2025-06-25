@@ -2,10 +2,10 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.dto.mappers.AspspMapper;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
-import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;

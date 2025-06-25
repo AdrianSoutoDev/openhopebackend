@@ -1,16 +1,11 @@
 package es.udc.OpenHope.dto.mappers;
 
 import es.udc.OpenHope.dto.AspspDto;
-import es.udc.OpenHope.dto.AspspParamsDto;
 import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.BankAccountListDto;
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.client.AccountClientDto;
-import es.udc.OpenHope.model.Account;
-import es.udc.OpenHope.model.Aspsp;
 import es.udc.OpenHope.model.BankAccount;
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,5 +75,29 @@ public class BankAccountMapper {
     bankAccount.setName(bankAccountParams.getOriginalName());
     bankAccount.setOwnerName(bankAccountParams.getOwnerName());
     return bankAccount;
+  }
+
+  public static BankAccountListDto toBankAccountListDto(BankAccount bankAccount){
+    BankAccountListDto bankAccountListDto = new BankAccountListDto();
+
+    bankAccountListDto.setResourceId(bankAccount.getResourceId());
+    bankAccountListDto.setIban(bankAccount.getIban());
+
+    StringBuilder sb = new StringBuilder();
+    if(bankAccount.getName() != null && !bankAccount.getName().isBlank()){
+      sb.append(bankAccount.getName()).append(" - ");
+    }
+
+    sb.append(bankAccount.getIban().substring(0, 4))
+        .append(" **** **** **** **** ").append(bankAccount.getIban().substring(bankAccount.getIban().length() - 4));
+
+    bankAccountListDto.setName(sb.toString());
+    bankAccountListDto.setOwnerName(bankAccount.getOwnerName());
+    bankAccountListDto.setOriginalName(bankAccount.getName());
+
+    AspspDto aspspDto = AspspMapper.toAspspDto(bankAccount.getAspsp());
+    bankAccountListDto.setAspsp(aspspDto);
+
+    return bankAccountListDto;
   }
 }

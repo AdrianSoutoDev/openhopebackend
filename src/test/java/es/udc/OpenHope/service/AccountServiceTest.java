@@ -2,7 +2,6 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.exception.*;
-import es.udc.OpenHope.repository.AccountRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.SecretKey;
 
 import static es.udc.OpenHope.utils.Constants.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional

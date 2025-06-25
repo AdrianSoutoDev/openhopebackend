@@ -1,6 +1,9 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.*;
+import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.BankAccountParams;
+import es.udc.OpenHope.dto.UserDto;
+import es.udc.OpenHope.dto.UserParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.UserService;
@@ -13,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

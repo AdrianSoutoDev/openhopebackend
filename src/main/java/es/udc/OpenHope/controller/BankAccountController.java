@@ -1,6 +1,6 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.BankAccountListDto;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +19,11 @@ public class BankAccountController {
   private final UserService userService;
 
   @GetMapping()
-  public ResponseEntity<Page<BankAccountDto>> getBankAccounts(@RequestHeader(name="Authorization") String token,
-                                                              @RequestParam(defaultValue="0") int page,
-                                                              @RequestParam(defaultValue="5") int size) {
+  public ResponseEntity<Page<BankAccountListDto>> getBankAccounts(@RequestHeader(name="Authorization") String token,
+                                                                  @RequestParam(defaultValue="0") int page,
+                                                                  @RequestParam(defaultValue="5") int size) {
     String owner = tokenService.extractsubject(token);
-    Page<BankAccountDto> bankAccounts = userService.getBankAccounts(owner, page, size);
+    Page<BankAccountListDto> bankAccounts = userService.getBankAccounts(owner, page, size);
 
     return ResponseEntity.ok(bankAccounts);
   }

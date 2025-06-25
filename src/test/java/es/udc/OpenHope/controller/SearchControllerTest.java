@@ -1,17 +1,10 @@
 package es.udc.OpenHope.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.LoginParamsDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.EntityType;
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.MaxCategoriesExceededException;
-import es.udc.OpenHope.exception.MaxTopicsExceededException;
-import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import org.junit.jupiter.api.Test;
