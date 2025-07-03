@@ -386,7 +386,6 @@ public class CampaignServiceImpl implements CampaignService {
 
   private Float amountCollected(Campaign campaign) {
     List<Donation> donations = donationRepository.findByCampaign(campaign);
-    //TODO test
     return donations.stream()
                     .map(Donation::getAmount)
                     .reduce(0f, Float::sum);
@@ -395,10 +394,9 @@ public class CampaignServiceImpl implements CampaignService {
   private Float percentageCollected(Campaign campaign, Float amountCollected) {
     float percentageCollected = 0f;
     if (campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0) {
-      percentageCollected = amountCollected / campaign.getEconomicTarget();
+      percentageCollected = (amountCollected / campaign.getEconomicTarget()) * 100;
     }
-    //TODO test
-    return percentageCollected;
+    return Math.min(percentageCollected, 100F);
   }
 
   private boolean hasBankAccount(Campaign campaign) {

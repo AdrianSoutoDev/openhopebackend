@@ -977,4 +977,96 @@ public class CampaignServiceTest {
     assertEquals(campaignDto2.getId(), page.getContent().getLast().getId());
   }
 
+  @Test
+  public void campaignAmountCollectedZeroTest() throws MaxTopicsExceededException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+    assertEquals(0f, campaignDtoResult.getAmountCollected());
+  }
+
+  @Test
+  public void campaignAmountCollectedTest() throws MaxTopicsExceededException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 300f, user);
+    utils.createDonation(campaign.get(), 500f, user);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+
+    assertEquals(800f, campaignDtoResult.getAmountCollected());
+  }
+
+  @Test
+  public void campaignPercentageCollectedZeroTest() throws MaxTopicsExceededException, DuplicatedCampaignException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+    assertEquals(0f, campaignDtoResult.getPercentageCollected());
+  }
+
+  @Test
+  public void campaignPercentageCollectedTest() throws MaxTopicsExceededException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 300f, user);
+    utils.createDonation(campaign.get(), 500f, user);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+
+    assertEquals(80f, campaignDtoResult.getPercentageCollected());
+  }
+
+  @Test
+  public void campaignPercentageCollectedDecimalTest() throws MaxTopicsExceededException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 35f, user);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+
+    assertEquals(3.5f, campaignDtoResult.getPercentageCollected());
+  }
+
+  @Test
+  public void campaignPercentageCollectedMoreThan100Test() throws MaxTopicsExceededException, DuplicateOrganizationException, DuplicateEmailException, MaxCategoriesExceededException, DuplicatedCampaignException {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, ORG_DESCRIPTION, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
+        null, 1000L, 10F, null, null, null);
+
+    Optional<Campaign> campaign = campaignRepository.findById(campaignDto.getId());
+
+    User user = utils.getUser(USER_EMAIL, PASSWORD);
+    utils.createDonation(campaign.get(), 600f, user);
+    utils.createDonation(campaign.get(), 500f, user);
+
+    CampaignDto campaignDtoResult = campaignService.get(campaignDto.getId());
+
+    assertEquals(100f, campaignDtoResult.getPercentageCollected());
+  }
 }
