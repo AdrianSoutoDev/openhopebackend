@@ -22,6 +22,7 @@ public class CampaignDto implements ISearcheableDto {
   private Float percentageCollected;
   private LocalDate finalizedDate;
   private boolean hasBankAccount;
+  private List<Float> suggestions;
 
   public CampaignDto isOnGoing(Boolean isOnGoing) {
     this.isOnGoing = isOnGoing;

@@ -39,6 +39,7 @@ public class CampaignServiceImpl implements CampaignService {
   private final BankAccountRepository bankAccountRepository;
   private final AspspRepository aspspRepository;
   private final TopicService topicService;
+  private final DonationRepository donationRepository;
 
   @Override
   @Transactional
@@ -384,13 +385,20 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private Float amountCollected(Campaign campaign) {
-    //TODO suma del importe de las donacionaciones
-    return 0f;
+    List<Donation> donations = donationRepository.findByCampaign(campaign);
+    //TODO test
+    return donations.stream()
+                    .map(Donation::getAmount)
+                    .reduce(0f, Float::sum);
   }
 
-  private Float percentageCollected(Campaign campaign) {
-    //TODO si tiene economicTarget, porcentaje entre el economicTarget y amountCollected();
-    return 0f;
+  private Float percentageCollected(Campaign campaign, Float amountCollected) {
+    float percentageCollected = 0f;
+    if (campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0) {
+      percentageCollected = amountCollected / campaign.getEconomicTarget();
+    }
+    //TODO test
+    return percentageCollected;
   }
 
   private boolean hasBankAccount(Campaign campaign) {
@@ -398,9 +406,10 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private CampaignDto toCampaignDto(Campaign campaign) {
+    Float amountCollected = amountCollected(campaign);
     return CampaignMapper.toCampaignDto(campaign)
-        .amountCollected(amountCollected(campaign))
-        .percentageCollected(percentageCollected(campaign))
+        .amountCollected(amountCollected)
+        .percentageCollected(percentageCollected(campaign, amountCollected))
         .isOnGoing(isOnGoing(campaign))
         .hasBankAccount(hasBankAccount(campaign));
   }
