@@ -48,4 +48,9 @@ public class CampaignDto implements ISearcheableDto {
     this.hasBankAccount = hasBankAccount;
     return this;
   }
+
+  public CampaignDto suggestions(List<Float> suggestions) {
+    this.suggestions = suggestions;
+    return this;
+  }
 }

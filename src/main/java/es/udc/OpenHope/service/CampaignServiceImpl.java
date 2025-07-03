@@ -27,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -379,13 +381,10 @@ public class CampaignServiceImpl implements CampaignService {
       return false;
     }
 
-    //TODO Se debe eliminar esta comprobación cuando se establezca finalizedDate cuando se pase el target en las donaciones.
-    boolean isUnderTarget = campaign.getEconomicTarget() == null || amountCollected(campaign) < campaign.getEconomicTarget();
-    return itStated && isUnderTarget;
+    return itStated;
   }
 
-  private Float amountCollected(Campaign campaign) {
-    List<Donation> donations = donationRepository.findByCampaign(campaign);
+  private Float amountCollected(Campaign campaign, List<Donation> donations) {
     return donations.stream()
                     .map(Donation::getAmount)
                     .reduce(0f, Float::sum);
@@ -403,13 +402,61 @@ public class CampaignServiceImpl implements CampaignService {
     return campaign.getBankAccount() != null;
   }
 
+  private List<Float> suggestions(Campaign campaign, List<Donation> donations, Float amountCollected) {
+    List<Float> suggestions = new ArrayList<>();
+
+    if(campaign.getMinimumDonation() != null && campaign.getMinimumDonation() > 0) {
+      suggestions.add(campaign.getMinimumDonation());
+    } else {
+      suggestions.add(1f);
+    }
+
+    if(donations.isEmpty()) {
+      suggestions.add(suggestions.get(0) * 2);
+      suggestions.add(suggestions.get(1) * 5);
+    } else {
+      Float average = amountCollected / donations.size();
+      Float mode = calculateMode(donations);
+
+      if(!average.equals(suggestions.get(0))){
+        suggestions.add(average);
+      } else {
+        suggestions.add(suggestions.get(0) * 2);
+      }
+
+      if( !mode.equals(suggestions.get(0)) && !mode.equals(suggestions.get(1)) ) {
+        suggestions.add(mode);
+      } else {
+        suggestions.add(Float.max(suggestions.get(0), suggestions.get(1)) * 2);
+      }
+    }
+
+    Collections.sort(suggestions);
+
+    return suggestions;
+  }
+
+  private Float calculateMode(List<Donation> donations) {
+    return donations.stream()
+        .map(Donation::getAmount)
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+        .entrySet()
+        .stream()
+        .max(Map.Entry.comparingByValue())
+        .map(Map.Entry::getKey)
+        .orElse(null);
+  }
+
   private CampaignDto toCampaignDto(Campaign campaign) {
-    Float amountCollected = amountCollected(campaign);
+    List<Donation> donations = donationRepository.findByCampaign(campaign);
+    Float amountCollected = amountCollected(campaign, donations);
+
     return CampaignMapper.toCampaignDto(campaign)
         .amountCollected(amountCollected)
         .percentageCollected(percentageCollected(campaign, amountCollected))
         .isOnGoing(isOnGoing(campaign))
-        .hasBankAccount(hasBankAccount(campaign));
+        .hasBankAccount(hasBankAccount(campaign))
+        .suggestions(suggestions(campaign, donations, amountCollected));
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,
