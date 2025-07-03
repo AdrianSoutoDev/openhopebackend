@@ -2,6 +2,7 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
@@ -22,4 +23,5 @@ public interface CampaignService {
   CampaignDto updateBankAccount(Long id, BankAccountParams bankAccountParams, String owner);
 
   Page<CampaignDto> search(SearchParamsDto searchParamsDto, int page, int size);
+  Page<DonationDto> getDonations(Long id, int page, int size);
 }

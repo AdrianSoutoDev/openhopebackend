@@ -41,6 +41,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .requestMatchers(HttpMethod.POST,  "/api/resources").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}/donations").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
             .requestMatchers(HttpMethod.POST,  "/api/search").permitAll()
             .anyRequest().authenticated())

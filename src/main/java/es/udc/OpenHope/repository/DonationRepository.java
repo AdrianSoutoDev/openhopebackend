@@ -14,4 +14,5 @@ import java.util.List;
 public interface DonationRepository extends JpaRepository<Donation, Long> {
   Page<Donation> findByBankAccount_Account(Account account, Pageable pageable);
   List<Donation> findByCampaign(Campaign campaign);
+  Page<Donation> findByCampaignOrderByDateDesc(Campaign campaign, Pageable pageable);
 }

@@ -2,10 +2,12 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.dto.mappers.AspspMapper;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
+import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;
@@ -129,6 +131,15 @@ public class CampaignServiceImpl implements CampaignService {
     Pageable pageable = PageRequest.of(page, size);
     Page<Campaign> campaignPage = campaignRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
     return campaignPage.map(this::toCampaignDto);
+  }
+
+  @Override
+  public Page<DonationDto> getDonations(Long id, int page, int size) {
+    Optional<Campaign> campaign = campaignRepository.findById(id);
+    if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Donation> donations = donationRepository.findByCampaignOrderByDateDesc(campaign.get(), pageable);
+    return donations.map(DonationMapper::toDonationDto);
   }
 
   private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {
