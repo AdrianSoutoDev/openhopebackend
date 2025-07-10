@@ -4,9 +4,7 @@ import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.enums.Provider;
-import es.udc.OpenHope.exception.ConsentInvalidException;
-import es.udc.OpenHope.exception.ProviderException;
-import es.udc.OpenHope.exception.UnauthorizedException;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.service.ConsentService;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.providers.ProviderManager;
@@ -61,7 +59,7 @@ public class ProviderController {
   }
 
   @GetMapping("/oauth/callback")
-  public void callback(@RequestParam(value="code") String code, @RequestParam String state,
+  public void callback(@RequestParam(value = "code") String code, @RequestParam String state,
                        HttpServletResponse response) throws ProviderException {
 
     HashMap<String, String> stateParams = StateParams.getStateParams(state);
@@ -80,17 +78,17 @@ public class ProviderController {
     response.addCookie(refreshCookie);
 
     StringBuilder UriRedirection = new StringBuilder(frontendBaseUrl);
-    if(campaign != null && !campaign.isBlank()) {
+    if (campaign != null && !campaign.isBlank()) {
       UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&campaign=").append(campaign);
-    } else if(userId != null && !userId.isBlank()){
+    } else if (userId != null && !userId.isBlank()) {
       UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&user=").append("me");
     }
 
     try {
       response.sendRedirect(UriRedirection.toString());
-    } catch (Exception e){
+    } catch (Exception e) {
       throw new ProviderException(e.getMessage());
     }
   }
@@ -99,8 +97,8 @@ public class ProviderController {
   public ResponseEntity<AccountsResponseDto> getAccounts(@PathVariable Provider provider, @PathVariable String aspsp,
                                                          @RequestParam(required = false) Integer campaign,
                                                          @RequestParam(required = false) Integer user,
-                                                         @RequestHeader(name="Authorization") String token,
-                                                      HttpServletRequest request, HttpServletResponse response) throws ProviderException, UnauthorizedException {
+                                                         @RequestHeader(name = "Authorization") String token,
+                                                         HttpServletRequest request, HttpServletResponse response) throws ProviderException, UnauthorizedException {
 
     String owner = tokenService.extractsubject(token);
 
@@ -150,11 +148,26 @@ public class ProviderController {
           }
         }
       }
-    } catch(UnauthorizedException e) {
-        restartSession(accountsResponseDto, owner, aspsp, provider.toString(), response);
+    } catch (UnauthorizedException e) {
+      restartSession(accountsResponseDto, owner, aspsp, provider.toString(), response);
     }
 
     return ResponseEntity.ok(accountsResponseDto);
+  }
+
+  @PostMapping("/donate")
+  public ResponseEntity<DonationDto> donate(@RequestBody DonateParamsDto params,
+                                            @RequestHeader(name="Authorization") String token,
+                                            HttpServletRequest request) throws CampaignFinalizedException, ProviderException, MissingBankAccountException, UnauthorizedException {
+
+    String owner = tokenService.extractsubject(token);
+    String ipClient = getClientIp(request);
+
+    ProviderService providerService = providerManager.getProviderService(params.getProvider());
+    DonationDto donationDto = providerService.initPayment(token, ipClient, params.getBankAccountId(), owner,
+        params.getCampaignId(), params.getAmount());
+
+    return ResponseEntity.ok(donationDto);
   }
 
   private void createConsent(ProviderService providerService, String owner, String aspsp, String tokenOauth, String ipClient,
@@ -184,4 +197,6 @@ public class ProviderController {
     CookieUtils.removeCookie("refresh_".concat(aspsp), response);
     consentService.delete(owner, aspsp, provider);
   }
+
+
 }

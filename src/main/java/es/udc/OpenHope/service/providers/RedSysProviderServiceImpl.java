@@ -178,7 +178,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
   @Override
   @Transactional
-  public void initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
+  public DonationDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
 
     Optional<Campaign> campaignOptional = campaignRepository.findById(campaignId);
     if(campaignOptional.isEmpty()) {
@@ -218,7 +218,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, aspsp, ipClient,
           "Bearer ".concat(tokenOAuth), "www.google.com");
 
-      campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
+      return campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
 
     } catch (UnauthorizedException e){
         throw e;
