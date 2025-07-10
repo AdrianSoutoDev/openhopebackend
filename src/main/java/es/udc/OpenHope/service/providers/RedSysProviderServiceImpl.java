@@ -1,22 +1,15 @@
 package es.udc.OpenHope.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.OpenHope.dto.AspspDto;
-import es.udc.OpenHope.dto.BankAccountDto;
-import es.udc.OpenHope.dto.CommonHeadersDto;
-import es.udc.OpenHope.dto.ProviderAuthDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.enums.Provider;
-import es.udc.OpenHope.exception.ConsentInvalidException;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.exception.ProviderException;
-import es.udc.OpenHope.exception.UnauthorizedException;
-import es.udc.OpenHope.model.Account;
-import es.udc.OpenHope.model.Consent;
-import es.udc.OpenHope.repository.AccountRepository;
-import es.udc.OpenHope.repository.ConsentRepository;
-import es.udc.OpenHope.repository.RedSysProviderRepository;
-import es.udc.OpenHope.service.ConsentService;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.*;
+import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,12 +28,10 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service("redSysProviderService")
 @RequiredArgsConstructor
@@ -49,7 +40,10 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final RedSysProviderRepository redSysProviderRepository;
   private final ConsentRepository consentRepository;
   private final AccountRepository accountRepository;
-  private final ConsentService consentService;
+  private final CampaignRepository campaignRepository;
+  private final BankAccountRepository bankAccountRepository;
+  private final CampaignService campaignService;
+
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -57,6 +51,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private static final String CERTIFICATE_FOOTER = "-----END CERTIFICATE-----";
   private static final String ALGORITHM_HEADER = "algorithm=\"SHA-256\"";
   private static final String HEADERS_HEADER = "headers=\"digest x-request-id\"";
+  private static final String PAYMENT_TYPE = "instant-sepa-credit-transfers";
 
   @Value("${redsys.rsa.privateKey.file.path}")
   private String privateKey;
@@ -96,6 +91,9 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
   @Value("${frontend.base.url}")
   private String frontendBaseUrl;
+
+  @Value("${redsys.api.post.payment.endpoint}")
+  private String initPaymentEndpoint;
 
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
@@ -176,6 +174,71 @@ public class RedSysProviderServiceImpl implements ProviderService {
         throw new ProviderException(Messages.get("provider.error.generic"));
       }
     }
+  }
+
+  @Override
+  @Transactional
+  public void initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
+
+    Optional<Campaign> campaignOptional = campaignRepository.findById(campaignId);
+    if(campaignOptional.isEmpty()) {
+      throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    }
+
+    if(campaignOptional.get().getFinalizedDate() != null) {
+      throw new CampaignFinalizedException(Messages.get("validation.campaign.finalized"));
+    }
+
+    if(campaignOptional.get().getBankAccount() == null) {
+      throw new MissingBankAccountException(Messages.get("validation.bank.account.on.campaign"));
+    }
+
+    Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+    Optional<BankAccount> bankAccountOptional = bankAccountRepository.findById(bankAccountId);
+
+    if(bankAccountOptional.isEmpty() || !account.equals(bankAccountOptional)) {
+      throw new SecurityException(Messages.get("validation.donate"));
+    }
+
+    try {
+      BankAccount bankAccountDestiny = campaignOptional.get().getBankAccount();
+      BankAccount bankAccountOrigin = bankAccountOptional.get();
+
+      PostInitPaymentDto postInitPaymentDto = getPostInitPaymentDto(amount, bankAccountOrigin, bankAccountDestiny);
+
+      String body = new ObjectMapper().writeValueAsString(postInitPaymentDto);
+
+      CommonHeadersDto commonHeadersDto = getCommonHeaders(body);
+      String aspsp = bankAccountOrigin.getAspsp().getCode();
+
+      String uri = redSysApiUrl + initPaymentEndpoint
+          .replace("{aspsp}", aspsp)
+          .replace("{payment-product}", PAYMENT_TYPE);
+
+      PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, aspsp, ipClient,
+          "Bearer ".concat(tokenOAuth), "www.google.com");
+
+      campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
+
+    } catch (UnauthorizedException e){
+        throw e;
+    } catch(Exception e) {
+      throw new ProviderException(Messages.get("provider.error.generic"));
+    }
+  }
+
+  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny) {
+    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getBban(),
+        bankAccountOrigin.getMsisdn(), bankAccountOrigin.getCurrency());
+
+    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getBban(),
+        bankAccountDestiny.getMsisdn(), bankAccountDestiny.getCurrency());
+
+    AmountDto amountDto = new AmountDto("EUR", amount.toString());
+
+    PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
+    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName());
+    return postInitPaymentDto;
   }
 
   @Transactional

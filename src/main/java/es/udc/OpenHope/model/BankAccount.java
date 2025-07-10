@@ -18,6 +18,15 @@ public class BankAccount {
   @Column(nullable = false)
   private String iban;
 
+  @Column
+  private String bban;
+
+  @Column
+  private String msisdn;
+
+  @Column
+  private String currency;
+
   private String name;
 
   @Column(nullable = false)

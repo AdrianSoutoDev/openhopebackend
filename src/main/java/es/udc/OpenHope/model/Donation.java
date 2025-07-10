@@ -26,4 +26,11 @@ public class Donation {
 
   @Column(nullable = false)
   private Date date;
+
+  public Donation(Campaign campaign, BankAccount bankAccount, Float amount, Date date) {
+    this.campaign = campaign;
+    this.bankAccount = bankAccount;
+    this.amount = amount;
+    this.date = date;
+  }
 }

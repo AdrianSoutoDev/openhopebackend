@@ -142,6 +142,24 @@ public class CampaignServiceImpl implements CampaignService {
     return donations.map(DonationMapper::toDonationDto);
   }
 
+  @Override
+  @Transactional
+  public DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Date date) {
+    Donation donation = new Donation(campaign, bankAccount, amount, date);
+    donationRepository.save(donation);
+
+    if(campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0){
+      List<Donation> donations = donationRepository.findByCampaign(campaign);
+      Float amountCollected = sumDonations(donations);
+      if(amountCollected > campaign.getEconomicTarget() && campaign.getFinalizedDate() == null) {
+        campaign.setFinalizedDate(date);
+        campaignRepository.save(campaign);
+      }
+    }
+
+    return DonationMapper.toDonationDto(donation);
+  }
+
   private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {
     return (root, query, criteriaBuilder) -> {
 
@@ -395,7 +413,7 @@ public class CampaignServiceImpl implements CampaignService {
     return itStated;
   }
 
-  private Float amountCollected(Campaign campaign, List<Donation> donations) {
+  private Float sumDonations(List<Donation> donations) {
     return donations.stream()
                     .map(Donation::getAmount)
                     .reduce(0f, Float::sum);
@@ -460,7 +478,7 @@ public class CampaignServiceImpl implements CampaignService {
 
   private CampaignDto toCampaignDto(Campaign campaign) {
     List<Donation> donations = donationRepository.findByCampaign(campaign);
-    Float amountCollected = amountCollected(campaign, donations);
+    Float amountCollected = sumDonations(donations);
 
     return CampaignMapper.toCampaignDto(campaign)
         .amountCollected(amountCollected)
