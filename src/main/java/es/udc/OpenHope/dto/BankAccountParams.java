@@ -9,8 +9,6 @@ public class BankAccountParams {
     private String name;
     private String ownerName;
     private String originalName;
-    private String bban;
-    private String msisdn;
     private String currency;
     private AspspParamsDto aspsp;
 }

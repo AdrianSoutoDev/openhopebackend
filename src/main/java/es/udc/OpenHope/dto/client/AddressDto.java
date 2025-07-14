@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class AccountReferenceDto {
-  private String iban;
-  private String currency;
+public class AddressDto {
+  private String country;
+  private String townName;
 }

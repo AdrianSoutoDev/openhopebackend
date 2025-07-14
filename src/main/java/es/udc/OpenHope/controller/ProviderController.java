@@ -71,8 +71,8 @@ public class ProviderController {
     ProviderService providerService = providerManager.getProviderService(provider);
     CredentialsDto credentialsDto = providerService.authorize(code, aspsp);
 
-    Cookie tokenCookie = CookieUtils.getCookie("token_".concat(aspsp), credentialsDto.getAccess_token(), credentialsDto.getExpires_in());
-    Cookie refreshCookie = CookieUtils.getCookie("refresh_".concat(aspsp), credentialsDto.getRefresh_token(), credentialsDto.getExpires_in());
+    Cookie tokenCookie = CookieUtils.getCookie("token_".concat(aspsp), credentialsDto.getAccess_token(), credentialsDto.getExpires_in() );
+    Cookie refreshCookie = CookieUtils.getCookie("refresh_".concat(aspsp), credentialsDto.getRefresh_token(), 31536000);
 
     response.addCookie(tokenCookie);
     response.addCookie(refreshCookie);
@@ -163,8 +163,11 @@ public class ProviderController {
     String owner = tokenService.extractsubject(token);
     String ipClient = getClientIp(request);
 
+    Cookie tokenCookie = CookieUtils.getCookieFromRequest("token_".concat(params.getAspsp()), request);
+    String tokenOauth = tokenCookie != null ? tokenCookie.getValue() : null;
+
     ProviderService providerService = providerManager.getProviderService(params.getProvider());
-    DonationDto donationDto = providerService.initPayment(token, ipClient, params.getBankAccountId(), owner,
+    DonationDto donationDto = providerService.initPayment(tokenOauth, ipClient, params.getBankAccountId(), owner,
         params.getCampaignId(), params.getAmount());
 
     return ResponseEntity.ok(donationDto);

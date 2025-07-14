@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class DonateParamsDto {
   private Provider provider;
+  private String aspsp;
   private Long campaignId;
   private Long bankAccountId;
   private Float amount;

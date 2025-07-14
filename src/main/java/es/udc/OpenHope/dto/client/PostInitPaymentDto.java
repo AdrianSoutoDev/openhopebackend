@@ -11,4 +11,5 @@ public class PostInitPaymentDto {
   private AmountDto instructedAmount;
   private AccountReferenceDto creditorAccount;
   private String creditorName;
+  private AddressDto creditorAddress;
 }

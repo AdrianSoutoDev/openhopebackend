@@ -19,12 +19,6 @@ public class BankAccount {
   private String iban;
 
   @Column
-  private String bban;
-
-  @Column
-  private String msisdn;
-
-  @Column
   private String currency;
 
   private String name;

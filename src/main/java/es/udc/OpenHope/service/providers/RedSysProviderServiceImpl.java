@@ -44,7 +44,6 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final BankAccountRepository bankAccountRepository;
   private final CampaignService campaignService;
 
-
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
   private static final String CERTIFICATE_HEADER = "-----BEGIN CERTIFICATE-----";
@@ -107,7 +106,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .sorted(Comparator.comparing(AspspDto::getName))
           .toList();
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -137,7 +136,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       providerAuthDto.setUri(sb.toString());
       return providerAuthDto;
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -153,7 +152,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       return redSysProviderRepository.authorize(redSysClientId, code, oauthCallback, oauthCodeVerifier, uri.toString());
 
     }catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -171,7 +170,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       if(e.getStatusCode().is4xxClientError()){
         throw new UnauthorizedException(e.getMessage());
       } else {
-        throw new ProviderException(Messages.get("provider.error.generic"));
+        throw new ProviderException(e.getMessage());
       }
     }
   }
@@ -196,7 +195,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
     Account account = accountRepository.getUserByEmailIgnoreCase(owner);
     Optional<BankAccount> bankAccountOptional = bankAccountRepository.findById(bankAccountId);
 
-    if(bankAccountOptional.isEmpty() || !account.equals(bankAccountOptional)) {
+    if(bankAccountOptional.isEmpty() || !bankAccountOptional.get().getAccount().equals(account) ){
       throw new SecurityException(Messages.get("validation.donate"));
     }
 
@@ -215,7 +214,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .replace("{aspsp}", aspsp)
           .replace("{payment-product}", PAYMENT_TYPE);
 
-      PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, aspsp, ipClient,
+      PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, ipClient,
           "Bearer ".concat(tokenOAuth), "www.google.com");
 
       return campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
@@ -223,21 +222,22 @@ public class RedSysProviderServiceImpl implements ProviderService {
     } catch (UnauthorizedException e){
         throw e;
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
   private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny) {
-    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getBban(),
-        bankAccountOrigin.getMsisdn(), bankAccountOrigin.getCurrency());
+    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getCurrency());
 
-    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getBban(),
-        bankAccountDestiny.getMsisdn(), bankAccountDestiny.getCurrency());
+    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getCurrency());
 
-    AmountDto amountDto = new AmountDto("EUR", amount.toString());
+    AmountDto amountDto = new AmountDto(bankAccountDestiny.getCurrency(), amount.toString());
+
+    AddressDto addressDto = new AddressDto("ES", "");
 
     PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
-    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName());
+    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto);
+
     return postInitPaymentDto;
   }
 
@@ -251,7 +251,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
     } catch (UnauthorizedException | ConsentInvalidException e){
       throw e;
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 

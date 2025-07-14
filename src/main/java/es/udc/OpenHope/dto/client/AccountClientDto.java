@@ -12,4 +12,5 @@ public class AccountClientDto {
   private String iban;
   private String name;
   private String ownerName;
+  private String currency;
 }
