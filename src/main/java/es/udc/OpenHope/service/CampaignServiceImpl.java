@@ -67,7 +67,7 @@ public class CampaignServiceImpl implements CampaignService {
     campaignRepository.save(campaign);
     topicService.saveTopics(topics, campaign, owner);
 
-    return CampaignMapper.toCampaignDto(campaign).amountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
+    return toCampaignDto(campaign);
   }
 
   @Override

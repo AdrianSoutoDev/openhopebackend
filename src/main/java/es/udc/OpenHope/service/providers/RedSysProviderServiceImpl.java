@@ -102,7 +102,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       List<AspspClientDto> response = redSysProviderRepository.getAspsps(commonHeadersDto, uri);
 
       return response.stream()
-          .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSYS))
+          .map(a -> new AspspDto(a.getBic(), a.getName(), a.getApiName(), Provider.REDSYS))
           .sorted(Comparator.comparing(AspspDto::getName))
           .toList();
     } catch(Exception e) {
@@ -235,8 +235,10 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
     AddressDto addressDto = new AddressDto("ES", "");
 
+    String remittanceInformationUnstructured = "Texto de prueba";
+
     PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
-    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto);
+    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto, bankAccountDestiny.getAspsp().getBic(), remittanceInformationUnstructured);
 
     return postInitPaymentDto;
   }

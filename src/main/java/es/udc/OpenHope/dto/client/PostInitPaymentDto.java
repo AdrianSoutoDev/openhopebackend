@@ -12,4 +12,6 @@ public class PostInitPaymentDto {
   private AccountReferenceDto creditorAccount;
   private String creditorName;
   private AddressDto creditorAddress;
+  private String creditorAgent;
+  private String remittanceInformationUnstructured;
 }

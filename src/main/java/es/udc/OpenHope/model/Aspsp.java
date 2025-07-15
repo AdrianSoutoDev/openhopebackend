@@ -13,6 +13,9 @@ public class Aspsp {
   private Long id;
 
   @Column(nullable = false)
+  private String bic;
+
+  @Column(nullable = false)
   private String code;
 
   @Column(nullable = false)
