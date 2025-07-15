@@ -215,7 +215,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .replace("{payment-product}", PAYMENT_TYPE);
 
       PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, ipClient,
-          "Bearer ".concat(tokenOAuth), "www.google.com");
+          "Bearer ".concat(tokenOAuth));
 
       return campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
 
