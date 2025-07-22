@@ -4,8 +4,6 @@ import java.util.HashMap;
 
 public class StateParams {
 
-  //TODO tests
-
   public static HashMap<String, String> getStateParams(String state) {
     HashMap<String, String> result = new HashMap<>();
     String[] params = state.split(",");

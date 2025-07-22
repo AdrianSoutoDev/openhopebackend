@@ -12,7 +12,7 @@ import java.util.List;
 
 @Repository
 public interface DonationRepository extends JpaRepository<Donation, Long> {
-  Page<Donation> findByBankAccount_Account(Account account, Pageable pageable);
-  List<Donation> findByCampaign(Campaign campaign);
-  Page<Donation> findByCampaignOrderByDateDesc(Campaign campaign, Pageable pageable);
+  Page<Donation> findByBankAccount_AccountAndConfirmedTrue(Account account, Pageable pageable);
+  List<Donation> findByCampaignAndConfirmedTrue(Campaign campaign);
+  Page<Donation> findByCampaignAndConfirmedTrueOrderByDateDesc(Campaign campaign, Pageable pageable);
 }

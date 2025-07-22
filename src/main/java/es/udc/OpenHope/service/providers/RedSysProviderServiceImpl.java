@@ -10,6 +10,7 @@ import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.model.*;
 import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.service.CampaignService;
+import es.udc.OpenHope.service.DonationService;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final CampaignRepository campaignRepository;
   private final BankAccountRepository bankAccountRepository;
   private final CampaignService campaignService;
+  private final DonationService donationService;
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -93,6 +95,9 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
   @Value("${redsys.api.post.payment.endpoint}")
   private String initPaymentEndpoint;
+
+//  @Value("${payments.callback.uri}")
+//  private String paymentCallback;
 
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
@@ -177,7 +182,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
   @Override
   @Transactional
-  public DonationDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
+  public InitPaymentDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
 
     Optional<Campaign> campaignOptional = campaignRepository.findById(campaignId);
     if(campaignOptional.isEmpty()) {
@@ -214,33 +219,30 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .replace("{aspsp}", aspsp)
           .replace("{payment-product}", PAYMENT_TYPE);
 
-      PostInitPaymentClientDto response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, ipClient,
-          "Bearer ".concat(tokenOAuth));
+      DonationDto donationDto = campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
 
-      return campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
+      String redirectionUri = frontendBaseUrl + "campaign/" + campaignId +
+          "?status=OK" + "&donation=" + donationDto.getId();
+
+      PostInitPaymentClientDto response = null;
+
+      try {
+        response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, ipClient,
+            "Bearer ".concat(tokenOAuth), redirectionUri);
+      } catch (Exception e) {
+        donationService.delete(donationDto.getId());
+        throw e;
+      }
+
+      InitPaymentDto initPaymentDto = new InitPaymentDto();
+      initPaymentDto.setRedirection(response.get_links().getScaRedirect().getHref());
+      return initPaymentDto;
 
     } catch (UnauthorizedException e){
         throw e;
     } catch(Exception e) {
-      throw new ProviderException(e.getMessage());
+        throw new ProviderException(e.getMessage());
     }
-  }
-
-  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny) {
-    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getCurrency());
-
-    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getCurrency());
-
-    AmountDto amountDto = new AmountDto(bankAccountDestiny.getCurrency(), amount.toString());
-
-    AddressDto addressDto = new AddressDto("ES", "");
-
-    String remittanceInformationUnstructured = "Texto de prueba";
-
-    PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
-    ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto, bankAccountDestiny.getAspsp().getBic(), remittanceInformationUnstructured);
-
-    return postInitPaymentDto;
   }
 
   @Transactional
@@ -272,18 +274,18 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
       String uri = redSysApiUrl + createConsentEndpoint.replace("{aspsp}", aspsp);
 
-      StringBuilder sb = new StringBuilder(frontendBaseUrl)
+      StringBuilder redirectionUri = new StringBuilder(frontendBaseUrl)
           .append("openbanking/bank-selection")
           .append("?aspsp=").append(aspsp);
 
       if(campaignId != null) {
-        sb.append("&campaign=").append(campaignId);
+        redirectionUri.append("&campaign=").append(campaignId);
       } else if(userId != null) {
-        sb.append("&user=").append("me");
+        redirectionUri.append("&user=").append("me");
       }
 
       PostConsentClientDto response = redSysProviderRepository.postConsent(commonHeadersDto, uri, body, aspsp, ipClient,
-          "Bearer ".concat(token), sb.toString());
+          "Bearer ".concat(token), redirectionUri.toString());
 
       Account account = accountRepository.getUserByEmailIgnoreCase(owner);
       Consent consent = new Consent();
@@ -397,4 +399,22 @@ public class RedSysProviderServiceImpl implements ProviderService {
     commonHeadersDto.setClientId(redSysClientId);
     return commonHeadersDto;
   }
+
+  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny) {
+    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getCurrency());
+
+    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getCurrency());
+
+    AmountDto amountDto = new AmountDto(bankAccountDestiny.getCurrency(), amount.toString());
+
+    AddressDto addressDto = new AddressDto("ES", "");
+
+    String remittanceInformationUnstructured = "Texto de prueba";
+
+    PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
+        ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto, bankAccountDestiny.getAspsp().getBic(), remittanceInformationUnstructured);
+
+    return postInitPaymentDto;
+  }
+
 }

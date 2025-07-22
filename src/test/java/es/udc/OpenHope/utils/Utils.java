@@ -118,6 +118,7 @@ public class Utils {
     BankAccount bankAccount = getBankAccount(aspsp, user);
     bankAccountRepository.save(bankAccount);
     Donation donation = getDonation(bankAccount, campaign, amount);
+    donation.setConfirmed(true);
     donationRepository.save(donation);
   }
 

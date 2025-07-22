@@ -14,5 +14,6 @@ public interface ProviderService {
   List<BankAccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException;
   PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String ipClient, Integer campaignId, Integer userId) throws ProviderException, UnauthorizedException;
   CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException;
-  DonationDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException;
+  InitPaymentDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount)
+      throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException;
 }

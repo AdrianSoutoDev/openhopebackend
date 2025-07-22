@@ -27,10 +27,14 @@ public class Donation {
   @Column(nullable = false)
   private Date date;
 
+  @Column
+  private boolean confirmed;
+
   public Donation(Campaign campaign, BankAccount bankAccount, Float amount, Date date) {
     this.campaign = campaign;
     this.bankAccount = bankAccount;
     this.amount = amount;
     this.date = date;
+    this.setConfirmed(false);
   }
 }

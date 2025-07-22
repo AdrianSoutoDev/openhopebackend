@@ -146,7 +146,8 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
   }
 
   @Override
-  public PostInitPaymentClientDto postInitPayment(CommonHeadersDto commonHeaders, String uri, String body, String PsuIpAddress, String authorization) throws UnauthorizedException {
+  public PostInitPaymentClientDto postInitPayment(CommonHeadersDto commonHeaders, String uri, String body, String PsuIpAddress,
+                                                  String authorization, String redirectionUri) throws UnauthorizedException {
     try {
       RestClient restClient = RestClient.create();
 
@@ -162,6 +163,7 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
           .header("x-request-id", commonHeaders.getXRequestID())
           .header("authorization", authorization)
           .header("psu-ip-address", PsuIpAddress)
+          .header("TPP-Redirect-URI", redirectionUri)
           .retrieve()
           .body(PostInitPaymentClientDto.class);
 

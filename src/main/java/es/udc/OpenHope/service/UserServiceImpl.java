@@ -73,7 +73,7 @@ public class UserServiceImpl extends AccountServiceImpl implements UserService {
     public Page<DonationDto> getDonations(String owner, int page, int size) {
         Account account = accountRepository.getUserByEmailIgnoreCase(owner);
         Pageable pageable = PageRequest.of(page, size);
-        Page<Donation> donations = donationRepository.findByBankAccount_Account(account, pageable);
+        Page<Donation> donations = donationRepository.findByBankAccount_AccountAndConfirmedTrue(account, pageable);
 
         return donations.map(DonationMapper::toDonationDto);
     }

@@ -138,7 +138,7 @@ public class CampaignServiceImpl implements CampaignService {
     Optional<Campaign> campaign = campaignRepository.findById(id);
     if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
     Pageable pageable = PageRequest.of(page, size);
-    Page<Donation> donations = donationRepository.findByCampaignOrderByDateDesc(campaign.get(), pageable);
+    Page<Donation> donations = donationRepository.findByCampaignAndConfirmedTrueOrderByDateDesc(campaign.get(), pageable);
     return donations.map(DonationMapper::toDonationDto);
   }
 
@@ -149,7 +149,7 @@ public class CampaignServiceImpl implements CampaignService {
     donationRepository.save(donation);
 
     if(campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0){
-      List<Donation> donations = donationRepository.findByCampaign(campaign);
+      List<Donation> donations = donationRepository.findByCampaignAndConfirmedTrue(campaign);
       Float amountCollected = sumDonations(donations);
       if(amountCollected > campaign.getEconomicTarget() && campaign.getFinalizedDate() == null) {
         campaign.setFinalizedDate(date);
@@ -477,7 +477,7 @@ public class CampaignServiceImpl implements CampaignService {
   }
 
   private CampaignDto toCampaignDto(Campaign campaign) {
-    List<Donation> donations = donationRepository.findByCampaign(campaign);
+    List<Donation> donations = donationRepository.findByCampaignAndConfirmedTrue(campaign);
     Float amountCollected = sumDonations(donations);
 
     return CampaignMapper.toCampaignDto(campaign)

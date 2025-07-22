@@ -77,17 +77,17 @@ public class ProviderController {
     response.addCookie(tokenCookie);
     response.addCookie(refreshCookie);
 
-    StringBuilder UriRedirection = new StringBuilder(frontendBaseUrl);
+    StringBuilder uriRedirection = new StringBuilder(frontendBaseUrl);
     if (campaign != null && !campaign.isBlank()) {
-      UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
+      uriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&campaign=").append(campaign);
     } else if (userId != null && !userId.isBlank()) {
-      UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
+      uriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&user=").append("me");
     }
 
     try {
-      response.sendRedirect(UriRedirection.toString());
+      response.sendRedirect(uriRedirection.toString());
     } catch (Exception e) {
       throw new ProviderException(e.getMessage());
     }
@@ -115,10 +115,10 @@ public class ProviderController {
 
     try {
       if (!accountsResponseDto.isNotAllowed()) {
+        //if we are allowed
         ConsentDto consentDto = consentService.get(owner, aspsp, provider.toString());
 
         if (consentDto != null) {
-
           try {
             List<BankAccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
             accountsResponseDto.setAccounts(accounts);
@@ -149,28 +149,57 @@ public class ProviderController {
         }
       }
     } catch (UnauthorizedException e) {
-      restartSession(accountsResponseDto, owner, aspsp, provider.toString(), response);
+      accountsResponseDto.restart();
+      restartSession(aspsp, response);
+      consentService.delete(owner, aspsp, provider.toString());
     }
 
     return ResponseEntity.ok(accountsResponseDto);
   }
 
   @PostMapping("/donate")
-  public ResponseEntity<DonationDto> donate(@RequestBody DonateParamsDto params,
+  public ResponseEntity<DonationResponseDto> donate(@RequestBody DonateParamsDto params,
                                             @RequestHeader(name="Authorization") String token,
-                                            HttpServletRequest request) throws CampaignFinalizedException, ProviderException, MissingBankAccountException, UnauthorizedException {
+                                            HttpServletRequest request,
+                                            HttpServletResponse response)
+      throws CampaignFinalizedException, ProviderException, MissingBankAccountException {
+
+    DonationResponseDto donationResponseDto = new DonationResponseDto();
 
     String owner = tokenService.extractsubject(token);
     String ipClient = getClientIp(request);
 
     Cookie tokenCookie = CookieUtils.getCookieFromRequest("token_".concat(params.getAspsp()), request);
     String tokenOauth = tokenCookie != null ? tokenCookie.getValue() : null;
+    Cookie refreshCookie = CookieUtils.getCookieFromRequest("refresh_".concat(params.getAspsp()), request);
+    String refresh = refreshCookie != null ? refreshCookie.getValue() : null;
+    donationResponseDto.setNotAllowed(token == null || refresh == null);
 
     ProviderService providerService = providerManager.getProviderService(params.getProvider());
-    DonationDto donationDto = providerService.initPayment(tokenOauth, ipClient, params.getBankAccountId(), owner,
-        params.getCampaignId(), params.getAmount());
 
-    return ResponseEntity.ok(donationDto);
+    try {
+      if (!donationResponseDto.isNotAllowed()) {
+        try {
+          InitPaymentDto initPaymentDto = providerService.initPayment(tokenOauth, ipClient, params.getBankAccountId(), owner,
+              params.getCampaignId(), params.getAmount());
+
+          donationResponseDto.setRedirection(initPaymentDto.getRedirection());
+        } catch (UnauthorizedException e) {
+          //if fails tray to refresh the oauth token
+          tokenOauth = refreshToken(providerService, refresh, params.getAspsp(), response);
+          InitPaymentDto initPaymentDto = providerService.initPayment(tokenOauth, ipClient, params.getBankAccountId(), owner,
+              params.getCampaignId(), params.getAmount());
+
+          donationResponseDto.setRedirection(initPaymentDto.getRedirection());
+        }
+      }
+    } catch(UnauthorizedException e) {
+      //if fails after refresh token, we restart the session
+      donationResponseDto.restart();
+      restartSession(params.getAspsp(), response);
+    }
+
+    return ResponseEntity.ok(donationResponseDto);
   }
 
   private void createConsent(ProviderService providerService, String owner, String aspsp, String tokenOauth, String ipClient,
@@ -186,20 +215,15 @@ public class ProviderController {
   private String refreshToken(ProviderService providerService, String refresh, String aspsp, HttpServletResponse response) throws ProviderException, UnauthorizedException {
     CredentialsDto credentialsDto = providerService.refreshToken(refresh, aspsp);
     if(credentialsDto == null){
-      throw new UnauthorizedException("Refresh token response Null");
+      throw new UnauthorizedException("Refresh token response is null");
     }
     CookieUtils.reNewCookies(credentialsDto.getAccess_token(), credentialsDto.getRefresh_token(), credentialsDto.getExpires_in(), aspsp, response);
     return credentialsDto.getAccess_token();
   }
 
-  private void restartSession(AccountsResponseDto accountsResponseDto, String owner, String aspsp, String provider, HttpServletResponse response) {
-    accountsResponseDto.setAccounts(new ArrayList<>());
-    accountsResponseDto.setNotAllowed(true);
-    accountsResponseDto.setRedirection(null);
+  private void restartSession(String aspsp, HttpServletResponse response) {
     CookieUtils.removeCookie("token_".concat(aspsp), response);
     CookieUtils.removeCookie("refresh_".concat(aspsp), response);
-    consentService.delete(owner, aspsp, provider);
   }
-
 
 }
