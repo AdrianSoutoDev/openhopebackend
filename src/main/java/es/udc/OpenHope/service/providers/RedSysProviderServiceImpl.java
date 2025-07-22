@@ -7,6 +7,7 @@ import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.exception.ConsentInvalidException;
 import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.exception.UnauthorizedException;

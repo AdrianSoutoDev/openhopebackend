@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -62,6 +61,12 @@ public class ControllerAdvice {
   @ExceptionHandler(MaxCategoriesExceededException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ErrorDto handleMaxCategoriesExceededException(MaxCategoriesExceededException e) {
+    return new ErrorDto(e.getMessage());
+  }
+
+  @ExceptionHandler(MaxTopicsExceededException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorDto handleMaxTopicsExceededException(MaxTopicsExceededException e) {
     return new ErrorDto(e.getMessage());
   }
 

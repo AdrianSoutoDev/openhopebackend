@@ -1,5 +1,6 @@
 package es.udc.OpenHope.service.providers;
 
+import es.udc.OpenHope.enums.Provider;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;

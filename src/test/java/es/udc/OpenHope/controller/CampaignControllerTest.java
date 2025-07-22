@@ -1,8 +1,7 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.CampaignParamsDto;
-import es.udc.OpenHope.dto.OrganizationDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.utils.Utils;
@@ -25,6 +24,7 @@ import java.util.List;
 
 import static es.udc.OpenHope.utils.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -37,14 +37,16 @@ public class CampaignControllerTest {
   private final CampaignService campaignService;
   private final MockMvc mockMvc;
   private final Utils utils;
+  private final ObjectMapper objectMapper;
 
   @Autowired
   public CampaignControllerTest(final OrganizationService organizationService, final CampaignService campaignService,
-                                final MockMvc mockMvc, final Utils utils) {
+                                final MockMvc mockMvc, final Utils utils, final ObjectMapper objectMapper) {
     this.organizationService = organizationService;
     this.campaignService = campaignService;
     this.mockMvc = mockMvc;
     this.utils = utils;
+    this.objectMapper = objectMapper;
   }
 
   private ResultActions createCampaign(CampaignParamsDto params, String authToken) throws Exception {
@@ -64,16 +66,30 @@ public class CampaignControllerTest {
         .param("minimumDonation", params.getMinimumDonation() == null ? "" : String.valueOf(params.getMinimumDonation()))
         .param("description", params.getDescription())
         .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
+        .param("topics", params.getTopics() != null ? String.join(",", params.getTopics()) : "")
         .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
   }
 
+  private ResultActions updateCampaign(Long id, String authToken) throws Exception {
+    AspspParamsDto aspspParamsDto = Utils.getAspspParams();
+    BankAccountParams bankAccountParams = Utils.getBankAccountParams();
+    bankAccountParams.setAspsp(aspspParamsDto);
+
+    String jsonContent = objectMapper.writeValueAsString(bankAccountParams);
+
+    return mockMvc.perform(put("/api/campaigns/" + id.toString())
+        .header("Authorization", "Bearer " + authToken)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(jsonContent));
+  }
+
   @Test
   public void createCampaignTest() throws Exception {
     utils.initCategories();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
     List<String> categories = utils.getCategoryNames().subList(0,1);
 
@@ -84,6 +100,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
     campaignParamsDto.setCategories(categories);
+    campaignParamsDto.setTopics(Utils.getTopics());
 
     ResultActions result = createCampaign(campaignParamsDto, authToken);
 
@@ -109,7 +126,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignForOrganizationThatDoesntExistsTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
@@ -125,8 +142,8 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithIncorrectOwnerTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
-    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope.com", PASSWORD, "another_name", null, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("another_email@openhope.com", PASSWORD, "another_name", null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -143,7 +160,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithNameNullTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
@@ -159,10 +176,10 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithDuplicatedNameTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -180,7 +197,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithStartAtNullTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -197,7 +214,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithStartAtBeforeTodayTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -216,7 +233,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithouthDateLimitAndEconomicTargetTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -234,7 +251,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithhDateLimitEqualsStartAtTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -253,7 +270,7 @@ public class CampaignControllerTest {
 
   @Test
   public void createCampaignWithDateLimitBeforeStartAtTest() throws Exception{
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -274,12 +291,12 @@ public class CampaignControllerTest {
   @Test
   void GetCampaignByIdTest() throws Exception {
     utils.initCategories();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
 
     List<String> categories = utils.getCategoryNames().subList(0,1);
 
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, categories, null);
+        CAMPAIGN_DATE_LIMIT, null, null, categories, null, null);
 
     ResultActions result = mockMvc.perform(get("/api/campaigns/{id}", campaignDto.getId()));
 
@@ -307,5 +324,41 @@ public class CampaignControllerTest {
   void GetCampaignByIdThatDoesntExistTest() throws Exception {
     ResultActions result = mockMvc.perform(get("/api/campaigns/{id}", 0));
     result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateCampaignBankAccountTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.hasBankAccount").value(true));
+  }
+
+  @Test
+  public void updateCampaignBankAccountThatDoesntExistTest() throws Exception {
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
+    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(-1L, authToken);
+    result.andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateCampaignBankAccountWithNoPermissionTest() throws Exception {
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    organizationService.create("another_email@openhope.com", PASSWORD, "another org name", null, null, null, null);
+
+    CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
+
+    String authToken = organizationService.authenticate("another_email@openhope.com", PASSWORD);
+
+    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
+    result.andExpect(status().isForbidden());
   }
 }

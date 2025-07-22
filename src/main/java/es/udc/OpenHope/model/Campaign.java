@@ -27,7 +27,7 @@ public class Campaign {
   private String image;
   private Float minimumDonation;
 
-  @Lob
+  @Column(columnDefinition = "TEXT")
   private String description;
 
   @ManyToOne
@@ -40,6 +40,9 @@ public class Campaign {
 
   @OneToOne
   private BankAccount bankAccount;
+
+  @OneToMany(mappedBy = "campaign")
+  private Set<Topic> topics;
 
   public Campaign(String name, Date startAt, Date dateLimit, Long economicTarget, Float minimumDonation, String image,
                   Organization organization, String description, Set<Category> categories) {

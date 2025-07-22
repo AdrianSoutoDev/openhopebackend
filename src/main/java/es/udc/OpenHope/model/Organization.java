@@ -1,9 +1,6 @@
 package es.udc.OpenHope.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,13 +17,16 @@ public class Organization extends Account {
   @Column(unique = true, nullable = false)
   private String name;
 
-  @Lob
+  @Column(columnDefinition = "TEXT")
   private String description;
 
   private String image;
 
   @ManyToMany
   Set<Category> categories;
+
+  @OneToMany(mappedBy = "organization")
+  private Set<Topic> topics;
 
   public Organization(String email, String encryptedPassword, String name) {
     super(email, encryptedPassword);

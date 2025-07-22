@@ -2,21 +2,33 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.mappers.OrganizationMapper;
+import es.udc.OpenHope.dto.ISearcheableDto;
+import es.udc.OpenHope.dto.SearchParamsDto;
+import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
+import es.udc.OpenHope.model.Campaign;
 import es.udc.OpenHope.model.Category;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.AccountRepository;
 import es.udc.OpenHope.repository.CategoryRepository;
 import es.udc.OpenHope.repository.OrganizationRepository;
+import es.udc.OpenHope.repository.TopicRepository;
 import es.udc.OpenHope.utils.Messages;
+import jakarta.persistence.criteria.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -27,23 +39,25 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
   private final OrganizationRepository organizationRepository;
   private final ResourceService resourceService;
   private final CategoryRepository categoryRepository;
+  private final TopicService topicService;
 
   public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  BCryptPasswordEncoder bCryptPasswordEncoder, AccountRepository accountRepository,
                                  ResourceService resourceService, CategoryRepository categoryRepository,
-                                 TokenService tokenService) {
+                                 TokenService tokenService, TopicRepository topicRepository, TopicService topicService) {
     super(bCryptPasswordEncoder, accountRepository, tokenService);
     this.organizationRepository = organizationRepository;
     this.resourceService = resourceService;
     this.categoryRepository = categoryRepository;
+    this.topicService = topicService;
   }
 
   @Override
   @Transactional
-  public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, MultipartFile image)
-      throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+  public OrganizationDto create(String email, String password, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image)
+      throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
 
-    validateParamsCreate(email, password, name, categoryNames);
+    validateParamsCreate(email, password, name, categoryNames, topics);
 
     //Create organization
     String encryptedPassword = bCryptPasswordEncoder.encode(password);
@@ -54,7 +68,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
     Organization organization = new Organization(email, encryptedPassword, name, description ,imagePath, categories);
     organizationRepository.save(organization);
-
+    topicService.saveTopics(topics, organization, email);
     return OrganizationMapper.toOrganizationDto(organization);
   }
 
@@ -67,10 +81,10 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
 
   @Override
   @Transactional
-  public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+  public OrganizationDto update(Long id, String name, String description, List<String> categoryNames, List<String> topics, MultipartFile image, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException, MaxTopicsExceededException {
 
     Optional<Organization> organization = organizationRepository.findById(id);
-    validateParamsUpdate(organization, name, categoryNames, owner);
+    validateParamsUpdate(organization, name, categoryNames, topics, owner);
 
     //Update organization
     if(image != null) {
@@ -94,6 +108,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     organization.get().setCategories(categories);
 
     organizationRepository.save(organization.get());
+    topicService.updateTopics(topics, organization.get(), owner);
     return OrganizationMapper.toOrganizationDto(organization.get());
   }
 
@@ -106,7 +121,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     return organization != null && !organization.getId().equals(id);
   }
 
-  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+  private void validateParamsCreate(String email, String password, String name, List<String> categoryNames, List<String> topics) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
     if(email == null || email.isBlank()) throw new IllegalArgumentException( Messages.get("validation.email.null") );
     if(password == null || password.isBlank()) throw new IllegalArgumentException( Messages.get("validation.password.null") );
     if(name == null || name.isBlank())  throw new IllegalArgumentException( Messages.get("validation.name.null") );
@@ -119,7 +134,7 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     }
   }
 
-  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException {
+  private void validateParamsUpdate(Optional<Organization> organization, String name, List<String> categoryNames, List<String> topics,  String owner) throws DuplicateOrganizationException, MaxCategoriesExceededException {
     if(organization.isEmpty()) throw new NoSuchElementException(Messages.get("validation.organization.not.exists"));
 
     if(!owner.equals(organization.get().getEmail())){
@@ -134,5 +149,70 @@ public class OrganizationServiceImpl extends AccountServiceImpl implements Organ
     if(categoryNames != null && categoryNames.size() > MAX_CATEGORIES_ALLOWED) {
       throw new MaxCategoriesExceededException( Messages.get("validation.organization.max.categories") );
     }
+  }
+
+  public Page<OrganizationDto> search(SearchParamsDto searchParamsDto, int page, int size){
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Organization> organizationPage = organizationRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
+    return organizationPage.map(OrganizationMapper::toOrganizationDto);
+  }
+
+  private Specification<Organization> getSearchSpecification(SearchParamsDto searchParamsDto) {
+    return (root, query, criteriaBuilder) -> {
+      List<Predicate> predicates = new ArrayList<>();
+
+      Predicate textPredicate = buildTextPredicate(root, criteriaBuilder, searchParamsDto.getText());
+      Predicate categoriesPredicate = buildCategoriesPredicate(root, criteriaBuilder, searchParamsDto.getCategories());
+      Predicate hasCampaignsOnGoingPredicate = buildOrganizationsWithCampaignsActivePredicate(root, criteriaBuilder, searchParamsDto.isHasCampaignsOnGoing());
+
+      Predicate combinedPredicate = criteriaBuilder.and(textPredicate, categoriesPredicate, hasCampaignsOnGoingPredicate);
+
+      if (searchParamsDto.getSortCriteria() != null && searchParamsDto.getSortCriteria().equals(SortCriteria.NAME_DESC)) {
+        query.orderBy(criteriaBuilder.desc(root.get("name")));
+      } else {
+        query.orderBy(criteriaBuilder.asc(root.get("name")));
+      }
+
+      return combinedPredicate;
+    };
+  }
+
+  private Predicate buildTextPredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, String text) {
+    if (text == null || text.isBlank()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    String likePattern = "%" + text.toLowerCase() + "%";
+    return criteriaBuilder.or(
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern),
+        criteriaBuilder.like(criteriaBuilder.lower(root.join("topics", JoinType.LEFT).get("name")), likePattern)
+    );
+  }
+
+  private Predicate buildCategoriesPredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, List<String> categories) {
+    if (categories == null || categories.isEmpty()) {
+      return criteriaBuilder.conjunction();
+    }
+
+    Join<Organization, Category> categoriesJoin = root.join("categories", JoinType.INNER);
+    return categoriesJoin.get("name").in(categories);
+  }
+
+  private Predicate buildOrganizationsWithCampaignsActivePredicate(Root<Organization> root, CriteriaBuilder criteriaBuilder, boolean hasCampaignsOnGoing) {
+
+    if(!hasCampaignsOnGoing) return criteriaBuilder.conjunction();
+
+    Subquery<Long> activeCampaignsSubquery = criteriaBuilder.createQuery().subquery(Long.class);
+    Root<Campaign> campaignRoot = activeCampaignsSubquery.from(Campaign.class);
+
+    activeCampaignsSubquery.select(criteriaBuilder.count(campaignRoot))
+        .where(
+            criteriaBuilder.equal(campaignRoot.get("organization"), root),
+            criteriaBuilder.isNull(campaignRoot.get("finalizedDate")),
+            criteriaBuilder.greaterThan(campaignRoot.get("dateLimit"), LocalDate.now())
+        );
+
+    return criteriaBuilder.greaterThan(activeCampaignsSubquery.getSelection(), 0L);
   }
 }

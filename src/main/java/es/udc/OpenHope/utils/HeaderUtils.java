@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public class HeaderUtils {
 
+  //TODO tests
+
   public static String getClientIp(HttpServletRequest request) {
     String ipAddress = request.getHeader("X-Forwarded-For");
     if (ipAddress == null || ipAddress.isEmpty()) {

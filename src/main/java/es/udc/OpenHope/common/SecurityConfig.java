@@ -1,7 +1,6 @@
 package es.udc.OpenHope.common;
 
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -43,6 +42,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
+            .requestMatchers(HttpMethod.POST,  "/api/search").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())

@@ -1,6 +1,5 @@
 package es.udc.OpenHope.dto;
 
-import es.udc.OpenHope.model.Aspsp;
 import lombok.Data;
 @Data
 public class BankAccountParams {

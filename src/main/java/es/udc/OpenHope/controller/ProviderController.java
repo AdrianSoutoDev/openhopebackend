@@ -8,7 +8,7 @@ import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.exception.UnauthorizedException;
 import es.udc.OpenHope.service.ConsentService;
 import es.udc.OpenHope.service.TokenService;
-import es.udc.OpenHope.service.providers.Provider;
+import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.service.providers.ProviderManager;
 import es.udc.OpenHope.service.providers.ProviderService;
 import es.udc.OpenHope.utils.CookieUtils;

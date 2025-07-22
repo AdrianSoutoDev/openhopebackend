@@ -28,5 +28,5 @@ public class CampaignParamsDto {
 
   private String description;
   private List<String> categories;
-
+  private List<String> topics;
 }

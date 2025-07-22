@@ -7,6 +7,7 @@ import es.udc.OpenHope.dto.OrganizationParamsDto;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;
 import es.udc.OpenHope.exception.MaxCategoriesExceededException;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.OrganizationService;
 import es.udc.OpenHope.service.TokenService;
@@ -38,9 +39,9 @@ public class OrganizationController {
   private String serverPort;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params, @RequestParam(value = "file", required = false) MultipartFile file) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException {
+  public ResponseEntity<OrganizationDto> register(@Valid @ModelAttribute OrganizationParamsDto params, @RequestParam(value = "file", required = false) MultipartFile file) throws DuplicateEmailException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
     OrganizationDto organizationDto = organizationService.create(params.getEmail(), params.getPassword(), params.getName(),
-        params.getDescription(), params.getCategories(), file);
+        params.getDescription(), params.getCategories(), params.getTopics(), file);
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest()
@@ -59,11 +60,11 @@ public class OrganizationController {
 
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<OrganizationDto> updateOrganization(@Valid @ModelAttribute EditOrganizationParamsDto params,
-       @RequestParam(value = "file", required = false) MultipartFile file, @RequestHeader(name="Authorization") String token) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException {
+       @RequestParam(value = "file", required = false) MultipartFile file, @RequestHeader(name="Authorization") String token) throws DuplicateOrganizationException, MaxCategoriesExceededException, IOException, MaxTopicsExceededException {
 
     String owner = tokenService.extractsubject(token);
     OrganizationDto organizationDto = organizationService.update(params.getId(), params.getName(), params.getDescription(),
-        params.getCategories(), file, owner);
+        params.getCategories(), params.getTopics(), file, owner);
 
     return ResponseEntity.ok(organizationDto);
   }

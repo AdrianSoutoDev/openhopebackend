@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class CampaignDto {
+public class CampaignDto implements ISearcheableDto {
   private Long id;
   private String name;
   private LocalDate startAt;

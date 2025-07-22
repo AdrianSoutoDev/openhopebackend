@@ -4,23 +4,26 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Date;
+
 @Data
 @Entity
 @NoArgsConstructor
-public class Consent {
+public class Donation {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true, nullable = false)
-  private String consentId;
-
-  @Column(nullable = false)
-  private String aspsp;
-
-  @Column(nullable = false)
-  private String provider;
+  @ManyToOne
+  private Campaign campaign;
 
   @ManyToOne
-  private Account account;
+  private BankAccount bankAccount;
+
+  @Column(nullable = false)
+  private Float amount;
+
+  @Column(nullable = false)
+  private Date date;
 }

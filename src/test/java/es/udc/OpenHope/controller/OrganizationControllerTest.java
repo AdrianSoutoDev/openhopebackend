@@ -99,6 +99,7 @@ public class OrganizationControllerTest {
         .param("name", params.getName())
         .param("description", params.getDescription())
         .param("categories", params.getCategories() != null ? String.join(",", params.getCategories()) : "")
+        .param("topics", params.getTopics() != null ? String.join(",", params.getTopics()) : "")
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
     return mockMvc.perform(builder);
@@ -123,6 +124,7 @@ public class OrganizationControllerTest {
         .param("name", params.getName())
         .param("description", params.getDescription())
         .param("categories", String.valueOf(params.getCategories()))
+        .param("topics", String.valueOf(params.getCategories()))
         .header("Authorization", "Bearer " + authToken)
         .contentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -232,7 +234,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedEmailTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail(ORG_EMAIL);
@@ -245,7 +247,7 @@ public class OrganizationControllerTest {
 
   @Test
   void registerOrganizationWithDuplicatedNameTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
 
     OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
     organizationParamsDto.setEmail("another_email@openhope.com");
@@ -297,6 +299,19 @@ public class OrganizationControllerTest {
   }
 
   @Test
+  void registerOrganizationWithTopicsTest() throws Exception {
+    OrganizationParamsDto organizationParamsDto = new OrganizationParamsDto();
+    organizationParamsDto.setEmail(ORG_EMAIL);
+    organizationParamsDto.setPassword(PASSWORD);
+    organizationParamsDto.setName(ORG_NAME);
+    organizationParamsDto.setTopics(Utils.getTopics());
+
+    ResultActions result = registerOrganization(organizationParamsDto);
+    result.andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+  }
+
+  @Test
   void registerOrganizationWithMoreThanThreeCategoriesTest() throws Exception {
     utils.initCategories();
 
@@ -316,7 +331,7 @@ public class OrganizationControllerTest {
   @Test
   void GetOrganizationByIdTest() throws Exception {
     utils.initCategories();
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
     ResultActions result = mockMvc.perform(get("/api/organizations/{id}", organizationDto.getId()));
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -336,13 +351,15 @@ public class OrganizationControllerTest {
 
   @Test
   void UpdateOrganizationTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    List<String> topics = Utils.getTopics();
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, topics, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
     editOrganizationParamsDto.setId(organizationDto.getId());
     editOrganizationParamsDto.setName("New Name");
     editOrganizationParamsDto.setDescription("New Description");
+    editOrganizationParamsDto.setTopics(Utils.getAnotherTopics());
 
     ResultActions result = updateOrganization(editOrganizationParamsDto, authToken);
 
@@ -363,8 +380,8 @@ public class OrganizationControllerTest {
 
   @Test
   public void updateOrganizationWithNoPermissionTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
-    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null, null);
 
     String authToken = organizationService.authenticate("org2@openhope.com", PASSWORD);
 
@@ -378,7 +395,7 @@ public class OrganizationControllerTest {
 
   @Test
   public void updateOrganizationThatNotExistTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
@@ -391,7 +408,7 @@ public class OrganizationControllerTest {
 
   @Test
   public void updateOrganizationWithNameNullTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     EditOrganizationParamsDto editOrganizationParamsDto = new EditOrganizationParamsDto();
@@ -404,8 +421,8 @@ public class OrganizationControllerTest {
 
   @Test
   public void updateOrganizationWithDuplicatedNameTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
-    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
+    OrganizationDto organizationDto2 = organizationService.create("org2@openhope.com", PASSWORD, "another Name", null, null, null, null);
 
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
@@ -419,7 +436,7 @@ public class OrganizationControllerTest {
 
   @Test
   public void updateOrganizationWithMaxCategoriesExceededTest() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     List<String> categories = utils.getCategoryNames();
@@ -435,9 +452,9 @@ public class OrganizationControllerTest {
 
   @Test
   public void getCampaignsByOrganization() throws Exception {
-    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null);
+    OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
-        CAMPAIGN_DATE_LIMIT, null, null, null, null);
+        CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
     ResultActions result = mockMvc.perform(get("/api/organizations/{id}/campaigns", organizationDto.getId())
         .param("page", String.valueOf(0))

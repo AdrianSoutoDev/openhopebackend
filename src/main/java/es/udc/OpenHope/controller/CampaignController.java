@@ -4,6 +4,7 @@ import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.CampaignParamsDto;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
+import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.TokenService;
 import jakarta.validation.Valid;
@@ -28,12 +29,12 @@ public class CampaignController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<CampaignDto> createCampaign(@Valid @ModelAttribute CampaignParamsDto params,
-         @RequestParam(value = "file", required = false) MultipartFile file,  @RequestHeader(name="Authorization") String token) throws DuplicatedCampaignException {
+         @RequestParam(value = "file", required = false) MultipartFile file,  @RequestHeader(name="Authorization") String token) throws DuplicatedCampaignException, MaxTopicsExceededException {
 
     String owner = tokenService.extractsubject(token);
     CampaignDto campaignDto = campaignService.create(params.getOrganizationId(), owner, params.getName(),
         params.getDescription(), params.getStartAt(), params.getDateLimit(), params.getEconomicTarget(), params.getMinimumDonation(),
-        params.getCategories(), file);
+        params.getCategories(), params.getTopics(), file);
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest()

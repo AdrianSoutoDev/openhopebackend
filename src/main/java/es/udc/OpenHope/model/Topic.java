@@ -7,6 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @NoArgsConstructor
+@Table(
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"name", "organization_id"}),
+        @UniqueConstraint(columnNames = {"name", "campaign_id"})
+    }
+)
 public class Topic {
 
   @Id
@@ -19,5 +25,15 @@ public class Topic {
   Organization organization;
 
   @ManyToOne
-  Organization campaign;
+  Campaign campaign;
+
+  public Topic(String name, Organization organization) {
+    this.name = name;
+    this.organization = organization;
+  }
+
+  public Topic(String name, Campaign campaign) {
+    this.campaign = campaign;
+    this.name = name;
+  }
 }
