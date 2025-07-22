@@ -116,7 +116,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Override
-  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId) throws ProviderException {
+  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId, Boolean isDonation, Float amount, Long bankAccount) throws ProviderException {
     try {
       StringBuilder sb = new StringBuilder(redSysApiUrl)
           .append(oauthEndpoint)
@@ -127,6 +127,10 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("&redirect_uri=").append(oauthCallback)
           .append("&scope=PIS%20AIS%20SVA")
           .append("&state=").append("provider=").append(Provider.REDSYS).append(",aspsp=").append(aspsp);
+
+      if(isDonation){
+        sb.append(",isDonation=true").append(",amount=").append(amount).append(",bankAccount=").append(bankAccount);
+      }
 
       if(campaign != null) {
         sb.append(",campaign=").append(campaign);

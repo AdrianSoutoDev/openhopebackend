@@ -52,9 +52,13 @@ public class ProviderController {
   @GetMapping("/{provider}/{aspsp}/oauth")
   public ResponseEntity<ProviderAuthDto> auth(@PathVariable Provider provider, @PathVariable String aspsp,
                                               @RequestParam(required = false) Integer campaign,
-                                              @RequestParam(required = false) Integer user) throws ProviderException {
+                                              @RequestParam(required = false) Integer user,
+                                              @RequestParam(required = false) Boolean isDonation,
+                                              @RequestParam(required = false) Float amount,
+                                              @RequestParam(required = false) Long bankAccount
+  ) throws ProviderException {
     ProviderService providerService = providerManager.getProviderService(provider);
-    ProviderAuthDto providerAuthDto = providerService.getOAuthUri(aspsp, campaign, user);
+    ProviderAuthDto providerAuthDto = providerService.getOAuthUri(aspsp, campaign, user, isDonation, amount, bankAccount);
     return ResponseEntity.ok(providerAuthDto);
   }
 
@@ -67,6 +71,9 @@ public class ProviderController {
     String aspsp = stateParams.get("aspsp");
     String campaign = stateParams.get("campaign");
     String userId = stateParams.get("user");
+    String isDonation =  stateParams.get("isDonation");
+    String amount =  stateParams.get("amount");
+    String bankAccount =  stateParams.get("bankAccount");
 
     ProviderService providerService = providerManager.getProviderService(provider);
     CredentialsDto credentialsDto = providerService.authorize(code, aspsp);
@@ -78,7 +85,15 @@ public class ProviderController {
     response.addCookie(refreshCookie);
 
     StringBuilder uriRedirection = new StringBuilder(frontendBaseUrl);
-    if (campaign != null && !campaign.isBlank()) {
+
+    if(isDonation != null && !isDonation.isBlank() && Boolean.parseBoolean(isDonation)) {
+      uriRedirection.append("campaign/").append(campaign)
+          .append("?isDonation=").append(isDonation)
+          .append("&provider=").append(provider)
+          .append("&aspsp=").append(aspsp)
+          .append("&amount=").append(amount)
+          .append("&bankAccount=").append(bankAccount);
+    } else if (campaign != null && !campaign.isBlank()) {
       uriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&campaign=").append(campaign);
     } else if (userId != null && !userId.isBlank()) {
