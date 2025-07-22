@@ -2,8 +2,6 @@ package es.udc.OpenHope.dto;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-
 @Data
 public class DonationResponseDto {
   private boolean notAllowed;

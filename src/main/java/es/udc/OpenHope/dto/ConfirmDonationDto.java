@@ -1,6 +1,5 @@
 package es.udc.OpenHope.dto;
 
-import es.udc.OpenHope.model.Donation;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

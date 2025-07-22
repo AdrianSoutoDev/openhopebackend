@@ -1,6 +1,9 @@
 package es.udc.OpenHope.service.providers;
 
-import es.udc.OpenHope.dto.*;
+import es.udc.OpenHope.dto.AspspDto;
+import es.udc.OpenHope.dto.BankAccountDto;
+import es.udc.OpenHope.dto.InitPaymentDto;
+import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.exception.*;
