@@ -1,7 +1,6 @@
 package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.ISearcheableDto;
-import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.enums.EntityType;
 import es.udc.OpenHope.service.CampaignService;

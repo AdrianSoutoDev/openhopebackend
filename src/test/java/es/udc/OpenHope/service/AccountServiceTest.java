@@ -1,5 +1,6 @@
 package es.udc.OpenHope.service;
 
+import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.exception.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -38,13 +39,13 @@ public class AccountServiceTest {
   @Test
   public void LoginUserTest() throws DuplicateEmailException, InvalidCredentialsException {
     userService.create(USER_EMAIL, PASSWORD);
-    String jwt = accountService.authenticate(USER_EMAIL, PASSWORD);
+    LoginDto loginDto = accountService.authenticate(USER_EMAIL, PASSWORD);
 
     SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
     String subject = Jwts.parser()
         .verifyWith(key)
         .build()
-        .parseSignedClaims(jwt)
+        .parseSignedClaims(loginDto.getToken())
         .getPayload()
         .getSubject();
 
@@ -54,13 +55,13 @@ public class AccountServiceTest {
   @Test
   public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
     organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
-    String jwt = accountService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto = accountService.authenticate(ORG_EMAIL, PASSWORD);
 
     SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
     String subject = Jwts.parser()
         .verifyWith(key)
         .build()
-        .parseSignedClaims(jwt)
+        .parseSignedClaims(loginDto.getToken())
         .getPayload()
         .getSubject();
 

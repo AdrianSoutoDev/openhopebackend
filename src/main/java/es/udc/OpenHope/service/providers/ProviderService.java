@@ -1,7 +1,7 @@
 package es.udc.OpenHope.service.providers;
 
-import es.udc.OpenHope.dto.AccountDto;
 import es.udc.OpenHope.dto.AspspDto;
+import es.udc.OpenHope.dto.BankAccountDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
@@ -13,9 +13,9 @@ import java.util.List;
 
 public interface ProviderService {
   List<AspspDto> getAspsps() throws ProviderException;
-  ProviderAuthDto getOAuthUri(String aspsp, Integer campaign) throws ProviderException;
+  ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId) throws ProviderException;
   CredentialsDto authorize(String code, String aspsp) throws ProviderException;
-  List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException;
-  PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String ipClient, String campaignId) throws ProviderException, UnauthorizedException;
+  List<BankAccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException;
+  PostConsentClientDto createConsent(String owner, String aspsp, String tokenOAuth, String ipClient, Integer campaignId, Integer userId) throws ProviderException, UnauthorizedException;
   CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException;
 }

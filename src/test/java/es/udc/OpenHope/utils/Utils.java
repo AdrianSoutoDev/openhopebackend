@@ -127,7 +127,7 @@ public class Utils {
     return userFinded.get();
   }
 
-  public Aspsp getAspsps(){
+  public static Aspsp getAspsps(){
     Aspsp aspsp = new Aspsp();
     aspsp.setCode(ASPSP_CODE);
     aspsp.setName(ASPSP_NAME);
@@ -135,7 +135,7 @@ public class Utils {
     return aspsp;
   }
 
-  public BankAccount getBankAccount(Aspsp aspsp, User user) {
+  public static BankAccount getBankAccount(Aspsp aspsp, User user) {
     BankAccount bankAccount = new BankAccount();
     bankAccount.setResourceId(BANK_RESOURCE_ID);
     bankAccount.setIban(BANK_IBAN);
@@ -145,7 +145,7 @@ public class Utils {
     return bankAccount;
   }
 
-  public Donation getDonation(BankAccount bankAccount, Campaign campaign, Float amount) {
+  public static Donation getDonation(BankAccount bankAccount, Campaign campaign, Float amount) {
     Donation donation = new Donation();
     donation.setCampaign(campaign);
     donation.setBankAccount(bankAccount);

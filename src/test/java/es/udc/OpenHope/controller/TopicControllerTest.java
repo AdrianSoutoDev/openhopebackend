@@ -1,5 +1,6 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.OrganizationDto;
 import es.udc.OpenHope.model.Organization;
 import es.udc.OpenHope.repository.OrganizationRepository;
@@ -55,9 +56,9 @@ public class TopicControllerTest {
     List<String> topics = Utils.getTopics();
     Optional<Organization> organization = organizationRepository.findById(organizationDto.getId());
     topicService.saveTopics(topics, organization.get(), organizationDto.getEmail());
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
-    ResultActions result = getTopics(organizationDto.getId(), authToken);
+    ResultActions result = getTopics(organizationDto.getId(), loginDto.getToken());
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.topics").isArray())
@@ -67,9 +68,9 @@ public class TopicControllerTest {
   @Test
   public void getTopicsFromOrganizationTheDoesntExist() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
-    ResultActions result = getTopics(-1L, authToken);
+    ResultActions result = getTopics(-1L, loginDto.getToken());
 
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -86,9 +87,9 @@ public class TopicControllerTest {
     Optional<Organization> organization = organizationRepository.findById(organizationDto.getId());
     topicService.saveTopics(topics, organization.get(), organizationDto.getEmail());
 
-    String authToken = organizationService.authenticate(organizationDto2.getEmail(), PASSWORD);
+    LoginDto loginDto = organizationService.authenticate(organizationDto2.getEmail(), PASSWORD);
 
-    ResultActions result = getTopics(organizationDto.getId(), authToken);
+    ResultActions result = getTopics(organizationDto.getId(), loginDto.getToken());
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.topics").isArray())

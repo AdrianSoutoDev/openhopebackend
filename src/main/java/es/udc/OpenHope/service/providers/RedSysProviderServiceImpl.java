@@ -1,8 +1,8 @@
 package es.udc.OpenHope.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.OpenHope.dto.AccountDto;
 import es.udc.OpenHope.dto.AspspDto;
+import es.udc.OpenHope.dto.BankAccountDto;
 import es.udc.OpenHope.dto.CommonHeadersDto;
 import es.udc.OpenHope.dto.ProviderAuthDto;
 import es.udc.OpenHope.dto.client.*;
@@ -114,7 +114,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Override
-  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign) throws ProviderException {
+  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId) throws ProviderException {
     try {
       StringBuilder sb = new StringBuilder(redSysApiUrl)
           .append(oauthEndpoint)
@@ -127,7 +127,9 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("&state=").append("provider=").append(Provider.REDSYS).append(",aspsp=").append(aspsp);
 
       if(campaign != null) {
-          sb.append(",campaign=").append(campaign);
+        sb.append(",campaign=").append(campaign);
+      } else if(userId != null) {
+        sb.append(",user=").append(userId);
       }
 
       sb.append("&code_challenge=").append(oauthChallenge)
@@ -177,12 +179,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Transactional
-  public List<AccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException {
+  public List<BankAccountDto> getAccounts(String aspsp, String tokenOAuth, String ipClient, String consentId) throws ProviderException, UnauthorizedException, ConsentInvalidException {
     try {
       CommonHeadersDto commonHeadersDto = getCommonHeaders("");
       String uri = redSysApiUrl + accountsEndpoint.replace("{aspsp}", aspsp);
       List<AccountClientDto> accountClientDtos = redSysProviderRepository.getAccounts(commonHeadersDto, uri, consentId, "Bearer ".concat(tokenOAuth));
-      return BankAccountMapper.toAccountDto(accountClientDtos);
+      return BankAccountMapper.toBankAccountDto(accountClientDtos);
     } catch (UnauthorizedException | ConsentInvalidException e){
       throw e;
     } catch(Exception e) {
@@ -191,7 +193,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   }
 
   @Transactional
-  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, String campaignId) throws ProviderException, UnauthorizedException {
+  public PostConsentClientDto createConsent(String owner, String aspsp, String token, String ipClient, Integer campaignId, Integer userId) throws ProviderException, UnauthorizedException {
     try {
       LocalDate dateNowPlus60Days = LocalDate.now().plusDays(60);
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -209,8 +211,10 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("openbanking/bank-selection")
           .append("?aspsp=").append(aspsp);
 
-      if(campaignId != null){
+      if(campaignId != null) {
         sb.append("&campaign=").append(campaignId);
+      } else if(userId != null) {
+        sb.append("&user=").append("me");
       }
 
       PostConsentClientDto response = redSysProviderRepository.postConsent(commonHeadersDto, uri, body, aspsp, ipClient,

@@ -2,8 +2,10 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.dto.SearchParamsDto;
+import es.udc.OpenHope.dto.mappers.AspspMapper;
+import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.dto.mappers.CampaignMapper;
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;
@@ -94,21 +96,14 @@ public class CampaignServiceImpl implements CampaignService {
       throw new SecurityException(Messages.get("validation.campaign.update.not.allowed"));
     }
 
-    Optional<BankAccount> bankAccount = bankAccountRepository.findByIban(bankAccountParams.getIban());
+    Optional<BankAccount> bankAccount = bankAccountRepository.findByIbanAndAccount(bankAccountParams.getIban(), organization);
     Optional<Aspsp> aspsp = aspspRepository.findByProviderAndCode(bankAccountParams.getAspsp().getProvider(), bankAccountParams.getAspsp().getCode());
 
     if(bankAccount.isEmpty()){
-      BankAccount newBankAccount = new BankAccount();
-      newBankAccount.setIban(bankAccountParams.getIban());
-      newBankAccount.setName(bankAccountParams.getOriginalName());
-      newBankAccount.setResourceId(bankAccountParams.getResourceId());
-      newBankAccount.setOwnerName(bankAccountParams.getOwnerName());
+      BankAccount newBankAccount = BankAccountMapper.toBankAccount(bankAccountParams);
 
       if(aspsp.isEmpty()){
-        Aspsp newAspsp = new Aspsp();
-        newAspsp.setCode(bankAccountParams.getAspsp().getCode());
-        newAspsp.setName(bankAccountParams.getAspsp().getName());
-        newAspsp.setProvider(bankAccountParams.getAspsp().getProvider());
+        Aspsp newAspsp = AspspMapper.toAspsp(bankAccountParams.getAspsp());
         aspspRepository.save(newAspsp);
         aspsp = Optional.of(newAspsp);
       }

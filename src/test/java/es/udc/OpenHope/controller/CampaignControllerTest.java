@@ -90,7 +90,7 @@ public class CampaignControllerTest {
   public void createCampaignTest() throws Exception {
     utils.initCategories();
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, utils.getCategoryNames(), null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
     List<String> categories = utils.getCategoryNames().subList(0,1);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
@@ -102,7 +102,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setCategories(categories);
     campaignParamsDto.setTopics(Utils.getTopics());
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
 
     result.andExpect(status().isCreated())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -127,7 +127,7 @@ public class CampaignControllerTest {
   @Test
   public void createCampaignForOrganizationThatDoesntExistsTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(0L);
@@ -136,7 +136,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isNotFound());
   }
 
@@ -145,7 +145,7 @@ public class CampaignControllerTest {
     organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
     OrganizationDto organizationDto2 = organizationService.create("another_email@openhope.com", PASSWORD, "another_name", null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(organizationDto2.getId());
@@ -154,14 +154,14 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isForbidden());
   }
 
   @Test
   public void createCampaignWithNameNullTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(organizationDto.getId());
@@ -170,7 +170,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -181,7 +181,7 @@ public class CampaignControllerTest {
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, CAMPAIGN_DESCRIPTION, CAMPAIGN_START_AT,
         CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(organizationDto.getId());
@@ -190,7 +190,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isConflict());
   }
 
@@ -199,7 +199,7 @@ public class CampaignControllerTest {
   public void createCampaignWithStartAtNullTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(organizationDto.getId());
@@ -208,7 +208,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(null);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -216,7 +216,7 @@ public class CampaignControllerTest {
   public void createCampaignWithStartAtBeforeTodayTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     LocalDate StartAtBeforeToday = LocalDate.now().minusDays(1);
 
@@ -227,7 +227,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(StartAtBeforeToday);
     campaignParamsDto.setDateLimit(CAMPAIGN_DATE_LIMIT);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -235,7 +235,7 @@ public class CampaignControllerTest {
   public void createCampaignWithouthDateLimitAndEconomicTargetTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     CampaignParamsDto campaignParamsDto = new CampaignParamsDto();
     campaignParamsDto.setOrganizationId(organizationDto.getId());
@@ -245,7 +245,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setDateLimit(null);
     campaignParamsDto.setEconomicTarget(null);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -253,7 +253,7 @@ public class CampaignControllerTest {
   public void createCampaignWithhDateLimitEqualsStartAtTest() throws Exception {
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     LocalDate dateLimit = CAMPAIGN_START_AT;
 
@@ -264,7 +264,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(CAMPAIGN_START_AT);
     campaignParamsDto.setDateLimit(dateLimit);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -272,7 +272,7 @@ public class CampaignControllerTest {
   public void createCampaignWithDateLimitBeforeStartAtTest() throws Exception{
     OrganizationDto organizationDto = organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    LoginDto loginDto = organizationService.authenticate(ORG_EMAIL, PASSWORD);
 
     LocalDate startAt = CAMPAIGN_START_AT.plusDays(5);
     LocalDate dateLimit = startAt.minusDays(1);
@@ -284,7 +284,7 @@ public class CampaignControllerTest {
     campaignParamsDto.setStartAt(startAt);
     campaignParamsDto.setDateLimit(dateLimit);
 
-    ResultActions result = createCampaign(campaignParamsDto, authToken);
+    ResultActions result = createCampaign(campaignParamsDto, loginDto.getToken());
     result.andExpect(status().isBadRequest());
   }
 
@@ -332,8 +332,8 @@ public class CampaignControllerTest {
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
         CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
-    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(campaignDto.getId(), loginDto.getToken());
 
     result.andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -343,8 +343,8 @@ public class CampaignControllerTest {
   @Test
   public void updateCampaignBankAccountThatDoesntExistTest() throws Exception {
     organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null,null, null, null);
-    String authToken = organizationService.authenticate(ORG_EMAIL, PASSWORD);
-    ResultActions result = updateCampaign(-1L, authToken);
+    LoginDto loginDto =  organizationService.authenticate(ORG_EMAIL, PASSWORD);
+    ResultActions result = updateCampaign(-1L, loginDto.getToken());
     result.andExpect(status().isNotFound());
   }
 
@@ -356,9 +356,9 @@ public class CampaignControllerTest {
     CampaignDto campaignDto = campaignService.create(organizationDto.getId(), organizationDto.getEmail(), CAMPAIGN_NAME, null, CAMPAIGN_START_AT,
         CAMPAIGN_DATE_LIMIT, null, null, null, null, null);
 
-    String authToken = organizationService.authenticate("another_email@openhope.com", PASSWORD);
+    LoginDto loginDto =  organizationService.authenticate("another_email@openhope.com", PASSWORD);
 
-    ResultActions result = updateCampaign(campaignDto.getId(), authToken);
+    ResultActions result = updateCampaign(campaignDto.getId(), loginDto.getToken());
     result.andExpect(status().isForbidden());
   }
 }

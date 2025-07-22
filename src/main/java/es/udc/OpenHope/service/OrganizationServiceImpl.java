@@ -1,9 +1,8 @@
 package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.OrganizationDto;
-import es.udc.OpenHope.dto.mappers.OrganizationMapper;
-import es.udc.OpenHope.dto.ISearcheableDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
+import es.udc.OpenHope.dto.mappers.OrganizationMapper;
 import es.udc.OpenHope.enums.SortCriteria;
 import es.udc.OpenHope.exception.DuplicateEmailException;
 import es.udc.OpenHope.exception.DuplicateOrganizationException;

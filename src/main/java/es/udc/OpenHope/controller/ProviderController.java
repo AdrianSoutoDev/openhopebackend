@@ -3,12 +3,12 @@ package es.udc.OpenHope.controller;
 import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
+import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.exception.ConsentInvalidException;
 import es.udc.OpenHope.exception.ProviderException;
 import es.udc.OpenHope.exception.UnauthorizedException;
 import es.udc.OpenHope.service.ConsentService;
 import es.udc.OpenHope.service.TokenService;
-import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.service.providers.ProviderManager;
 import es.udc.OpenHope.service.providers.ProviderService;
 import es.udc.OpenHope.utils.CookieUtils;
@@ -53,9 +53,10 @@ public class ProviderController {
 
   @GetMapping("/{provider}/{aspsp}/oauth")
   public ResponseEntity<ProviderAuthDto> auth(@PathVariable Provider provider, @PathVariable String aspsp,
-                                              @RequestParam(required = false) Integer campaign) throws ProviderException {
+                                              @RequestParam(required = false) Integer campaign,
+                                              @RequestParam(required = false) Integer user) throws ProviderException {
     ProviderService providerService = providerManager.getProviderService(provider);
-    ProviderAuthDto providerAuthDto = providerService.getOAuthUri(aspsp, campaign);
+    ProviderAuthDto providerAuthDto = providerService.getOAuthUri(aspsp, campaign, user);
     return ResponseEntity.ok(providerAuthDto);
   }
 
@@ -67,6 +68,7 @@ public class ProviderController {
     Provider provider = Provider.valueOf(stateParams.get("provider"));
     String aspsp = stateParams.get("aspsp");
     String campaign = stateParams.get("campaign");
+    String userId = stateParams.get("user");
 
     ProviderService providerService = providerManager.getProviderService(provider);
     CredentialsDto credentialsDto = providerService.authorize(code, aspsp);
@@ -81,6 +83,9 @@ public class ProviderController {
     if(campaign != null && !campaign.isBlank()) {
       UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
           .append("&campaign=").append(campaign);
+    } else if(userId != null && !userId.isBlank()){
+      UriRedirection.append("openbanking/bank-selection?aspsp=").append(aspsp)
+          .append("&user=").append("me");
     }
 
     try {
@@ -93,6 +98,7 @@ public class ProviderController {
   @GetMapping("/{provider}/{aspsp}/accounts")
   public ResponseEntity<AccountsResponseDto> getAccounts(@PathVariable Provider provider, @PathVariable String aspsp,
                                                          @RequestParam(required = false) Integer campaign,
+                                                         @RequestParam(required = false) Integer user,
                                                          @RequestHeader(name="Authorization") String token,
                                                       HttpServletRequest request, HttpServletResponse response) throws ProviderException, UnauthorizedException {
 
@@ -116,31 +122,31 @@ public class ProviderController {
         if (consentDto != null) {
 
           try {
-            List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
+            List<BankAccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
             accountsResponseDto.setAccounts(accounts);
           } catch (UnauthorizedException e) {
 
             tokenOauth = refreshToken(providerService, refresh, aspsp, response);
 
             try {
-              List<AccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
+              List<BankAccountDto> accounts = providerService.getAccounts(aspsp, tokenOauth, ipClient, consentDto.getConsentId());
               accountsResponseDto.setAccounts(accounts);
             } catch (ConsentInvalidException ex) {
               consentService.delete(owner, aspsp, String.valueOf(provider));
-              createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+              createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign, user, accountsResponseDto);
             }
 
           } catch (ConsentInvalidException e) {
             consentService.delete(owner, aspsp, String.valueOf(provider));
-            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign, user, accountsResponseDto);
           }
 
         } else {
           try {
-            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign, user, accountsResponseDto);
           } catch (UnauthorizedException e) {
             tokenOauth = refreshToken(providerService, refresh, aspsp, response);
-            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign.toString(), accountsResponseDto);
+            createConsent(providerService, owner, aspsp, tokenOauth, ipClient, campaign, user, accountsResponseDto);
           }
         }
       }
@@ -152,8 +158,8 @@ public class ProviderController {
   }
 
   private void createConsent(ProviderService providerService, String owner, String aspsp, String tokenOauth, String ipClient,
-                    String campaign, AccountsResponseDto accountsResponseDto) throws ProviderException, UnauthorizedException {
-    PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, ipClient, campaign);
+                    Integer campaign, Integer user, AccountsResponseDto accountsResponseDto) throws ProviderException, UnauthorizedException {
+    PostConsentClientDto postConsentClientDto = providerService.createConsent(owner, aspsp, tokenOauth, ipClient, campaign, user);
     if(postConsentClientDto != null && postConsentClientDto.get_links() != null
             && postConsentClientDto.get_links().getScaRedirect() != null) {
       String redirection = postConsentClientDto.get_links().getScaRedirect().getHref();

@@ -2,6 +2,7 @@ package es.udc.OpenHope.controller;
 
 import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.LoginParamsDto;
+import es.udc.OpenHope.dto.UserAccountDto;
 import es.udc.OpenHope.dto.ValidateDto;
 import es.udc.OpenHope.exception.InvalidCredentialsException;
 import es.udc.OpenHope.service.AccountService;
@@ -24,8 +25,8 @@ public class AccountController {
 
   @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<LoginDto> login(@Valid @RequestBody LoginParamsDto params) throws InvalidCredentialsException {
-    String jwt = accountService.authenticate(params.getEmail(), params.getPassword());
-    return ResponseEntity.ok().body(new LoginDto(jwt, params.getEmail()));
+    LoginDto loginDto = accountService.authenticate(params.getEmail(), params.getPassword());
+    return ResponseEntity.ok().body(loginDto);
   }
 
   @PostMapping("/logout")
@@ -36,7 +37,8 @@ public class AccountController {
   @PostMapping("/validate")
   public ResponseEntity<ValidateDto> validate(@RequestHeader(name="Authorization") String token) {
     String owner = tokenService.extractsubject(token);
-    ValidateDto validateDto = new ValidateDto(owner);
+    UserAccountDto userAccountDto = accountService.getByEmail(owner);
+    ValidateDto validateDto = new ValidateDto(userAccountDto.getId(), owner, userAccountDto.getAccountType());
     return ResponseEntity.ok().body(validateDto);
   }
 }
