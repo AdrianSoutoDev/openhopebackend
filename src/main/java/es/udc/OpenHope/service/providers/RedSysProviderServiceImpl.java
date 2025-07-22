@@ -128,7 +128,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("&scope=PIS%20AIS%20SVA")
           .append("&state=").append("provider=").append(Provider.REDSYS).append(",aspsp=").append(aspsp);
 
-      if(isDonation){
+      if(isDonation != null && isDonation){
         sb.append(",isDonation=true").append(",amount=").append(amount).append(",bankAccount=").append(bankAccount);
       }
 
