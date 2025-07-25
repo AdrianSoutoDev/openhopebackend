@@ -12,23 +12,24 @@ import java.util.List;
 
 public class BankAccountMapper {
 
-  public static BankAccountDto toBankAccountDto(AccountClientDto accountClientDtos){
+  public static BankAccountDto toBankAccountDto(AccountClientDto accountClientDto){
     BankAccountDto bankAccountDto = new BankAccountDto();
 
-    bankAccountDto.setResourceId(accountClientDtos.getResourceId());
-    bankAccountDto.setIban(accountClientDtos.getIban());
+    bankAccountDto.setResourceId(accountClientDto.getResourceId());
+    bankAccountDto.setIban(accountClientDto.getIban());
 
     StringBuilder sb = new StringBuilder();
-    if(accountClientDtos.getName() != null && !accountClientDtos.getName().isBlank()){
-      sb.append(accountClientDtos.getName()).append(" - ");
+    if(accountClientDto.getName() != null && !accountClientDto.getName().isBlank()){
+      sb.append(accountClientDto.getName()).append(" - ");
     }
 
-    sb.append(accountClientDtos.getIban().substring(0, 4))
-        .append(" **** **** **** **** ").append(accountClientDtos.getIban().substring(accountClientDtos.getIban().length() - 4));
+    sb.append(accountClientDto.getIban().substring(0, 4))
+        .append(" **** **** **** **** ").append(accountClientDto.getIban().substring(accountClientDto.getIban().length() - 4));
 
     bankAccountDto.setName(sb.toString());
-    bankAccountDto.setOwnerName(accountClientDtos.getOwnerName());
-    bankAccountDto.setOriginalName(accountClientDtos.getName());
+    bankAccountDto.setOwnerName(accountClientDto.getOwnerName());
+    bankAccountDto.setOriginalName(accountClientDto.getName());
+    bankAccountDto.setCurrency(accountClientDto.getCurrency());
 
     return bankAccountDto;
   }
@@ -36,6 +37,7 @@ public class BankAccountMapper {
   public static BankAccountDto toBankAccountDto(BankAccount bankAccount){
     BankAccountDto bankAccountDto = new BankAccountDto();
 
+    bankAccountDto.setId(bankAccount.getId());
     bankAccountDto.setResourceId(bankAccount.getResourceId());
     bankAccountDto.setIban(bankAccount.getIban());
 
@@ -53,6 +55,7 @@ public class BankAccountMapper {
 
     AspspDto aspspDto = AspspMapper.toAspspDto(bankAccount.getAspsp());
     bankAccountDto.setAspsp(aspspDto);
+    bankAccountDto.setCurrency(bankAccount.getCurrency());
 
     return bankAccountDto;
   }
@@ -74,12 +77,14 @@ public class BankAccountMapper {
     bankAccount.setIban(bankAccountParams.getIban());
     bankAccount.setName(bankAccountParams.getOriginalName());
     bankAccount.setOwnerName(bankAccountParams.getOwnerName());
+    bankAccount.setCurrency(bankAccountParams.getCurrency());
     return bankAccount;
   }
 
   public static BankAccountListDto toBankAccountListDto(BankAccount bankAccount){
     BankAccountListDto bankAccountListDto = new BankAccountListDto();
 
+    bankAccountListDto.setId(bankAccount.getId());
     bankAccountListDto.setResourceId(bankAccount.getResourceId());
     bankAccountListDto.setIban(bankAccount.getIban());
 
@@ -97,6 +102,7 @@ public class BankAccountMapper {
 
     AspspDto aspspDto = AspspMapper.toAspspDto(bankAccount.getAspsp());
     bankAccountListDto.setAspsp(aspspDto);
+    bankAccountListDto.setCurrency(bankAccount.getCurrency());
 
     return bankAccountListDto;
   }

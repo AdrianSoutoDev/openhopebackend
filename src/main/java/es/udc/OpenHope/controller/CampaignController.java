@@ -3,12 +3,14 @@ package es.udc.OpenHope.controller;
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
 import es.udc.OpenHope.dto.CampaignParamsDto;
+import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.exception.DuplicatedCampaignException;
 import es.udc.OpenHope.exception.MaxTopicsExceededException;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.TokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -56,5 +58,14 @@ public class CampaignController {
     String owner = tokenService.extractsubject(token);
     CampaignDto campaignDto = campaignService.updateBankAccount(id, bankAccountParams, owner);
     return ResponseEntity.ok(campaignDto);
+  }
+
+  @GetMapping("/{id}/donations")
+  public ResponseEntity<Page<DonationDto>> getDonations(@PathVariable long id,
+                                                        @RequestParam(defaultValue="0") int page,
+                                                        @RequestParam(defaultValue="5") int size) {
+
+    Page<DonationDto> donations = campaignService.getDonations(id, page, size);
+    return ResponseEntity.ok(donations);
   }
 }

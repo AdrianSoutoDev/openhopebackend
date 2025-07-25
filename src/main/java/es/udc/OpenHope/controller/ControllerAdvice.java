@@ -101,11 +101,16 @@ public class ControllerAdvice {
   }
 
   @ExceptionHandler(UnauthorizedException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public ErrorDto handleUnauthorizedException(UnauthorizedException e) {
-    System.out.println("UnauthorizedException: " + e.getMessage());
-    String message = Messages.get("error.generic");
+    String message = Messages.get(e.getMessage());
     return new ErrorDto(message);
   }
 
+  @ExceptionHandler(MissingBankAccountException.class)
+  @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+  public ErrorDto hanldeMissingBankAccountException(MissingBankAccountException e) {
+    String message = Messages.get(e.getMessage());
+    return new ErrorDto(message);
+  }
 }

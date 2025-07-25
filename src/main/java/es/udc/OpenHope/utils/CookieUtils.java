@@ -8,9 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CookieUtils {
-
-  //TODO tests
-
   public static Cookie getCookie(String name, String value, Integer expires){
     Cookie cookie = new Cookie(name, value);
     cookie.setHttpOnly(true);

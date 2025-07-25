@@ -15,4 +15,10 @@ public class AccountsResponseDto {
     this.accounts = new ArrayList<>();
     this.notAllowed = false;
   }
+
+  public void restart() {
+    this.accounts = new ArrayList<>();
+    this.notAllowed = true;
+    this.redirection = null;
+  }
 }

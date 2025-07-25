@@ -11,6 +11,7 @@ public abstract class AspspMapper {
     aspsp.setName(aspspParamsDto.getName());
     aspsp.setCode(aspspParamsDto.getCode());
     aspsp.setProvider(aspspParamsDto.getProvider());
+    aspsp.setBic(aspspParamsDto.getBic());
     return aspsp;
   }
 
@@ -19,6 +20,7 @@ public abstract class AspspMapper {
     aspspDto.setName(aspsp.getName());
     aspspDto.setCode(aspsp.getCode());
     aspspDto.setProvider(Provider.valueOf(aspsp.getProvider()));
+    aspspDto.setBic(aspsp.getBic());
     return aspspDto;
   }
 
@@ -27,6 +29,7 @@ public abstract class AspspMapper {
     aspspDto.setName(aspspParamsDto.getName());
     aspspDto.setCode(aspspParamsDto.getCode());
     aspspDto.setProvider(Provider.valueOf(aspspParamsDto.getProvider()));
+    aspspDto.setBic(aspspParamsDto.getBic());
     return aspspDto;
   }
 }

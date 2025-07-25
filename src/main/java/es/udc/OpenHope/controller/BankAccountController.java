@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/bank-accounts")
@@ -24,6 +26,14 @@ public class BankAccountController {
                                                                   @RequestParam(defaultValue="5") int size) {
     String owner = tokenService.extractsubject(token);
     Page<BankAccountListDto> bankAccounts = userService.getBankAccounts(owner, page, size);
+
+    return ResponseEntity.ok(bankAccounts);
+  }
+
+  @GetMapping("/all")
+  public ResponseEntity<List<BankAccountListDto>> getAllBankAccounts(@RequestHeader(name="Authorization") String token) {
+    String owner = tokenService.extractsubject(token);
+    List<BankAccountListDto> bankAccounts = userService.getAllBankAccounts(owner);
 
     return ResponseEntity.ok(bankAccounts);
   }
