@@ -80,6 +80,7 @@ public class Utils {
     aspspParamsDto.setCode(ASPSP_CODE);
     aspspParamsDto.setName(ASPSP_NAME);
     aspspParamsDto.setProvider(ASPSP_PROVIDER);
+    aspspParamsDto.setBic(ASPSP_BIC);
 
     return aspspParamsDto;
   }
@@ -133,6 +134,7 @@ public class Utils {
     aspsp.setCode(ASPSP_CODE);
     aspsp.setName(ASPSP_NAME);
     aspsp.setProvider(ASPSP_PROVIDER);
+    aspsp.setBic(ASPSP_BIC);
     return aspsp;
   }
 
@@ -152,6 +154,7 @@ public class Utils {
     donation.setBankAccount(bankAccount);
     donation.setDate(Date.valueOf(LocalDate.now()));
     donation.setAmount(amount);
+    donation.setConfirmed(true);
     return donation;
   }
 
