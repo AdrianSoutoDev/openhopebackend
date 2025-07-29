@@ -6,6 +6,7 @@ import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.service.ConsentService;
+import es.udc.OpenHope.service.DonationService;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.providers.ProviderManager;
 import es.udc.OpenHope.service.providers.ProviderService;
@@ -215,6 +216,28 @@ public class ProviderController {
     }
 
     return ResponseEntity.ok(donationResponseDto);
+  }
+
+  @GetMapping("/{provider}/{aspsp}/payment/validate")
+  public ResponseEntity<ValidateDonationDto> paymentValidate(@PathVariable Provider provider, @PathVariable String aspsp,
+                                                             @RequestParam(value = "donation") Long donation,
+                                                             @RequestHeader(name="Authorization") String token,
+                                                             HttpServletRequest request) throws UnauthorizedException, ProviderException {
+
+    String ipClient = getClientIp(request);
+    String owner = tokenService.extractsubject(token);
+    ProviderService providerService = providerManager.getProviderService(provider);
+
+    Cookie tokenCookie = CookieUtils.getCookieFromRequest("token_".concat(aspsp), request);
+    String tokenOauth = tokenCookie != null ? tokenCookie.getValue() : null;
+    Cookie refreshCookie = CookieUtils.getCookieFromRequest("refresh_".concat(aspsp), request);
+    String refresh = refreshCookie != null ? refreshCookie.getValue() : null;
+
+    if(tokenOauth == null && refresh == null) throw new UnauthorizedException("");
+
+    ValidateDonationDto validateDonationDto = providerService.validatePayment(tokenOauth, ipClient, owner, donation);
+
+    return ResponseEntity.ok(validateDonationDto);
   }
 
   private void createConsent(ProviderService providerService, String owner, String aspsp, String tokenOauth, String ipClient,

@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -144,15 +145,15 @@ public class CampaignServiceImpl implements CampaignService {
 
   @Override
   @Transactional
-  public DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Date date) {
-    Donation donation = new Donation(campaign, bankAccount, amount, date);
+  public DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Timestamp dateTime) {
+    Donation donation = new Donation(campaign, bankAccount, amount, dateTime);
     donationRepository.save(donation);
 
     if(campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0){
       List<Donation> donations = donationRepository.findByCampaignAndConfirmedTrue(campaign);
       Float amountCollected = sumDonations(donations);
       if(amountCollected > campaign.getEconomicTarget() && campaign.getFinalizedDate() == null) {
-        campaign.setFinalizedDate(date);
+        campaign.setFinalizedDate(new Date(dateTime.getTime()));
         campaignRepository.save(campaign);
       }
     }

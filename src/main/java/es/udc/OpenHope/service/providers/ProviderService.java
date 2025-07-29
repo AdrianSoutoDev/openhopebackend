@@ -1,9 +1,6 @@
 package es.udc.OpenHope.service.providers;
 
-import es.udc.OpenHope.dto.AspspDto;
-import es.udc.OpenHope.dto.BankAccountDto;
-import es.udc.OpenHope.dto.InitPaymentDto;
-import es.udc.OpenHope.dto.ProviderAuthDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.CredentialsDto;
 import es.udc.OpenHope.dto.client.PostConsentClientDto;
 import es.udc.OpenHope.exception.*;
@@ -19,4 +16,6 @@ public interface ProviderService {
   CredentialsDto refreshToken(String refreshToken, String aspsp) throws ProviderException, UnauthorizedException;
   InitPaymentDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount)
       throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException;
+  ValidateDonationDto validatePayment(String tokenOAuth, String ipClient, String owner, Long donationId)
+      throws ProviderException, UnauthorizedException;
 }

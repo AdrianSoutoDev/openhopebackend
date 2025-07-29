@@ -1,6 +1,6 @@
 package es.udc.OpenHope.controller;
 
-import es.udc.OpenHope.dto.ConfirmDonationDto;
+import es.udc.OpenHope.dto.ValidateDonationDto;
 import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.service.DonationService;
 import es.udc.OpenHope.service.TokenService;
@@ -29,16 +29,5 @@ public class DonationController {
     Page<DonationDto> donations = userService.getDonations(owner, page, size);
 
     return ResponseEntity.ok(donations);
-  }
-
-  @PutMapping("/payment/callback")
-  public ResponseEntity<ConfirmDonationDto> paymentCallback(@RequestParam(value = "status") String status,
-                       @RequestParam(value = "donation") Long donation,
-                       @RequestHeader(name="Authorization") String token) {
-
-    String owner = tokenService.extractsubject(token);
-    ConfirmDonationDto confirmDonationDto = donationService.confirm(donation, status, owner);
-
-    return ResponseEntity.ok(confirmDonationDto);
   }
 }

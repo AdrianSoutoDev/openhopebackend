@@ -16,4 +16,5 @@ public interface RedSysProviderRepository {
   List<AccountClientDto> getAccounts(CommonHeadersDto commonHeaders, String uri, String consentId, String authorization) throws UnauthorizedException, ConsentInvalidException;
   PostInitPaymentClientDto postInitPayment(CommonHeadersDto commonHeaders, String uri, String body,
                                            String PsuIpAddress, String authorization, String redirectionUri) throws UnauthorizedException;
+  PaymentStatusClientDto getPaymentStatus(CommonHeadersDto commonHeaders, String uri, String PsuIpAddress, String authorization) throws UnauthorizedException;
 }

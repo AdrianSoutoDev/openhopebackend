@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -27,5 +29,5 @@ public interface CampaignService {
 
   Page<CampaignDto> search(SearchParamsDto searchParamsDto, int page, int size);
   Page<DonationDto> getDonations(Long id, int page, int size);
-  DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Date date);
+  DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Timestamp datetime);
 }

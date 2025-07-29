@@ -2,7 +2,7 @@ package es.udc.OpenHope.dto.mappers;
 
 import es.udc.OpenHope.dto.BankAccountDto;
 import es.udc.OpenHope.dto.CampaignDto;
-import es.udc.OpenHope.dto.ConfirmDonationDto;
+import es.udc.OpenHope.dto.ValidateDonationDto;
 import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.model.Donation;
 
@@ -13,7 +13,7 @@ public abstract class DonationMapper {
 
     donationDto.setId(donation.getId());
     donationDto.setAmount(donation.getAmount());
-    donationDto.setDate(donation.getDate().toLocalDate());
+    donationDto.setDate(donation.getDate().toLocalDateTime());
 
     CampaignDto campaignDto = CampaignMapper.toCampaignDto((donation.getCampaign()));
     donationDto.setCampaign(campaignDto);
@@ -24,16 +24,16 @@ public abstract class DonationMapper {
     return donationDto;
   }
 
-  public static ConfirmDonationDto toConfirmDonationDto(ConfirmDonationDto confirmDonationDto, Donation donation){
-    confirmDonationDto.setAmount(donation.getAmount());
-    confirmDonationDto.setDate(donation.getDate().toLocalDate());
+  public static ValidateDonationDto toConfirmDonationDto(ValidateDonationDto validateDonationDto, Donation donation){
+    validateDonationDto.setAmount(donation.getAmount());
+    validateDonationDto.setDate(donation.getDate().toLocalDateTime());
 
     CampaignDto campaignDto = CampaignMapper.toCampaignDto((donation.getCampaign()));
-    confirmDonationDto.setCampaign(campaignDto);
+    validateDonationDto.setCampaign(campaignDto);
 
     BankAccountDto bankAccountDto = BankAccountMapper.toBankAccountDto(donation.getBankAccount());
-    confirmDonationDto.setBankAccount(bankAccountDto);
+    validateDonationDto.setBankAccount(bankAccountDto);
 
-    return confirmDonationDto;
+    return validateDonationDto;
   }
 }

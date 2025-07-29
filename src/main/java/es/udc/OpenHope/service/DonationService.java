@@ -1,8 +1,8 @@
 package es.udc.OpenHope.service;
 
-import es.udc.OpenHope.dto.ConfirmDonationDto;
+import es.udc.OpenHope.dto.DonationDto;
 
 public interface DonationService {
-  ConfirmDonationDto confirm(Long id, String status, String owner);
   void delete(Long id);
+  DonationDto updatePaymentId(Long id, String paymentId);
 }

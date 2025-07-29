@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.enums.Provider;
 import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.exception.ProviderException;
-import es.udc.OpenHope.model.Account;
-import es.udc.OpenHope.model.BankAccount;
-import es.udc.OpenHope.model.Campaign;
-import es.udc.OpenHope.model.Consent;
+import es.udc.OpenHope.model.*;
 import es.udc.OpenHope.repository.*;
 import es.udc.OpenHope.service.CampaignService;
 import es.udc.OpenHope.service.DonationService;
@@ -33,7 +31,10 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -48,6 +49,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final BankAccountRepository bankAccountRepository;
   private final CampaignService campaignService;
   private final DonationService donationService;
+  private final DonationRepository donationRepository;
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -55,7 +57,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private static final String CERTIFICATE_FOOTER = "-----END CERTIFICATE-----";
   private static final String ALGORITHM_HEADER = "algorithm=\"SHA-256\"";
   private static final String HEADERS_HEADER = "headers=\"digest x-request-id\"";
-  private static final String PAYMENT_TYPE = "instant-sepa-credit-transfers";
+  private static final String OK_PAYMENT_STATUS_1 = "ACSC";
+  private static final String OK_PAYMENT_STATUS_2 = "ACCC";
 
   @Value("${redsys.rsa.privateKey.file.path}")
   private String privateKey;
@@ -99,8 +102,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Value("${redsys.api.post.payment.endpoint}")
   private String initPaymentEndpoint;
 
-//  @Value("${payments.callback.uri}")
-//  private String paymentCallback;
+  @Value("${redsys.api.get.payment.status.endpoint}")
+  private String paymentStatusEndpoint;
 
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
@@ -223,14 +226,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
       String aspsp = bankAccountOrigin.getAspsp().getCode();
 
       String uri = redSysApiUrl + initPaymentEndpoint
-          .replace("{aspsp}", aspsp)
-          .replace("{payment-product}", PAYMENT_TYPE);
+          .replace("{aspsp}", aspsp);
 
-      DonationDto donationDto = campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Date.valueOf(LocalDate.now()));
-
+      DonationDto donationDto = campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Timestamp.valueOf(LocalDateTime.now()));
       String redirectionUri = frontendBaseUrl + "campaign/" + campaignId +
-          "?status=OK" + "&donation=" + donationDto.getId();
-
+          "?provider=REDSYS" + "&aspsp=" + aspsp +
+          "&donation=" + donationDto.getId();
       PostInitPaymentClientDto response = null;
 
       try {
@@ -241,6 +242,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
         throw e;
       }
 
+      donationService.updatePaymentId(donationDto.getId(), response.getPaymentId());
+
       InitPaymentDto initPaymentDto = new InitPaymentDto();
       initPaymentDto.setRedirection(response.get_links().getScaRedirect().getHref());
       return initPaymentDto;
@@ -249,6 +252,47 @@ public class RedSysProviderServiceImpl implements ProviderService {
         throw e;
     } catch(Exception e) {
         throw new ProviderException(e.getMessage());
+    }
+  }
+
+  @Override
+  @Transactional
+  public ValidateDonationDto validatePayment(String tokenOAuth, String ipClient, String owner, Long donationId) throws ProviderException, UnauthorizedException {
+
+    ValidateDonationDto validateDonationDto = new ValidateDonationDto();
+    Optional<Donation> donationOptional = donationRepository.findById(donationId);
+
+    if(donationOptional.isEmpty()) {
+      throw new NoSuchElementException(Messages.get("validation.donation.not.exists"));
+    }
+
+    String donator = donationOptional.get().getBankAccount().getAccount().getEmail();
+
+    if(!owner.equals(donator)) {
+      throw new SecurityException(Messages.get("validation.donate.confirm.not.allowed"));
+    }
+
+    try {
+      CommonHeadersDto commonHeadersDto = getCommonHeaders("");
+      String uri = redSysApiUrl + paymentStatusEndpoint.replace("{aspsp}", donationOptional.get().getBankAccount().getAspsp().getCode())
+              .replace("{payment-id}", donationOptional.get().getPaymentId());
+
+      PaymentStatusClientDto paymentStatusClientDto = redSysProviderRepository.getPaymentStatus(commonHeadersDto, uri, ipClient, "Bearer ".concat(tokenOAuth));
+      validateDonationDto.setConfirmed(OK_PAYMENT_STATUS_1.equals(paymentStatusClientDto.getTransactionStatus()) ||
+          OK_PAYMENT_STATUS_2.equals(paymentStatusClientDto.getTransactionStatus()));
+
+      if (validateDonationDto.isConfirmed()) {
+        Donation donation = donationOptional.get();
+        DonationMapper.toConfirmDonationDto(validateDonationDto, donation);
+        donation.setConfirmed(true);
+        donationRepository.save(donation);
+      }
+
+      return validateDonationDto;
+    } catch (UnauthorizedException e){
+      throw e;
+    } catch(Exception e) {
+      throw new ProviderException(e.getMessage());
     }
   }
 
