@@ -215,7 +215,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       BankAccount bankAccountDestiny = campaignOptional.get().getBankAccount();
       BankAccount bankAccountOrigin = bankAccountOptional.get();
 
-      PostInitPaymentDto postInitPaymentDto = getPostInitPaymentDto(amount, bankAccountOrigin, bankAccountDestiny);
+      PostInitPaymentDto postInitPaymentDto = getPostInitPaymentDto(amount, bankAccountOrigin, bankAccountDestiny, campaignOptional.get().getName());
 
       String body = new ObjectMapper().writeValueAsString(postInitPaymentDto);
 
@@ -407,21 +407,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
     return commonHeadersDto;
   }
 
-  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny) {
-    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban(), bankAccountOrigin.getCurrency());
-
-    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban(), bankAccountDestiny.getCurrency());
-
+  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny, String campaignName) {
+    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban());
+    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban());
     AmountDto amountDto = new AmountDto(bankAccountDestiny.getCurrency(), amount.toString());
-
-    AddressDto addressDto = new AddressDto("ES", "");
-
-    String remittanceInformationUnstructured = "Texto de prueba";
-
-    PostInitPaymentDto postInitPaymentDto = new PostInitPaymentDto(bankAccountOrigin.getOwnerName(), accountReferenceOriginDto, amountDto
-        ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), addressDto, bankAccountDestiny.getAspsp().getBic(), remittanceInformationUnstructured);
-
-    return postInitPaymentDto;
+    return new PostInitPaymentDto(accountReferenceOriginDto, amountDto
+        ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), campaignName);
   }
 
 }

@@ -7,5 +7,4 @@ import lombok.Data;
 @AllArgsConstructor
 public class AccountReferenceDto {
   private String iban;
-  private String currency;
 }

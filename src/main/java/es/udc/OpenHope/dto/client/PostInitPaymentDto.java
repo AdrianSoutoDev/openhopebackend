@@ -6,12 +6,9 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PostInitPaymentDto {
-  private String debtorName;
   private AccountReferenceDto debtorAccount;
   private AmountDto instructedAmount;
   private AccountReferenceDto creditorAccount;
   private String creditorName;
-  private AddressDto creditorAddress;
-  private String creditorAgent;
   private String remittanceInformationUnstructured;
 }
