@@ -6,5 +6,5 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class ValidateDonationDto extends DonationDto {
-  private boolean isConfirmed;
+  private boolean validated;
 }

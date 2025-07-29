@@ -30,8 +30,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.sql.Date;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -278,14 +276,16 @@ public class RedSysProviderServiceImpl implements ProviderService {
               .replace("{payment-id}", donationOptional.get().getPaymentId());
 
       PaymentStatusClientDto paymentStatusClientDto = redSysProviderRepository.getPaymentStatus(commonHeadersDto, uri, ipClient, "Bearer ".concat(tokenOAuth));
-      validateDonationDto.setConfirmed(OK_PAYMENT_STATUS_1.equals(paymentStatusClientDto.getTransactionStatus()) ||
+      validateDonationDto.setValidated(OK_PAYMENT_STATUS_1.equals(paymentStatusClientDto.getTransactionStatus()) ||
           OK_PAYMENT_STATUS_2.equals(paymentStatusClientDto.getTransactionStatus()));
 
-      if (validateDonationDto.isConfirmed()) {
+      if (validateDonationDto.isValidated()) {
         Donation donation = donationOptional.get();
         DonationMapper.toConfirmDonationDto(validateDonationDto, donation);
         donation.setConfirmed(true);
         donationRepository.save(donation);
+      } else {
+        throw new Exception(Messages.get("validation.donation.not.confirmed"));
       }
 
       return validateDonationDto;

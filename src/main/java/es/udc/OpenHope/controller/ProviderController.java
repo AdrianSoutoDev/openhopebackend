@@ -218,7 +218,7 @@ public class ProviderController {
     return ResponseEntity.ok(donationResponseDto);
   }
 
-  @GetMapping("/{provider}/{aspsp}/payment/validate")
+  @PutMapping("/{provider}/{aspsp}/payment/validate")
   public ResponseEntity<ValidateDonationDto> paymentValidate(@PathVariable Provider provider, @PathVariable String aspsp,
                                                              @RequestParam(value = "donation") Long donation,
                                                              @RequestHeader(name="Authorization") String token,
