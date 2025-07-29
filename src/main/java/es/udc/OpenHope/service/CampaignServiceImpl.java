@@ -463,7 +463,11 @@ public class CampaignServiceImpl implements CampaignService {
 
     Collections.sort(suggestions);
 
-    return suggestions;
+    List<Float> roundedSuggestions = new ArrayList<>();
+    for (Float suggestion : suggestions) {
+      roundedSuggestions.add(Math.round(suggestion * 100f) / 100f);
+    }
+    return roundedSuggestions;
   }
 
   private Float calculateMode(List<Donation> donations) {
