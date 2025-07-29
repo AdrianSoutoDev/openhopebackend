@@ -2,10 +2,12 @@ package es.udc.OpenHope.service;
 
 import es.udc.OpenHope.dto.BankAccountParams;
 import es.udc.OpenHope.dto.CampaignDto;
+import es.udc.OpenHope.dto.DonationDto;
 import es.udc.OpenHope.dto.SearchParamsDto;
 import es.udc.OpenHope.dto.mappers.AspspMapper;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
 import es.udc.OpenHope.dto.mappers.CampaignMapper;
+import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.enums.CampaignFinalizeType;
 import es.udc.OpenHope.enums.CampaignState;
 import es.udc.OpenHope.enums.SortCriteria;
@@ -25,8 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +44,7 @@ public class CampaignServiceImpl implements CampaignService {
   private final BankAccountRepository bankAccountRepository;
   private final AspspRepository aspspRepository;
   private final TopicService topicService;
+  private final DonationRepository donationRepository;
 
   @Override
   @Transactional
@@ -62,7 +68,7 @@ public class CampaignServiceImpl implements CampaignService {
     campaignRepository.save(campaign);
     topicService.saveTopics(topics, campaign, owner);
 
-    return CampaignMapper.toCampaignDto(campaign).amountCollected(0F).percentageCollected(0F).isOnGoing(isOnGoing(campaign));
+    return toCampaignDto(campaign);
   }
 
   @Override
@@ -126,6 +132,33 @@ public class CampaignServiceImpl implements CampaignService {
     Pageable pageable = PageRequest.of(page, size);
     Page<Campaign> campaignPage = campaignRepository.findAll(getSearchSpecification(searchParamsDto), pageable);
     return campaignPage.map(this::toCampaignDto);
+  }
+
+  @Override
+  public Page<DonationDto> getDonations(Long id, int page, int size) {
+    Optional<Campaign> campaign = campaignRepository.findById(id);
+    if(campaign.isEmpty()) throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Donation> donations = donationRepository.findByCampaignAndConfirmedTrueOrderByDateDesc(campaign.get(), pageable);
+    return donations.map(DonationMapper::toDonationDto);
+  }
+
+  @Override
+  @Transactional
+  public DonationDto addDonation(Campaign campaign, BankAccount bankAccount, Float amount, Timestamp dateTime) {
+    Donation donation = new Donation(campaign, bankAccount, amount, dateTime);
+    donationRepository.save(donation);
+
+    if(campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0){
+      List<Donation> donations = donationRepository.findByCampaignAndConfirmedTrue(campaign);
+      Float amountCollected = sumDonations(donations);
+      if(amountCollected > campaign.getEconomicTarget() && campaign.getFinalizedDate() == null) {
+        campaign.setFinalizedDate(new Date(dateTime.getTime()));
+        campaignRepository.save(campaign);
+      }
+    }
+
+    return DonationMapper.toDonationDto(donation);
   }
 
   private Specification<Campaign> getSearchSpecification(SearchParamsDto searchParamsDto) {
@@ -378,31 +411,86 @@ public class CampaignServiceImpl implements CampaignService {
       return false;
     }
 
-    //TODO Se debe eliminar esta comprobación cuando se establezca finalizedDate cuando se pase el target en las donaciones.
-    boolean isUnderTarget = campaign.getEconomicTarget() == null || amountCollected(campaign) < campaign.getEconomicTarget();
-    return itStated && isUnderTarget;
+    return itStated;
   }
 
-  private Float amountCollected(Campaign campaign) {
-    //TODO suma del importe de las donacionaciones
-    return 0f;
+  private Float sumDonations(List<Donation> donations) {
+    return donations.stream()
+                    .map(Donation::getAmount)
+                    .reduce(0f, Float::sum);
   }
 
-  private Float percentageCollected(Campaign campaign) {
-    //TODO si tiene economicTarget, porcentaje entre el economicTarget y amountCollected();
-    return 0f;
+  private Float percentageCollected(Campaign campaign, Float amountCollected) {
+    float percentageCollected = 0f;
+    if (campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0) {
+      percentageCollected = (amountCollected / campaign.getEconomicTarget()) * 100;
+    }
+    return Math.min(percentageCollected, 100F);
   }
 
   private boolean hasBankAccount(Campaign campaign) {
     return campaign.getBankAccount() != null;
   }
 
+  private List<Float> suggestions(Campaign campaign, List<Donation> donations, Float amountCollected) {
+    List<Float> suggestions = new ArrayList<>();
+
+    if(campaign.getMinimumDonation() != null && campaign.getMinimumDonation() > 0) {
+      suggestions.add(campaign.getMinimumDonation());
+    } else {
+      suggestions.add(1f);
+    }
+
+    if(donations.isEmpty()) {
+      suggestions.add(suggestions.get(0) * 2);
+      suggestions.add(suggestions.get(1) * 5);
+    } else {
+      Float average = amountCollected / donations.size();
+      Float mode = calculateMode(donations);
+
+      if(!average.equals(suggestions.get(0))){
+        suggestions.add(average);
+      } else {
+        suggestions.add(suggestions.get(0) * 2);
+      }
+
+      if( !mode.equals(suggestions.get(0)) && !mode.equals(suggestions.get(1)) ) {
+        suggestions.add(mode);
+      } else {
+        suggestions.add(Float.max(suggestions.get(0), suggestions.get(1)) * 2);
+      }
+    }
+
+    Collections.sort(suggestions);
+
+    List<Float> roundedSuggestions = new ArrayList<>();
+    for (Float suggestion : suggestions) {
+      roundedSuggestions.add(Math.round(suggestion * 100f) / 100f);
+    }
+    return roundedSuggestions;
+  }
+
+  private Float calculateMode(List<Donation> donations) {
+    return donations.stream()
+        .map(Donation::getAmount)
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+        .entrySet()
+        .stream()
+        .max(Map.Entry.comparingByValue())
+        .map(Map.Entry::getKey)
+        .orElse(null);
+  }
+
   private CampaignDto toCampaignDto(Campaign campaign) {
+    List<Donation> donations = donationRepository.findByCampaignAndConfirmedTrue(campaign);
+    Float amountCollected = sumDonations(donations);
+
     return CampaignMapper.toCampaignDto(campaign)
-        .amountCollected(amountCollected(campaign))
-        .percentageCollected(percentageCollected(campaign))
+        .amountCollected(amountCollected)
+        .percentageCollected(percentageCollected(campaign, amountCollected))
         .isOnGoing(isOnGoing(campaign))
-        .hasBankAccount(hasBankAccount(campaign));
+        .hasBankAccount(hasBankAccount(campaign))
+        .suggestions(suggestions(campaign, donations, amountCollected));
   }
 
   private void validateParamsCreate(Optional<Organization> organization, String owner, String name, LocalDate startAt,

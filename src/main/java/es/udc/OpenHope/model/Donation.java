@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 
 @Data
 @Entity
@@ -25,5 +25,19 @@ public class Donation {
   private Float amount;
 
   @Column(nullable = false)
-  private Date date;
+  private Timestamp date;
+
+  @Column
+  private String PaymentId;
+
+  @Column
+  private boolean confirmed;
+
+  public Donation(Campaign campaign, BankAccount bankAccount, Float amount, Timestamp date) {
+    this.campaign = campaign;
+    this.bankAccount = bankAccount;
+    this.amount = amount;
+    this.date = date;
+    this.setConfirmed(false);
+  }
 }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AspspDto {
+  private String bic;
   private String name;
   private String code;
   private Provider provider;

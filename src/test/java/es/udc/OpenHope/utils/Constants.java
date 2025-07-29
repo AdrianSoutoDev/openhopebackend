@@ -35,6 +35,7 @@ public abstract class Constants {
   public static final String ASPSP_CODE = "BBVA";
   public static final String ASPSP_NAME = "BANCO BILBAO VIZCAYA ARGENTARIA, S.A.";
   public static final String ASPSP_PROVIDER = "REDSYS";
+  public static final String ASPSP_BIC = "BBVAESMMXXX";
 
   //Bank account
   public static final String BANK_IBAN = "ES2501822200160201933547";

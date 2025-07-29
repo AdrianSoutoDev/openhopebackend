@@ -1,22 +1,17 @@
 package es.udc.OpenHope.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.OpenHope.dto.AspspDto;
-import es.udc.OpenHope.dto.BankAccountDto;
-import es.udc.OpenHope.dto.CommonHeadersDto;
-import es.udc.OpenHope.dto.ProviderAuthDto;
+import es.udc.OpenHope.dto.*;
 import es.udc.OpenHope.dto.client.*;
 import es.udc.OpenHope.dto.mappers.BankAccountMapper;
+import es.udc.OpenHope.dto.mappers.DonationMapper;
 import es.udc.OpenHope.enums.Provider;
-import es.udc.OpenHope.exception.ConsentInvalidException;
+import es.udc.OpenHope.exception.*;
 import es.udc.OpenHope.exception.ProviderException;
-import es.udc.OpenHope.exception.UnauthorizedException;
-import es.udc.OpenHope.model.Account;
-import es.udc.OpenHope.model.Consent;
-import es.udc.OpenHope.repository.AccountRepository;
-import es.udc.OpenHope.repository.ConsentRepository;
-import es.udc.OpenHope.repository.RedSysProviderRepository;
-import es.udc.OpenHope.service.ConsentService;
+import es.udc.OpenHope.model.*;
+import es.udc.OpenHope.repository.*;
+import es.udc.OpenHope.service.CampaignService;
+import es.udc.OpenHope.service.DonationService;
 import es.udc.OpenHope.utils.Messages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,12 +30,11 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service("redSysProviderService")
 @RequiredArgsConstructor
@@ -49,7 +43,11 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private final RedSysProviderRepository redSysProviderRepository;
   private final ConsentRepository consentRepository;
   private final AccountRepository accountRepository;
-  private final ConsentService consentService;
+  private final CampaignRepository campaignRepository;
+  private final BankAccountRepository bankAccountRepository;
+  private final CampaignService campaignService;
+  private final DonationService donationService;
+  private final DonationRepository donationRepository;
 
   private static final String PRIVATE_KEY_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
   private static final String PRIVATE_KEY_FOOTER = "-----END RSA PRIVATE KEY-----";
@@ -57,6 +55,8 @@ public class RedSysProviderServiceImpl implements ProviderService {
   private static final String CERTIFICATE_FOOTER = "-----END CERTIFICATE-----";
   private static final String ALGORITHM_HEADER = "algorithm=\"SHA-256\"";
   private static final String HEADERS_HEADER = "headers=\"digest x-request-id\"";
+  private static final String OK_PAYMENT_STATUS_1 = "ACSC";
+  private static final String OK_PAYMENT_STATUS_2 = "ACCC";
 
   @Value("${redsys.rsa.privateKey.file.path}")
   private String privateKey;
@@ -97,6 +97,12 @@ public class RedSysProviderServiceImpl implements ProviderService {
   @Value("${frontend.base.url}")
   private String frontendBaseUrl;
 
+  @Value("${redsys.api.post.payment.endpoint}")
+  private String initPaymentEndpoint;
+
+  @Value("${redsys.api.get.payment.status.endpoint}")
+  private String paymentStatusEndpoint;
+
   @Override
   public List<AspspDto> getAspsps() throws ProviderException {
     try {
@@ -105,16 +111,16 @@ public class RedSysProviderServiceImpl implements ProviderService {
       List<AspspClientDto> response = redSysProviderRepository.getAspsps(commonHeadersDto, uri);
 
       return response.stream()
-          .map(a -> new AspspDto(a.getName(), a.getApiName(), Provider.REDSYS))
+          .map(a -> new AspspDto(a.getBic(), a.getName(), a.getApiName(), Provider.REDSYS))
           .sorted(Comparator.comparing(AspspDto::getName))
           .toList();
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
   @Override
-  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId) throws ProviderException {
+  public ProviderAuthDto getOAuthUri(String aspsp, Integer campaign, Integer userId, Boolean isDonation, Float amount, Long bankAccount) throws ProviderException {
     try {
       StringBuilder sb = new StringBuilder(redSysApiUrl)
           .append(oauthEndpoint)
@@ -125,6 +131,10 @@ public class RedSysProviderServiceImpl implements ProviderService {
           .append("&redirect_uri=").append(oauthCallback)
           .append("&scope=PIS%20AIS%20SVA")
           .append("&state=").append("provider=").append(Provider.REDSYS).append(",aspsp=").append(aspsp);
+
+      if(isDonation != null && isDonation){
+        sb.append(",isDonation=true").append(",amount=").append(amount).append(",bankAccount=").append(bankAccount);
+      }
 
       if(campaign != null) {
         sb.append(",campaign=").append(campaign);
@@ -139,7 +149,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       providerAuthDto.setUri(sb.toString());
       return providerAuthDto;
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -155,7 +165,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
       return redSysProviderRepository.authorize(redSysClientId, code, oauthCallback, oauthCodeVerifier, uri.toString());
 
     }catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -173,8 +183,116 @@ public class RedSysProviderServiceImpl implements ProviderService {
       if(e.getStatusCode().is4xxClientError()){
         throw new UnauthorizedException(e.getMessage());
       } else {
-        throw new ProviderException(Messages.get("provider.error.generic"));
+        throw new ProviderException(e.getMessage());
       }
+    }
+  }
+
+  @Override
+  @Transactional
+  public InitPaymentDto initPayment(String tokenOAuth, String ipClient, Long bankAccountId, String owner, Long campaignId, Float amount) throws ProviderException, UnauthorizedException, MissingBankAccountException, CampaignFinalizedException {
+
+    Optional<Campaign> campaignOptional = campaignRepository.findById(campaignId);
+    if(campaignOptional.isEmpty()) {
+      throw new NoSuchElementException(Messages.get("validation.campaign.not.exists"));
+    }
+
+    if(campaignOptional.get().getFinalizedDate() != null) {
+      throw new CampaignFinalizedException(Messages.get("validation.campaign.finalized"));
+    }
+
+    if(campaignOptional.get().getBankAccount() == null) {
+      throw new MissingBankAccountException(Messages.get("validation.bank.account.on.campaign"));
+    }
+
+    Account account = accountRepository.getUserByEmailIgnoreCase(owner);
+    Optional<BankAccount> bankAccountOptional = bankAccountRepository.findById(bankAccountId);
+
+    if(bankAccountOptional.isEmpty() || !bankAccountOptional.get().getAccount().equals(account) ){
+      throw new SecurityException(Messages.get("validation.donate"));
+    }
+
+    try {
+      BankAccount bankAccountDestiny = campaignOptional.get().getBankAccount();
+      BankAccount bankAccountOrigin = bankAccountOptional.get();
+
+      PostInitPaymentDto postInitPaymentDto = getPostInitPaymentDto(amount, bankAccountOrigin, bankAccountDestiny, campaignOptional.get().getName());
+
+      String body = new ObjectMapper().writeValueAsString(postInitPaymentDto);
+
+      CommonHeadersDto commonHeadersDto = getCommonHeaders(body);
+      String aspsp = bankAccountOrigin.getAspsp().getCode();
+
+      String uri = redSysApiUrl + initPaymentEndpoint
+          .replace("{aspsp}", aspsp);
+
+      DonationDto donationDto = campaignService.addDonation(campaignOptional.get(), bankAccountOrigin, amount, Timestamp.valueOf(LocalDateTime.now()));
+      String redirectionUri = frontendBaseUrl + "campaign/" + campaignId +
+          "?provider=REDSYS" + "&aspsp=" + aspsp +
+          "&donation=" + donationDto.getId();
+      PostInitPaymentClientDto response = null;
+
+      try {
+        response = redSysProviderRepository.postInitPayment(commonHeadersDto, uri, body, ipClient,
+            "Bearer ".concat(tokenOAuth), redirectionUri);
+      } catch (Exception e) {
+        donationService.delete(donationDto.getId());
+        throw e;
+      }
+
+      donationService.updatePaymentId(donationDto.getId(), response.getPaymentId());
+
+      InitPaymentDto initPaymentDto = new InitPaymentDto();
+      initPaymentDto.setRedirection(response.get_links().getScaRedirect().getHref());
+      return initPaymentDto;
+
+    } catch (UnauthorizedException e){
+        throw e;
+    } catch(Exception e) {
+        throw new ProviderException(e.getMessage());
+    }
+  }
+
+  @Override
+  @Transactional
+  public ValidateDonationDto validatePayment(String tokenOAuth, String ipClient, String owner, Long donationId) throws ProviderException, UnauthorizedException {
+
+    ValidateDonationDto validateDonationDto = new ValidateDonationDto();
+    Optional<Donation> donationOptional = donationRepository.findById(donationId);
+
+    if(donationOptional.isEmpty()) {
+      throw new NoSuchElementException(Messages.get("validation.donation.not.exists"));
+    }
+
+    String donator = donationOptional.get().getBankAccount().getAccount().getEmail();
+
+    if(!owner.equals(donator)) {
+      throw new SecurityException(Messages.get("validation.donate.confirm.not.allowed"));
+    }
+
+    try {
+      CommonHeadersDto commonHeadersDto = getCommonHeaders("");
+      String uri = redSysApiUrl + paymentStatusEndpoint.replace("{aspsp}", donationOptional.get().getBankAccount().getAspsp().getCode())
+              .replace("{payment-id}", donationOptional.get().getPaymentId());
+
+      PaymentStatusClientDto paymentStatusClientDto = redSysProviderRepository.getPaymentStatus(commonHeadersDto, uri, ipClient, "Bearer ".concat(tokenOAuth));
+      validateDonationDto.setValidated(OK_PAYMENT_STATUS_1.equals(paymentStatusClientDto.getTransactionStatus()) ||
+          OK_PAYMENT_STATUS_2.equals(paymentStatusClientDto.getTransactionStatus()));
+
+      if (validateDonationDto.isValidated()) {
+        Donation donation = donationOptional.get();
+        DonationMapper.toConfirmDonationDto(validateDonationDto, donation);
+        donation.setConfirmed(true);
+        donationRepository.save(donation);
+      } else {
+        throw new Exception(Messages.get("validation.donation.not.confirmed"));
+      }
+
+      return validateDonationDto;
+    } catch (UnauthorizedException e){
+      throw e;
+    } catch(Exception e) {
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -188,7 +306,7 @@ public class RedSysProviderServiceImpl implements ProviderService {
     } catch (UnauthorizedException | ConsentInvalidException e){
       throw e;
     } catch(Exception e) {
-      throw new ProviderException(Messages.get("provider.error.generic"));
+      throw new ProviderException(e.getMessage());
     }
   }
 
@@ -207,18 +325,18 @@ public class RedSysProviderServiceImpl implements ProviderService {
 
       String uri = redSysApiUrl + createConsentEndpoint.replace("{aspsp}", aspsp);
 
-      StringBuilder sb = new StringBuilder(frontendBaseUrl)
+      StringBuilder redirectionUri = new StringBuilder(frontendBaseUrl)
           .append("openbanking/bank-selection")
           .append("?aspsp=").append(aspsp);
 
       if(campaignId != null) {
-        sb.append("&campaign=").append(campaignId);
+        redirectionUri.append("&campaign=").append(campaignId);
       } else if(userId != null) {
-        sb.append("&user=").append("me");
+        redirectionUri.append("&user=").append("me");
       }
 
       PostConsentClientDto response = redSysProviderRepository.postConsent(commonHeadersDto, uri, body, aspsp, ipClient,
-          "Bearer ".concat(token), sb.toString());
+          "Bearer ".concat(token), redirectionUri.toString());
 
       Account account = accountRepository.getUserByEmailIgnoreCase(owner);
       Consent consent = new Consent();
@@ -332,4 +450,13 @@ public class RedSysProviderServiceImpl implements ProviderService {
     commonHeadersDto.setClientId(redSysClientId);
     return commonHeadersDto;
   }
+
+  private static PostInitPaymentDto getPostInitPaymentDto(Float amount, BankAccount bankAccountOrigin, BankAccount bankAccountDestiny, String campaignName) {
+    AccountReferenceDto accountReferenceOriginDto = new AccountReferenceDto(bankAccountOrigin.getIban());
+    AccountReferenceDto accountReferenceDestinyDto = new AccountReferenceDto(bankAccountDestiny.getIban());
+    AmountDto amountDto = new AmountDto(bankAccountDestiny.getCurrency(), amount.toString());
+    return new PostInitPaymentDto(accountReferenceOriginDto, amountDto
+        ,accountReferenceDestinyDto, bankAccountDestiny.getOwnerName(), campaignName);
+  }
+
 }

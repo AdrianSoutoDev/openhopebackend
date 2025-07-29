@@ -1,6 +1,8 @@
 package es.udc.OpenHope.controller;
 
+import es.udc.OpenHope.dto.ValidateDonationDto;
 import es.udc.OpenHope.dto.DonationDto;
+import es.udc.OpenHope.service.DonationService;
 import es.udc.OpenHope.service.TokenService;
 import es.udc.OpenHope.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class DonationController {
 
   private final TokenService tokenService;
   private final UserService userService;
+  private final DonationService donationService;
 
   @GetMapping()
   public ResponseEntity<Page<DonationDto>> getDonations(@RequestHeader(name="Authorization") String token,

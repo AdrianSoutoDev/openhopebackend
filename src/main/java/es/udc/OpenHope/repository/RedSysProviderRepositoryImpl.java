@@ -144,4 +144,62 @@ public class RedSysProviderRepositoryImpl implements RedSysProviderRepository {
       }
     }
   }
+
+  @Override
+  public PostInitPaymentClientDto postInitPayment(CommonHeadersDto commonHeaders, String uri, String body, String PsuIpAddress,
+                                                  String authorization, String redirectionUri) throws UnauthorizedException {
+    try {
+      RestClient restClient = RestClient.create();
+
+      return restClient.post()
+          .uri(uri)
+          .body(body)
+          .header("accept", APPLICATION_JSON)
+          .header("Content-Type", APPLICATION_JSON)
+          .header("digest", commonHeaders.getDigest())
+          .header("signature", commonHeaders.getSignature())
+          .header("tpp-signature-certificate", commonHeaders.getCertificateContent())
+          .header("x-ibm-client-id", commonHeaders.getClientId())
+          .header("x-request-id", commonHeaders.getXRequestID())
+          .header("authorization", authorization)
+          .header("psu-ip-address", PsuIpAddress)
+          .header("TPP-Redirect-URI", redirectionUri)
+          .retrieve()
+          .body(PostInitPaymentClientDto.class);
+
+    } catch (HttpClientErrorException e){
+      if(e.getStatusCode().is4xxClientError()){
+        throw new UnauthorizedException(e.getMessage());
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  @Override
+  public PaymentStatusClientDto getPaymentStatus(CommonHeadersDto commonHeaders, String uri, String PsuIpAddress, String authorization) throws UnauthorizedException {
+    try{
+      RestClient restClient = RestClient.create();
+
+      PaymentStatusClientDto response = restClient.get()
+          .uri(uri)
+          .header("accept", APPLICATION_JSON)
+          .header("digest", commonHeaders.getDigest())
+          .header("signature", commonHeaders.getSignature())
+          .header("tpp-signature-certificate", commonHeaders.getCertificateContent())
+          .header("x-ibm-client-id", commonHeaders.getClientId())
+          .header("x-request-id", commonHeaders.getXRequestID())
+          .header("authorization", authorization)
+          .retrieve()
+          .body(PaymentStatusClientDto.class);
+
+      return response;
+    } catch (HttpClientErrorException e){
+      if(e.getStatusCode().is4xxClientError()){
+        throw new UnauthorizedException(e.getMessage());
+      } else {
+        throw e;
+      }
+    }
+  }
 }

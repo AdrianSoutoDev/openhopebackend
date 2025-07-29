@@ -15,7 +15,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -80,6 +83,7 @@ public class Utils {
     aspspParamsDto.setCode(ASPSP_CODE);
     aspspParamsDto.setName(ASPSP_NAME);
     aspspParamsDto.setProvider(ASPSP_PROVIDER);
+    aspspParamsDto.setBic(ASPSP_BIC);
 
     return aspspParamsDto;
   }
@@ -118,6 +122,7 @@ public class Utils {
     BankAccount bankAccount = getBankAccount(aspsp, user);
     bankAccountRepository.save(bankAccount);
     Donation donation = getDonation(bankAccount, campaign, amount);
+    donation.setConfirmed(true);
     donationRepository.save(donation);
   }
 
@@ -132,6 +137,7 @@ public class Utils {
     aspsp.setCode(ASPSP_CODE);
     aspsp.setName(ASPSP_NAME);
     aspsp.setProvider(ASPSP_PROVIDER);
+    aspsp.setBic(ASPSP_BIC);
     return aspsp;
   }
 
@@ -149,8 +155,9 @@ public class Utils {
     Donation donation = new Donation();
     donation.setCampaign(campaign);
     donation.setBankAccount(bankAccount);
-    donation.setDate(Date.valueOf(LocalDate.now()));
+    donation.setDate(Timestamp.valueOf(LocalDateTime.now()));
     donation.setAmount(amount);
+    donation.setConfirmed(true);
     return donation;
   }
 
