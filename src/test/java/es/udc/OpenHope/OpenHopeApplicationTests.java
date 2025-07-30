@@ -7,7 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 class OpenHopeApplicationTests {
 
 	@Test
-	void contextLoads() {
+	public void mainTest() {
+		OpenHopeApplication.main(new String[] {});
 	}
 
 }

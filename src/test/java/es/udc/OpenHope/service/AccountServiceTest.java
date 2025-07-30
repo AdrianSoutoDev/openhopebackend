@@ -1,29 +1,26 @@
 package es.udc.OpenHope.service;
 
-import es.udc.OpenHope.exception.DuplicateEmailException;
-import es.udc.OpenHope.exception.DuplicateOrganizationException;
-import es.udc.OpenHope.exception.InvalidCredentialsException;
+import es.udc.OpenHope.dto.LoginDto;
+import es.udc.OpenHope.exception.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 
+import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class AccountServiceTest {
-
-  private static final String USER_EMAIL = "user@openhope.com";
-  private static final String PASSWORD = "12345abc?";
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
 
   @Value("${jwt.secret}")
   private String SECRET;
@@ -42,13 +39,13 @@ public class AccountServiceTest {
   @Test
   public void LoginUserTest() throws DuplicateEmailException, InvalidCredentialsException {
     userService.create(USER_EMAIL, PASSWORD);
-    String jwt = accountService.authenticate(USER_EMAIL, PASSWORD);
+    LoginDto loginDto = accountService.authenticate(USER_EMAIL, PASSWORD);
 
     SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
     String subject = Jwts.parser()
         .verifyWith(key)
         .build()
-        .parseSignedClaims(jwt)
+        .parseSignedClaims(loginDto.getToken())
         .getPayload()
         .getSubject();
 
@@ -56,15 +53,15 @@ public class AccountServiceTest {
   }
 
   @Test
-  public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
-    String jwt = accountService.authenticate(ORG_EMAIL, PASSWORD);
+  public void LoginOrganizationTest() throws DuplicateEmailException, InvalidCredentialsException, DuplicateOrganizationException, MaxCategoriesExceededException, MaxTopicsExceededException {
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
+    LoginDto loginDto = accountService.authenticate(ORG_EMAIL, PASSWORD);
 
     SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
     String subject = Jwts.parser()
         .verifyWith(key)
         .build()
-        .parseSignedClaims(jwt)
+        .parseSignedClaims(loginDto.getToken())
         .getPayload()
         .getSubject();
 

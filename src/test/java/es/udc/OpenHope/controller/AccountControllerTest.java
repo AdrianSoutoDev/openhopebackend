@@ -2,6 +2,7 @@ package es.udc.OpenHope.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import es.udc.OpenHope.dto.LoginDto;
 import es.udc.OpenHope.dto.LoginParamsDto;
 import es.udc.OpenHope.service.AccountService;
 import es.udc.OpenHope.service.OrganizationService;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,19 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.SecretKey;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static es.udc.OpenHope.utils.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public class AccountControllerTest {
-
-  private static final String USER_EMAIL = "user@openhope.com";
-  private static final String PASSWORD = "12345abc?";
-  private static final String ORG_EMAIL = "org@openhope.com";
-  private static final String ORG_NAME = "Apadan";
 
   @Value("${jwt.secret}")
   private String SECRET;
@@ -89,7 +88,7 @@ public class AccountControllerTest {
 
   @Test
   public void loginOrganizationTest() throws Exception {
-    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null);
+    organizationService.create(ORG_EMAIL, PASSWORD, ORG_NAME, null, null,null, null);
 
     ResultActions result = loginUser(ORG_EMAIL, PASSWORD);
 
@@ -165,10 +164,10 @@ public class AccountControllerTest {
   @Test
   public void logoutLoggedAccountTest() throws Exception {
     userService.create(USER_EMAIL, PASSWORD);
-    String jwt = accountService.authenticate(USER_EMAIL, PASSWORD);
+    LoginDto loginDto =  accountService.authenticate(USER_EMAIL, PASSWORD);
 
     ResultActions result = mockMvc.perform(post("/api/accounts/logout")
-        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", jwt))
+        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", loginDto.getToken()))
         .contentType(MediaType.APPLICATION_JSON));
 
     result.andExpect(status().isNoContent());
@@ -180,5 +179,18 @@ public class AccountControllerTest {
     ResultActions result = mockMvc.perform(post("/api/accounts/logout")
         .contentType(MediaType.APPLICATION_JSON));
     result.andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  public void validateTest() throws Exception {
+    userService.create(USER_EMAIL, PASSWORD);
+    LoginDto loginDto =  userService.authenticate(USER_EMAIL, PASSWORD);
+    ResultActions result = mockMvc.perform(post("/api/accounts/validate")
+        .header("Authorization", "Bearer " + loginDto.getToken())
+        .contentType(MediaType.APPLICATION_JSON));
+
+    result.andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.email").value(USER_EMAIL));
   }
 }

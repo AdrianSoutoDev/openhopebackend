@@ -199,3 +199,7 @@ README.html
 *.iml
 .idea
 .exercism
+/src/main/resources/keys/redsys/certificate.pem
+/src/main/resources/keys/redsys/privkey.pem
+/src/main/resources/application-demo.properties
+/src/main/resources/keys/redsys/originalKey.txt

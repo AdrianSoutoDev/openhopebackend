@@ -1,7 +1,6 @@
 package es.udc.OpenHope.common;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import es.udc.OpenHope.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,18 +13,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
-
-  @Value("${jwt.secret}")
-  private String SECRET;
-
-  @Value("${jwt.expiration}")
-  private Long EXPIRATION;
 
   @Value("${jwt.header}")
   private String AUTH_HEADER;
@@ -34,6 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
   private String PREFIX;
 
   private final MessageSource messageSource;
+  private final TokenService tokenService;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -42,8 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
       boolean isValidToken = authHeader != null && authHeader.startsWith(String.format("%s ", PREFIX));
 
       if(isValidToken) {
-        String tokenClear = authHeader.replace(String.format("%s ", PREFIX), "");
-        String email = extractsubject(tokenClear);
+        String email = tokenService.extractsubject(authHeader);
 
         if (email != null && !email.trim().isEmpty()) {
           UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(email, null, null);
@@ -60,15 +52,5 @@ public class JwtFilter extends OncePerRequestFilter {
       SecurityContextHolder.clearContext();
       filterChain.doFilter(request, response);
     }
-  }
-
-  private String extractsubject(String jwt) {
-    SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
-    return Jwts.parser()
-        .verifyWith(key)
-        .build()
-        .parseSignedClaims(jwt)
-        .getPayload()
-        .getSubject();
   }
 }

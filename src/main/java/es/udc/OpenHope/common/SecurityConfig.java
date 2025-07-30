@@ -34,9 +34,16 @@ public class SecurityConfig implements WebMvcConfigurer {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.POST,  "/api/users").permitAll()
             .requestMatchers(HttpMethod.POST,  "/api/organizations").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/organizations/{id}").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/organizations/{id}/campaigns").permitAll()
             .requestMatchers(HttpMethod.POST,  "/api/accounts/login").permitAll()
             .requestMatchers(HttpMethod.GET,  "/api/resources/{imageName}").permitAll()
             .requestMatchers(HttpMethod.POST,  "/api/resources").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/categories").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/campaigns/{id}/donations").permitAll()
+            .requestMatchers(HttpMethod.GET,  "/api/providers/oauth/callback").permitAll()
+            .requestMatchers(HttpMethod.POST,  "/api/search").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exceptionHandling ->
             exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
@@ -57,7 +64,9 @@ public class SecurityConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(@NonNull CorsRegistry registry) {
     registry.addMapping("/**")
-        .allowedOrigins("*")
-        .allowedMethods("*");
+        .allowedOrigins("http://localhost:5173")
+        .allowedMethods("*")
+        .allowedHeaders("*")
+        .allowCredentials(true);
   }
 }
