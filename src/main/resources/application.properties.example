@@ -1,0 +1,44 @@
+spring.application.name=OpenHope
+server.port=8080
+spring.datasource.url=jdbc:mysql://localhost:3306/openhope
+spring.datasource.username=user
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.generate-ddl=true
+spring.jpa.show-sql=false
+spring.jpa.hibernate.ddl-auto=update
+spring.main.allow-circular-references=true
+server.error.include-message=always
+
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=2MB
+spring.servlet.multipart.max-request-size=2MB
+
+frontend.base.url=https://www.openhope.com
+upload.dir=C:\\openhope\\images
+
+# JWT
+jwt.secret=asdfasdfasdfasdfasdfasdfasdfasdf
+jwt.expiration=86400000
+jwt.header=Authorization
+jwt.prefix=Bearer
+
+# REDSYS
+redsys.rsa.privateKey.file.path=keys/redsys/privkey.pem
+redsys.rsa.certificate.file.path=keys/redsys/certificate.pem
+redsys.client.id=PSDES-BDE-APPUDC
+redsys.api.url=https://apis-i.redsys.es:20443/psd2/xs2a/
+
+redsys.api.get.aspsp.endpoint=api-entrada-xs2a/services/v2.1/sva/aspsps
+redsys.api.post.consent.endpoint=api-entrada-xs2a/services/{aspsp}/v1.1/consents
+redsys.api.get.accounts.endpoint=api-entrada-xs2a/services/{aspsp}/v1.1/accounts
+redsys.api.post.payment.endpoint=api-entrada-xs2a/services/{aspsp}/v1.1/payments/instant-sepa-credit-transfers
+redsys.api.get.payment.status.endpoint=api-entrada-xs2a/services/{aspsp}/v1.1/payments/instant-sepa-credit-transfers/{payment-id}/status
+
+# REDSYS OAUTH
+redsys.oauth.uri=api-oauth-xs2a/services/rest/
+redsys.oauth.callback.uri=https://core.openhope.com/api/providers/oauth/callback
+redsys.oauth.challenge=kajsdhfalskdfjhalsdkjfhaslkdjf
+redsys.oauth.challenge.method=S256
+redsys.oauth.code.verifier=98127439jdhfkjahd9hj09481nm203d9841239048d13
