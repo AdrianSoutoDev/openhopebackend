@@ -425,7 +425,13 @@ public class CampaignServiceImpl implements CampaignService {
     if (campaign.getEconomicTarget() != null && campaign.getEconomicTarget() > 0) {
       percentageCollected = (amountCollected / campaign.getEconomicTarget()) * 100;
     }
-    return Math.min(percentageCollected, 100F);
+
+    Float minValue = Math.min(percentageCollected, 100F);
+    if(minValue > 0){
+      return minValue / 100;
+    }
+
+    return minValue;
   }
 
   private boolean hasBankAccount(Campaign campaign) {
